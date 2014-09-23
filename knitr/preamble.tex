@@ -1,0 +1,78 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Preample
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\usepackage{amsmath}  % Enables the align enviroment
+\usepackage{amssymb}  % Math symbols (e.g. \mathbb{})
+\usepackage{dsfont} 	% For \mathds{1} blackboard bold 1
+\usepackage[footnote,draft,nomargin]{fixme}    % For fixme notes and corrections
+\usepackage{hyperref} % For urls and hyperlinks
+
+% For bibliography
+\usepackage[numbers]{natbib}
+
+
+% For algorihmns
+
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\makeatletter
+\def\BState{\State\hskip-\ALG@thistlm}
+\makeatother
+
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% My math macros
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\DeclareMathOperator{\sgn}{sgn}
+\DeclareMathOperator*{\maximize}{maximize}
+\DeclareMathOperator*{\minimize}{minimize}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\tr}{tr}
+\DeclareMathOperator*{\rank}{rank}
+\DeclareMathOperator{\vect}{vec}
+\DeclareMathOperator{\arctanh}{arctanh}
+\renewcommand{\vec}{\boldsymbol}
+\newcommand{\slfrac}[2]{\left.#1\middle/#2\right.}
+\newcommand{\panel}[1]{\textsf{#1}}
+\newcommand{\bbE}{\mathbb{E}}
+\newcommand{\bbR}{\mathbb{R}}
+\newcommand{\bbN}{\mathbb{N}}
+\newcommand{\calN}{\mathcal{N}}
+\newcommand{\calW}{\mathcal{W}}
+\newcommand{\bbOne}{\mathds{1}}
+\newcommand{\var}{\text{var}}
+\newcommand{\mfJ}{\mathfrak{J}}
+
+% Common bold symbols
+\newcommand{\vSigma}{{\vec{\Sigma}}}
+\newcommand{\hvSigma}{{\hat{\vec{\Sigma}}}}
+\newcommand{\vPsi}{{\vec{\Psi}}}
+\newcommand{\vDelta}{{\vec{\Delta}}}
+\newcommand{\vTheta}{{\vec{\Theta}}}
+\newcommand{\hvTheta}{{\hat{\vec{\Theta}}}}
+\newcommand{\hvPsi}{{\hat{\vec{\Psi}}}}
+\newcommand{\vX}{{\vec{X}}}
+\newcommand{\vx}{{\vec{x}}}
+\newcommand{\vY}{{\vec{Y}}}
+\newcommand{\vS}{{\vec{S}}}
+\newcommand{\vU}{{\vec{U}}}
+\newcommand{\vD}{{\vec{D}}}
+\newcommand{\vI}{{\vec{I}}}
+\newcommand{\vJ}{{\vec{J}}}
+\newcommand{\vE}{{\vec{E}}}
+
+\newcommand{\fig}[3]{
+\begin{figure}
+  \begin{center}
+    \includegraphics[width=#2]{#1}
+  \end{center}
+  \vspace{-5mm}
+  \caption{\emph{#3}}
+  \label{#1}
+\end{figure}
+}
