@@ -64,9 +64,9 @@
 
 \maketitle
 \begin{abstract}
-This paper proposes a model and estimators for a common covariance matrix in cases where multiple datasets are present and thus provide a basis for meta analysis of gaussian graphical models. Our approach is inspired by traditional meta analysis using random effects models. We derive the basic properties and estimators of the model and compare our estimators method to the straight-forward approaches of simple averages or ``mega analysis'' were the datasets are combined, reprocessed, and plugged into the usual estimators. Though only a modest improvement, we see that explicitly accounting for the inter-study variance is superior to the alternative.  The model is also shown to be applicable as an intermediate between linear discriminant analysis (LDA) and quadratic discriminant analysis (QDA). \medskip
+This paper proposes a model and estimators for a common covariance matrix in cases where multiple datasets are present and thus provide a basis for meta analysis of gaussian graphical models. Our approach is inspired by traditional meta analysis using random effects models. We derive the basic properties and estimators of the model and compare our estimators method to the straight-forward approaches of simple averages or ``mega analysis'' were the datasets are combined, reprocessed, and plugged into the usual estimators. Though only a modest improvement, explicitly accounting for the inter-study variance is superior to the alternative. The model is also shown to be applicable as an intermediate between linear discriminant analysis (LDA) and quadratic discriminant analysis (QDA). \medskip
 
-\noindent \textbf{Keywords:} \textit{meta analysis, covariance estimation, integrative analysis, network integration, structural meta analysis, gaussian graphical modeling}
+\noindent \textbf{Keywords:} \textit{meta analysis, covariance estimation, integrative analysis, network integration, structural meta analysis, gaussian graphical modeling, linear discriminant analysis, quadratic discriminant analysis}
 \end{abstract}
 
 \newpage
@@ -82,8 +82,10 @@ In high-dimensional datasets the number of features $p$ far exceed the number of
 We are motivated by gene-gene interaction networks in diffuse large B-cell lymphoma (DLBCL) where the covariance matrix contain all information about the conditional dependencies of the genes. As with many other cancers, a large number of DLBCL studies are now available online and hence we wish to use these studies in combination with our own data to arrive at a good estimate of the covariance matrix and the inter-study variation.
 
 
+
+
 \section{A graphical random effects model}
-In a vein similar to regular effect-based meta analysis of \citet{Choi2003}, we think of the the different studies as related but perturbed experiments. The structural or graphical analog to \citet{Choi2003} is the following relatively simple model of the observations.
+In a vein similar to regular effect-based meta analysis of \citet{Choi2003}, we think of the the different studies as related but perturbed experiments. The graphical analog to \citet{Choi2003} is the following relatively simple graphical random effects model (GREM) of the observations.
 Let $p$ be the number of features and $k$ the number of studies. We model the each sample for the $i$th study as a $p$-dimensional zero-mean multivariate gaussian vector with the covariance matrix realized from a inverse Wishart distribution, i.e.\ the hierarchical model,
 \begin{align}
 \begin{split} \label{eq:REM}
@@ -108,12 +110,15 @@ f(\vec{x} | \vSigma_i) =
 Throughout this paper, we use generic notation $f(\cdot | \cdot)$ and $f(\cdot)$ for the conditional and unconditional pdf of random variables.
 In the model, $\nu$ encodes the inter-study variation where the $\vSigma_i$'s concentrate around $\vPsi$ for $\nu\to\infty$. I.e.\ the inter-study variation goes to zero for larger $\nu$. We wish to infer the parameters $\vPsi$ and $\nu$ from the observed data.
 
+
+
+
 \subsection{The likelihood function}
 Suppose we have $n_i$ i.i.d.\ observations, $\vx_{i1}, \dots,\vx_{in_i}$, from the $i = 1,...,k$ independent studies from the model given in \eqref{eq:REM}.
-Let $\vX_i = (\vx_{i1}, \dots,\vx_{in_i})^\top$ be the $n_i \times p$ (transposed) expression matrix of the $i$'th study where rows correspond to samples and columns to features. By using the independence assumptions of the model the log-likelihood is thus given by
+Let $\vX_i = (\vx_{i1}, \dots,\vx_{in_i})^\top$ be the $n_i \times p$ (transposed) expression matrix of the $i$'th study where rows correspond to samples and columns to variables. By the independence assumptions, the log-likelihood is given by
 \begin{align*}
-  &\ell\!\left(\vPsi, \nu \big|\vX_1, ..., \vX_k  \right) \\
-  &= \log f\!\left(\vX_1, ..., \vX_k \big| \vPsi, \nu \right) \\
+  &\ell\!\left(\vPsi, \nu \big|\vX_1, ..., \vX_k  \right)
+  = \log f\!\left(\vX_1, ..., \vX_k \big| \vPsi, \nu \right) \\
   &= \log\!\int %\cdots \int
                f(\vX_1, ...,\vX_k |
                \vSigma_1, ..., \vSigma_k, \vPsi, \nu)
@@ -129,7 +134,7 @@ Let $\vX_i = (\vx_{i1}, \dots,\vx_{in_i})^\top$ be the $n_i \times p$ (transpose
                f(\vSigma_i | \vPsi, \nu)
                d\vSigma_i.
 \end{align*}
-Since the inverse Wishart distribution is conjugate to the multivariate gaussian distribution the integral, of which the integrand forms a gaussian-inverse-Wishart distribution, can be evaluated. Hence $\vSigma_i$ can be marginalized out (as shown in Appendix \ref{sec:marginalization}) and we arrive at the following expression for the log-likelihood,
+Since the inverse Wishart distribution is conjugate to the multivariate gaussian distribution the integral, of which the integrand forms a gaussian-inverse-Wishart distribution, can be evaluated. Hence $\vSigma_i$ can be marginalized out, cf.\  Appendix \ref{sec:marginalization}, and we arrive at the following expression for the log-likelihood,
 \small
 \begin{align}
   &\ell\!\left(\vPsi, \nu \big| \vX_1, ..., \vX_k \right) %\notag\\
@@ -145,21 +150,20 @@ Since the inverse Wishart distribution is conjugate to the multivariate gaussian
     \label{eq:loglik}
 \end{align}
 \normalsize
-where the constant terms are abbreviated by $c$ and $\Gamma_p$ is the multivariate generalization for the gamma function $\Gamma$, which can be seen in equation \eqref{eq:multigamma} of Appendix \ref{sec:multigamma}. As should be expected, the scatter matrix $\vec{S}_i =\vX_i^\top\vX_i$ is seen to be a sufficient statistic for each study.
+where the constant terms are abbreviated by $c$ and $\Gamma_p$ is the multivariate generalization for the gamma function $\Gamma$, which can be seen in equation \eqref{eq:multigamma} of Appendix \ref{sec:multigamma}. As should be expected, the scatter matrix $\vec{S}_i =\vX_i^\top\vX_i$ and $n_i$ are sufficient statistics for each study.
 
 While we are not able to shown general log-concavity of the log-likelihood, we show that it is log-concave in $\nu$ for fixed $\vSigma$, and hence there exists a unique maxima for the marginal $\ell(\nu)$, cf.\ Appendix \ref{sec:concaveloglik}.
-Reversely, for fixed $\nu$ we can show, that the hessian in any stationary point ($\frac{\partial\ell}{\partial\vPsi} = 0$) is negative semi-definite and hence a local maxima, cf.\ Appendix \ref{sec:negativedefinite}.
+Reversely, for fixed $\nu$ we can show, that the hessian in any stationary point (where $\frac{\partial\ell}{\partial\vPsi} = 0$) is negative semi-definite and hence a local maxima, cf.\ Appendix \ref{sec:negativedefinite}. This combined with the observation that $\ell(\vPsi) \to -\infty$ whenever an eigenvalue $\lambda_i(\vPsi) \to 0$, we conjecture that any stationary point indeed a global maximum.
 
+In the following, estimation of $\vPsi$ for fixed $\nu$ is considered.
 
-
-
-\subsection{The moment estimate}
-In this setup, a moment estimate of $\vPsi$ is readily available. It is clear, by construction that the expectation of a single scatter matrix is
+\subsection{Moment estimate}
+The moment estimate of $\vPsi$ is readily available. It is clear, by construction that the expectation of a single scatter matrix is
 \begin{align*}
   &\bbE[ \vec{S}_i ]
     = \bbE[\vX_i^\top\vX_i ]
-    = \bbE\left[\bbE[\vX_i^\top\vX_i | \vSigma_i ]\right] \\
-    &= \bbE[n_i \vSigma_i]
+    = \bbE\left[\bbE[\vX_i^\top\vX_i | \vSigma_i ]\right]
+    = \bbE[n_i \vSigma_i]
     = n_i\bbE[\vSigma_i]
     = n_i\frac{\vPsi}{\nu - p - 1}.
 \end{align*}
@@ -247,19 +251,10 @@ We now compute the expectation step of the EM-algorithm.
 From \eqref{eq:REM} we have that,
 \begin{align*}
   \vS_i | \vSigma_i  &\sim \calW_p(\vSigma_i, n_i), \qquad i = 1, ..., k\\
-  %\vx_{ij} | \vSigma_i  &\sim \calN_p(\vec{0}, \vSigma_i) \qquad j = 1, ..., n_i, \text{ and } i = 1, ..., k \\
   \vSigma_i          &\sim \calW_p^{-1}(\vPsi, \nu)
 \end{align*}
 Let $\vDelta_i = \vSigma_i^{-1}$ be the precision matrix (or, concentration matrix) and let $\vTheta = \vPsi^{-1}$, then
 \begin{align}
-%    \vx_{ij} | \vDelta_i
-%    &\sim \calN_p(\vec{0}, \vDelta_i^{-1})
-%    &\Leftrightarrow & &
-%    f(\vx_{i1}, ..., \vx_{in_i} | \vDelta_i)
-%    &= (2\pi)^{-\frac{p}{2}}
-%         |\vDelta_i|^{-\frac{1}{2}}
-%         e^{-\frac{1}{2}\tr(\vDelta_i\vS_i)},
-%
   \vS_i | \vDelta_i
   &\sim \calW_p( \vDelta_i^{-1}, n_i)
   &\Leftrightarrow & &
@@ -273,11 +268,6 @@ Let $\vDelta_i = \vSigma_i^{-1}$ be the precision matrix (or, concentration matr
   &\sim \calW_p(\vTheta, \nu)
   &\Leftrightarrow & &
   f(\vDelta_i)
-%   &= \frac{ |\vTheta|^{-\frac{\nu}{2}} }{
-%        2^{-\frac{\nu p}{2}}
-%        \Gamma_p\left(\frac{\nu}{2}\right)}
-%        |\vDelta_i|^\frac{\nu - p - 1}{2}
-%        e^{-\frac{1}{2}\tr(\vTheta^{-1}\vDelta_i)}
   &\propto
        |\vTheta|^{-\frac{\nu}{2}}
        e^{-\frac{1}{2}\tr(\vTheta^{-1}\vDelta_i)}.
@@ -339,7 +329,7 @@ More precisely, in pseudo-code, we propose the algorithm seen in Algorithm \ref{
 \end{algorithm}
 The update function $U$ in the algorithm is be defined by the derived estimators above. That is, equations \eqref{eq:moment}, \eqref{eq:mle}, and \eqref{eq:em} define $U$ to be the moment, approximate MLE, and EM estimate respectively.
 
-\section{Some numerical results}
+\section{Numerical results}
 
 
 To assess the model and the stability of the estimation procedure we generated data from \eqref{eq:REM} for $p = 10$ variables in $k = 3$ studies each with an equal number of observations, $n = n_1 = n_2 = n_3$. We chose the parameters $\nu = 15$ and
@@ -377,13 +367,13 @@ where
  \var(\Sigma_{ij}) = n(\Psi_{ij}^2 + \Psi_{ii}\Psi_{jj}).
 \end{align*}
 
-For each $n$ from $5$ to $14$, the squared sum of errors for each estimator, $\text{SSE}(\hvSigma_\text{GREM})$, and $\text{SSE}(\hvSigma_\text{pool})$ where computed for $200$ datasets and the average of these values seen in figure \ref{fig:num_exp_plot} as function of $n$.
+For each $n$ from $5$ to $14$, the squared sum of errors for each estimator, $\text{SSE}(\hvSigma_\text{GREM})$, and $\text{SSE}(\hvSigma_\text{pool})$ where computed for $500$ datasets and the average of these values seen in figure \ref{fig:num_exp_plot} as function of $n$.
 Unsurprisingly, the model outperforms the simple pool average covariance matrix.
 
 \begin{knitrout}\footnotesize
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}[ht]
 
-\includegraphics[width=\maxwidth]{figure/num_exp_plot} \caption[The average sum or squared errors (SSE), of 200 simulations, as a function of the number of samples $n_i$ in each study]{The average sum or squared errors (SSE), of 200 simulations, as a function of the number of samples $n_i$ in each study.\label{fig:num_exp_plot}}
+\includegraphics[width=\maxwidth]{figure/num_exp_plot} \caption[]{The average sum or squared errors (SSE), of 500 simulations, as a function of the number of samples $n_i$ in each study.\label{fig:num_exp_plot}}
 \end{figure}
 
 
@@ -493,18 +483,10 @@ This section analyse the (non)-concavity of the log-likelihood function,
             \label{eq:appendloglik}
 \end{align}
 \normalsize
-We first analyze the terms involving $\vPsi$ in \eqref{eq:appendloglik}. Not counting the constant, the first term,
-$
-  \frac{\nu}{2}  \log | \vPsi |,
-$
-is concave by the well known result that the log-determinant of positive semi-definite matrix is concave \citep[See e.g.][pp. 73-74]{Boyd2004}.
-The third term in \eqref{eq:appendloglik},
-$
-  - \frac{\nu + n_i}{2}\log|\vPsi + \vS_i|,
-$
-is convex by the same argument however negated by the sign.
+We first analyze the terms involving $\vPsi$ in \eqref{eq:appendloglik}. Not counting the constant, the first term, $\frac{\nu}{2}  \log | \vPsi |$, is concave by the well known result that the log-determinant of positive semi-definite matrix is concave \citep[See e.g.][pp. 73-74]{Boyd2004}.
+The third term in \eqref{eq:appendloglik}, $- \frac{\nu + n_i}{2}\log|\vPsi + \vS_i|$, is convex by the same argument however negated by the sign.
 The sum $\vPsi +\vS_i$ is positive semi-definite since both summands are.
-%As the definiteness of the two terms differ, the definiteness of the sum is unclear.
+
 
 Next, we look at the terms involving $\nu$.
 Cleary, the mixed terms involving both $\nu$ and $\vPsi$ are log-linear in $\nu$ and hence log-concave.
@@ -530,10 +512,12 @@ The sum however of these terms involving $\Gamma_p$ are concave in $\nu$, since
           \Gamma\!\left( \frac{\nu + 1 - j}{2} \right)}.
 \end{align*}
 which can be seen to be concave since $n_i \geq 2$ for all $i$ and
-\begin{align*}
+\begin{align}
   x \mapsto \log\left(\frac{\Gamma(x + a)}{\Gamma(x)}\right)
-\end{align*}
-is concave for all $x>0$ and $a > 0$.\fxnote{Provide proof or find a reference? This is not quite trivial (to me).}
+  \label{eq:logGammaRatio}
+\end{align}
+is concave for all $x>0$ and $a > 0$. While we do not provide a proof of this the mapping is plotted in figure \ref{fig:log_gamma_ratio}.
+Hence, the log-likelihood is log-concave in $\nu$.
 \begin{knitrout}\footnotesize
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
@@ -541,14 +525,18 @@ is concave for all $x>0$ and $a > 0$.\fxnote{Provide proof or find a reference? 
   \hlkwd{log}\hlstd{(}\hlkwd{gamma}\hlstd{(x} \hlopt{+} \hlstd{a)}\hlopt{/}\hlkwd{gamma}\hlstd{(x))}
 \hlstd{\}}
 \hlstd{xs} \hlkwb{<-} \hlkwd{seq}\hlstd{(}\hlnum{0.01}\hlstd{,} \hlnum{2}\hlstd{,} \hlkwc{by} \hlstd{=} \hlnum{0.01}\hlstd{)}
-\hlkwd{plot}\hlstd{(xs,} \hlkwd{logGammaRatio}\hlstd{(xs,} \hlkwc{a} \hlstd{=} \hlnum{2}\hlstd{),}    \hlkwc{type} \hlstd{=} \hlstr{"l"}\hlstd{,} \hlkwc{xlab} \hlstd{=} \hlstr{""}\hlstd{,} \hlkwc{ylab} \hlstd{=} \hlstr{""}\hlstd{)}
+\hlkwd{par}\hlstd{(}\hlkwc{mfrow} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{1}\hlstd{,}\hlnum{2}\hlstd{),} \hlkwc{mar} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{2}\hlstd{,}\hlnum{2}\hlstd{,}\hlnum{0}\hlstd{,}\hlnum{0}\hlstd{)}\hlopt{+} \hlnum{0.5}\hlstd{)}
 \hlkwd{plot}\hlstd{(xs,} \hlkwd{logGammaRatio}\hlstd{(xs,} \hlkwc{a} \hlstd{=} \hlnum{1e-3}\hlstd{),} \hlkwc{type} \hlstd{=} \hlstr{"l"}\hlstd{,} \hlkwc{xlab} \hlstd{=} \hlstr{""}\hlstd{,} \hlkwc{ylab} \hlstd{=} \hlstr{""}\hlstd{)}
 \end{alltt}
-\end{kframe}
-\includegraphics[width=\maxwidth]{figure/log_gamma_ratio} 
+\end{kframe}\begin{figure}[ht]
+
+\includegraphics[width=\maxwidth]{figure/log_gamma_ratio} \caption[]{Plots of the mapping given in \eqref{eq:logGammaRatio} for diffent values of $a$.\label{fig:log_gamma_ratio}}
+\end{figure}
+
 
 \end{knitrout}
-Hence, the log-likelihood is log-concave in $\nu$.
+
+
 
 \subsection{log-convexity of the multivariate gamma function}
 \label{sec:multigamma}
@@ -560,7 +548,7 @@ The log-convexity of the multivariate gamma function can seen using the followin
   \text{ where }
   \Gamma(t) = \int_0^\infty x^{t-1} e^{-x} dx.
 \end{align}
-From this we see that
+From this
 \begin{align}
   \label{eq:logmultigamma}
   \log\Gamma_p(t) =
@@ -569,6 +557,8 @@ From this we see that
 \end{align}
 which is convex since $\Gamma$ is log-convex and sums of convex functions are convex.
 Hence $\Gamma_p$ is log-convex.
+
+
 
 
 \subsection{One-dimensional case}
@@ -584,7 +574,6 @@ which is not clearly convex. We see, that
   \text{  and  }
   \lim_{\phi \to \infty} \ell'(\phi) = 0
 \end{align*}
-
 We draw this derivative with $k = 1$ and other appropriately chosen parameters:
 \begin{knitrout}\footnotesize
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
@@ -617,15 +606,10 @@ The log-likelihood in \eqref{eq:loglik}, assuming $\nu$ fixed, obey
 \end{align}
 up to an addition of a constant. The matrix cookbook by \citet{Petersen2008} has been a useful reference here\footnote{See equation (41, p.\ 8) and (59, p.\ 9) and pages 14 and 52-53 in \url{http://www2.imm.dtu.dk/pubdb/views/publication_details.php?id=3274}}.
 
+
+
 \subsection{1.\ order derivatives}
-From the log-likelihood expression, we compute the 1.\ order derivative $\nabla_\vPsi 2\ell(\vPsi)$ which is the matrix-valued function
-% \begin{align}
-%   \nabla_\vPsi 2\ell(\vPsi)
-%   = \frac{\partial2\ell}{\partial\vPsi}
-%     \in \bbR^{p\times p},
-%     \label{eq:gradient}
-% \end{align}
-where each entry is given by
+From the log-likelihood expression, we compute the 1.\ order derivative $\nabla_\vPsi 2\ell(\vPsi)$ which is the matrix-valued function where each entry is given by
 \begin{align}
   %\left(\frac{\partial 2\ell}{\partial \vPsi}\right)_{ij}=
   \frac{\partial 2\ell}{\partial \Psi_{ij}}
@@ -639,17 +623,11 @@ However, when $\vPsi$ is symmetric we have that $\frac{\partial}{\partial \Psi_{
 
 The first order derivative lives in a $\binom{p+1}{2}$-dimensional vector space indexed by $(i,j)$, $i\leq j$, with basis vectors $\vE^{ij}$.
 
+
+
+
 \subsection{2.\ order derivatives}
-We proceed with the second order derivative $\nabla^2_\vPsi 2\ell(\vPsi)$
-% \begin{align*}
-%   \nabla^2_\vPsi 2\ell(\vPsi)
-%   = 2\begin{bmatrix}
-%     \nabla\frac{\partial\ell}{\partial\Psi_{11}} & \cdots & \nabla\frac{\partial\ell}{\partial\Psi_{1p}} \\
-%     \vdots & \ddots & \vdots \\
-%     \nabla\frac{\partial\ell}{\partial\Psi_{p1}} & \cdots & \nabla\frac{\partial\ell}{\partial\Psi_{pp}}
-%   \end{bmatrix} \in \bbR^{pp\times pp}
-% \end{align*}
-with entries given by
+We proceed with the second order derivative $\nabla^2_\vPsi 2\ell(\vPsi)$ with entries given by
 \begin{align*}
   \frac{\partial^2 2\ell}{\partial \Psi_{kl} \partial \Psi_{ij}}
   &= - k\nu\tr\!\left( \vE^{ij}\vPsi^{-1} \vE^{kl}\vPsi^{-1} \right) \\
@@ -664,6 +642,9 @@ $\frac{\partial}{\partial \Psi_{ij}} \vPsi^{-1} = - \vPsi^{-1}\vE^{ij}\vPsi^{-1}
 for symmetric matrices \citep[eq.\ (40)]{Petersen2008} and the linearity of the trace operator.
 
 The second order derivative is a $\binom{p+1}{2} \times \binom{p+1}{2}$-dimensional matrix indexed by $(i,j)$ and $(k,l)$, $i \leq j$, $k \leq l$.
+
+
+
 
 \subsection{Negative semi-definiteness in stationary points}
 With the above expressions we now show that the hessian is negative semi-definite in all stationary points (or, extrema).
@@ -708,7 +689,7 @@ We substitute \eqref{eq:loglikequation} into \eqref{eq:negativedefinte} to get
   &=  \sum_a (n_a + \nu)\tr\!\Big( \vY (\vI + \vS_a) \vY \big[ (\vI + \vS_a)  - \vI \big]\Big)
   \leq 0
 \end{align*}
-Since $\vS_a$ is positive semi-definite, it can be diagonalized $\vS_a = \vU_a \vD_a \vU_a^\top$ by the spectral theorem where the diagonal matrix $\vD_a \succeq 0$ (all non-zero entries are positive) and $\vU_a$ is orthonormal (i.e.\ $\vU_a\vU_a^\top = \vU_a^\top\vU_a = \vI$). Using the diagonalization, we see that
+Since $\vS_a$ is positive semi-definite, it can be diagonalized $\vS_a = \vU_a \vD_a \vU_a^\top$ by the spectral theorem where the diagonal matrix $\vD_a \succeq 0$ (all non-zero entries are positive) and $\vU_a$ is orthonormal (i.e.\ $\vU_a\vU_a^\top = \vU_a^\top\vU_a = \vI$). Using the diagonalization,
 \begin{align}
   \sum_a (n_a + \nu)\tr\!\Big(
     \underbrace{\vU^\top \vY (\vI + \vS_a)^{-1} \vY \vU}
@@ -724,7 +705,6 @@ Since the trace of a matrix product is the sum of the element-wise products, the
 
 \section{log-likelihood of the precision}
 \label{sec:precisionloglik}
-\fxnote{Find a better and more informative headline?}
 Suppose we have $k$ i.i.d. realizations, $\vDelta_1, ..., \vDelta_k$, from the Wishart distribution given in equation \eqref{eq:precisiondensity}. The corresponding log-likelihood can be computed straight-forwardly:
 \begin{align*}
   \ell(\vTheta | \vDelta_1, ..., \vDelta_k)
@@ -740,10 +720,10 @@ Suppose we have $k$ i.i.d. realizations, $\vDelta_1, ..., \vDelta_k$, from the W
    &= c + \frac{\nu k}{2}
      \left(
        \log |\vTheta| +
-       \tr\!\left((\vTheta^{-1} \frac{1}{\nu k}\sum_{i = 1}^k\vDelta_i\right)
+       \tr\!\left(\vTheta^{-1} \frac{1}{\nu k}\sum_{i = 1}^k\vDelta_i\right)
      \right).
 \end{align*}
-The last expression is to be maximized with respect to $\vTheta$ and can thus be recognized as the MLE problem in a multivariate Gaussian distribution. Hence,
+The last expression is to be maximized with respect to $\vTheta$ and can be recognized as the MLE problem in a multivariate Gaussian distribution. Hence,
 \begin{align*}
   \vTheta = \frac{1}{k \nu} \sum_{i = 1}^k \vDelta_i,
 \end{align*}

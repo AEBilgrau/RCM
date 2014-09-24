@@ -73,10 +73,10 @@ In the model, $\nu$ encodes the inter-study variation where the $\vSigma_i$'s co
 
 \subsection{The likelihood function}
 Suppose we have $n_i$ i.i.d.\ observations, $\vx_{i1}, \dots,\vx_{in_i}$, from the $i = 1,...,k$ independent studies from the model given in \eqref{eq:REM}.
-Let $\vX_i = (\vx_{i1}, \dots,\vx_{in_i})^\top$ be the $n_i \times p$ (transposed) expression matrix of the $i$'th study where rows correspond to samples and columns to features. By using the independence assumptions of the model the log-likelihood is thus given by
+Let $\vX_i = (\vx_{i1}, \dots,\vx_{in_i})^\top$ be the $n_i \times p$ (transposed) expression matrix of the $i$'th study where rows correspond to samples and columns to variables. By the independence assumptions, the log-likelihood is given by
 \begin{align*}
-  &\ell\!\left(\vPsi, \nu \big|\vX_1, ..., \vX_k  \right) \\
-  &= \log f\!\left(\vX_1, ..., \vX_k \big| \vPsi, \nu \right) \\
+  &\ell\!\left(\vPsi, \nu \big|\vX_1, ..., \vX_k  \right)
+  = \log f\!\left(\vX_1, ..., \vX_k \big| \vPsi, \nu \right) \\
   &= \log\!\int %\cdots \int
                f(\vX_1, ...,\vX_k |
                \vSigma_1, ..., \vSigma_k, \vPsi, \nu)
@@ -92,7 +92,7 @@ Let $\vX_i = (\vx_{i1}, \dots,\vx_{in_i})^\top$ be the $n_i \times p$ (transpose
                f(\vSigma_i | \vPsi, \nu)
                d\vSigma_i.
 \end{align*}
-Since the inverse Wishart distribution is conjugate to the multivariate gaussian distribution the integral, of which the integrand forms a gaussian-inverse-Wishart distribution, can be evaluated. Hence $\vSigma_i$ can be marginalized out (as shown in Appendix \ref{sec:marginalization}) and we arrive at the following expression for the log-likelihood,
+Since the inverse Wishart distribution is conjugate to the multivariate gaussian distribution the integral, of which the integrand forms a gaussian-inverse-Wishart distribution, can be evaluated. Hence $\vSigma_i$ can be marginalized out, cf.\  Appendix \ref{sec:marginalization}, and we arrive at the following expression for the log-likelihood,
 \small
 \begin{align}
   &\ell\!\left(\vPsi, \nu \big| \vX_1, ..., \vX_k \right) %\notag\\
@@ -108,21 +108,20 @@ Since the inverse Wishart distribution is conjugate to the multivariate gaussian
     \label{eq:loglik}
 \end{align}
 \normalsize
-where the constant terms are abbreviated by $c$ and $\Gamma_p$ is the multivariate generalization for the gamma function $\Gamma$, which can be seen in equation \eqref{eq:multigamma} of Appendix \ref{sec:multigamma}. As should be expected, the scatter matrix $\vec{S}_i =\vX_i^\top\vX_i$ is seen to be a sufficient statistic for each study.
+where the constant terms are abbreviated by $c$ and $\Gamma_p$ is the multivariate generalization for the gamma function $\Gamma$, which can be seen in equation \eqref{eq:multigamma} of Appendix \ref{sec:multigamma}. As should be expected, the scatter matrix $\vec{S}_i =\vX_i^\top\vX_i$ and $n_i$ are sufficient statistics for each study.
 
 While we are not able to shown general log-concavity of the log-likelihood, we show that it is log-concave in $\nu$ for fixed $\vSigma$, and hence there exists a unique maxima for the marginal $\ell(\nu)$, cf.\ Appendix \ref{sec:concaveloglik}.
-Reversely, for fixed $\nu$ we can show, that the hessian in any stationary point ($\frac{\partial\ell}{\partial\vPsi} = 0$) is negative semi-definite and hence a local maxima, cf.\ Appendix \ref{sec:negativedefinite}.
+Reversely, for fixed $\nu$ we can show, that the hessian in any stationary point (where $\frac{\partial\ell}{\partial\vPsi} = 0$) is negative semi-definite and hence a local maxima, cf.\ Appendix \ref{sec:negativedefinite}. This combined with the observation that $\ell(\vPsi) \to -\infty$ whenever an eigenvalue $\lambda_i(\vPsi) \to 0$, we conjecture that any stationary point indeed a global maximum.
 
+In the following, estimation of $\vPsi$ for fixed $\nu$ is considered.
 
-
-
-\subsection{The moment estimate}
-In this setup, a moment estimate of $\vPsi$ is readily available. It is clear, by construction that the expectation of a single scatter matrix is
+\subsection{Moment estimate}
+The moment estimate of $\vPsi$ is readily available. It is clear, by construction that the expectation of a single scatter matrix is
 \begin{align*}
   &\bbE[ \vec{S}_i ]
     = \bbE[\vX_i^\top\vX_i ]
-    = \bbE\left[\bbE[\vX_i^\top\vX_i | \vSigma_i ]\right] \\
-    &= \bbE[n_i \vSigma_i]
+    = \bbE\left[\bbE[\vX_i^\top\vX_i | \vSigma_i ]\right]
+    = \bbE[n_i \vSigma_i]
     = n_i\bbE[\vSigma_i]
     = n_i\frac{\vPsi}{\nu - p - 1}.
 \end{align*}
@@ -134,7 +133,6 @@ Thus the estimator
   \label{eq:moment}
 \end{align}
 of $\vPsi$ is unbiased. This estimate is a scaled average of the empirical covariance matrices.
-
 
 
 
@@ -294,18 +292,21 @@ The update function $U$ in the algorithm is be defined by the derived estimators
 k  <- 3
 nu <- 15
 p  <- 10
-n.sims <- 200
+n.sims <- 500
 n.obs <- 4 + seq_len(10)
 
 if (!file.exists("res.RData") | recompute) {
   set.seed(644031)
+  st <- proc.time()
   res <- list()
   it <- 1
   for (i in seq_along(n.obs)) {
     for (j in seq_len(n.sims)) {
       res[[it]] <- test.grem(k = 3, n = n.obs[i], p = p, nu = nu)
-      cat("it =", it, "of", length(n.obs)*n.sims, "done.\n"); flush.console()
       it <- it  + 1
+      cat("it =", it, "of", length(n.obs)*n.sims, "done after",
+          (proc.time()-st)[3] %/% 60, "mins.\n")
+      flush.console()
     }
   }
   resave(res, file = "res.RData")
@@ -352,7 +353,7 @@ where
 For each $n$ from $\Sexpr{min(n.obs)}$ to $\Sexpr{max(n.obs)}$, the squared sum of errors for each estimator, $\text{SSE}(\hvSigma_\text{GREM})$, and $\text{SSE}(\hvSigma_\text{pool})$ where computed for $\Sexpr{n.sims}$ datasets and the average of these values seen in figure \ref{fig:num_exp_plot} as function of $n$.
 Unsurprisingly, the model outperforms the simple pool average covariance matrix.
 
-<<num_exp_plot, echo=FALSE, results='hide', fig.cap="", fig.pos="ht", fig.height=7, fig.width=7, fig.cap=paste0("The average sum or squared errors (SSE), of ", n.sims, " simulations, as a function of the number of samples $n_i$ in each study.")>>=
+<<num_exp_plot, echo=FALSE, results='hide', fig.pos="ht", fig.height=7, fig.width=7, fig.scap = "", fig.cap=paste0("The average sum or squared errors (SSE), of ", n.sims, " simulations, as a function of the number of samples $n_i$ in each study.")>>=
 df <- as.data.frame(t(sapply(res, SSEs)))
 df <- aggregate(cbind(SSE.grem.em, SSE.grem.mle, SSE.grem.mom, SSE.mean) ~
                   n + nu + k + p, mean, data = df)
@@ -477,16 +478,8 @@ This section analyse the (non)-concavity of the log-likelihood function,
             \label{eq:appendloglik}
 \end{align}
 \normalsize
-We first analyze the terms involving $\vPsi$ in \eqref{eq:appendloglik}. Not counting the constant, the first term,
-$
-  \frac{\nu}{2}  \log | \vPsi |,
-$
-is concave by the well known result that the log-determinant of positive semi-definite matrix is concave \citep[See e.g.][pp. 73-74]{Boyd2004}.
-The third term in \eqref{eq:appendloglik},
-$
-  - \frac{\nu + n_i}{2}\log|\vPsi + \vS_i|,
-$
-is convex by the same argument however negated by the sign.
+We first analyze the terms involving $\vPsi$ in \eqref{eq:appendloglik}. Not counting the constant, the first term, $\frac{\nu}{2}  \log | \vPsi |$, is concave by the well known result that the log-determinant of positive semi-definite matrix is concave \citep[See e.g.][pp. 73-74]{Boyd2004}.
+The third term in \eqref{eq:appendloglik}, $- \frac{\nu + n_i}{2}\log|\vPsi + \vS_i|$, is convex by the same argument however negated by the sign.
 The sum $\vPsi +\vS_i$ is positive semi-definite since both summands are.
 
 
@@ -519,7 +512,8 @@ which can be seen to be concave since $n_i \geq 2$ for all $i$ and
   \label{eq:logGammaRatio}
 \end{align}
 is concave for all $x>0$ and $a > 0$. While we do not provide a proof of this the mapping is plotted in figure \ref{fig:log_gamma_ratio}.
-<<log_gamma_ratio, echo=-4, fig.height=4.5/2, fig.width=4.5, fig.cap="Plots of the mapping given in \eqref{eq:logGammaRatio} for diffent values of $a$.">>=
+Hence, the log-likelihood is log-concave in $\nu$.
+<<log_gamma_ratio, echo=-4, fig.height=4.5/2, fig.width=4.5, fig.pos="ht", fig.scap = "", fig.cap="Plots of the mapping given in \\eqref{eq:logGammaRatio} for diffent values of $a$.">>=
 logGammaRatio <- function(x, a) {
   log(gamma(x + a)/gamma(x))
 }
@@ -528,7 +522,8 @@ par(mfrow = c(1,2), mar = c(2,2,0,0)+ 0.5)
 plot(xs, logGammaRatio(xs, a = 2),    type = "l", xlab = "", ylab = "")
 plot(xs, logGammaRatio(xs, a = 1e-3), type = "l", xlab = "", ylab = "")
 @
-Hence, the log-likelihood is log-concave in $\nu$.
+
+
 
 \subsection{log-convexity of the multivariate gamma function}
 \label{sec:multigamma}
@@ -549,6 +544,8 @@ From this
 \end{align}
 which is convex since $\Gamma$ is log-convex and sums of convex functions are convex.
 Hence $\Gamma_p$ is log-convex.
+
+
 
 
 \subsection{One-dimensional case}
@@ -591,15 +588,10 @@ The log-likelihood in \eqref{eq:loglik}, assuming $\nu$ fixed, obey
 \end{align}
 up to an addition of a constant. The matrix cookbook by \citet{Petersen2008} has been a useful reference here\footnote{See equation (41, p.\ 8) and (59, p.\ 9) and pages 14 and 52-53 in \url{http://www2.imm.dtu.dk/pubdb/views/publication_details.php?id=3274}}.
 
+
+
 \subsection{1.\ order derivatives}
-From the log-likelihood expression, we compute the 1.\ order derivative $\nabla_\vPsi 2\ell(\vPsi)$ which is the matrix-valued function
-% \begin{align}
-%   \nabla_\vPsi 2\ell(\vPsi)
-%   = \frac{\partial2\ell}{\partial\vPsi}
-%     \in \bbR^{p\times p},
-%     \label{eq:gradient}
-% \end{align}
-where each entry is given by
+From the log-likelihood expression, we compute the 1.\ order derivative $\nabla_\vPsi 2\ell(\vPsi)$ which is the matrix-valued function where each entry is given by
 \begin{align}
   %\left(\frac{\partial 2\ell}{\partial \vPsi}\right)_{ij}=
   \frac{\partial 2\ell}{\partial \Psi_{ij}}
@@ -613,17 +605,11 @@ However, when $\vPsi$ is symmetric we have that $\frac{\partial}{\partial \Psi_{
 
 The first order derivative lives in a $\binom{p+1}{2}$-dimensional vector space indexed by $(i,j)$, $i\leq j$, with basis vectors $\vE^{ij}$.
 
+
+
+
 \subsection{2.\ order derivatives}
-We proceed with the second order derivative $\nabla^2_\vPsi 2\ell(\vPsi)$
-% \begin{align*}
-%   \nabla^2_\vPsi 2\ell(\vPsi)
-%   = 2\begin{bmatrix}
-%     \nabla\frac{\partial\ell}{\partial\Psi_{11}} & \cdots & \nabla\frac{\partial\ell}{\partial\Psi_{1p}} \\
-%     \vdots & \ddots & \vdots \\
-%     \nabla\frac{\partial\ell}{\partial\Psi_{p1}} & \cdots & \nabla\frac{\partial\ell}{\partial\Psi_{pp}}
-%   \end{bmatrix} \in \bbR^{pp\times pp}
-% \end{align*}
-with entries given by
+We proceed with the second order derivative $\nabla^2_\vPsi 2\ell(\vPsi)$ with entries given by
 \begin{align*}
   \frac{\partial^2 2\ell}{\partial \Psi_{kl} \partial \Psi_{ij}}
   &= - k\nu\tr\!\left( \vE^{ij}\vPsi^{-1} \vE^{kl}\vPsi^{-1} \right) \\
@@ -638,6 +624,9 @@ $\frac{\partial}{\partial \Psi_{ij}} \vPsi^{-1} = - \vPsi^{-1}\vE^{ij}\vPsi^{-1}
 for symmetric matrices \citep[eq.\ (40)]{Petersen2008} and the linearity of the trace operator.
 
 The second order derivative is a $\binom{p+1}{2} \times \binom{p+1}{2}$-dimensional matrix indexed by $(i,j)$ and $(k,l)$, $i \leq j$, $k \leq l$.
+
+
+
 
 \subsection{Negative semi-definiteness in stationary points}
 With the above expressions we now show that the hessian is negative semi-definite in all stationary points (or, extrema).
@@ -698,7 +687,6 @@ Since the trace of a matrix product is the sum of the element-wise products, the
 
 \section{log-likelihood of the precision}
 \label{sec:precisionloglik}
-\fxnote{Find a better and more informative headline?}
 Suppose we have $k$ i.i.d. realizations, $\vDelta_1, ..., \vDelta_k$, from the Wishart distribution given in equation \eqref{eq:precisiondensity}. The corresponding log-likelihood can be computed straight-forwardly:
 \begin{align*}
   \ell(\vTheta | \vDelta_1, ..., \vDelta_k)
@@ -714,10 +702,10 @@ Suppose we have $k$ i.i.d. realizations, $\vDelta_1, ..., \vDelta_k$, from the W
    &= c + \frac{\nu k}{2}
      \left(
        \log |\vTheta| +
-       \tr\!\left((\vTheta^{-1} \frac{1}{\nu k}\sum_{i = 1}^k\vDelta_i\right)
+       \tr\!\left(\vTheta^{-1} \frac{1}{\nu k}\sum_{i = 1}^k\vDelta_i\right)
      \right).
 \end{align*}
-The last expression is to be maximized with respect to $\vTheta$ and can thus be recognized as the MLE problem in a multivariate Gaussian distribution. Hence,
+The last expression is to be maximized with respect to $\vTheta$ and can be recognized as the MLE problem in a multivariate Gaussian distribution. Hence,
 \begin{align*}
   \vTheta = \frac{1}{k \nu} \sum_{i = 1}^k \vDelta_i,
 \end{align*}
