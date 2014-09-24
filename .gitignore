@@ -6,3 +6,8 @@
 *.lox
 *.out
 *.toc
+*-concordance.tex
+*.log
+*.synctex.gz
+knitr/res copy.RData
+
