@@ -59,12 +59,7 @@
 \IfFileExists{upquote.sty}{\usepackage{upquote}}{}
 \begin{document}
 
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 
-
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'misclassification.risks' not found}}\end{kframe}
-\end{knitrout}
 
 
 \maketitle
@@ -407,7 +402,53 @@ f(\vx | Y = y)
           { \pi^{-\frac{n}{2}} |\vPsi + (\vx-\mu_k)(\vx-\mu_k)^\top|^{\frac{\nu + 1}{2}}
             \Gamma_p\!\left(\frac{\nu}{2}\right)},
 \end{align*}
-analogous to the computation done in appendix \ref{sec:marginalization}, using the matrix determinant lemma, $|\vec{A} + \vec{u}\vec{v}^\top| = (1 + \vec{v}^\top\vec{A}\vec{u})|\vec{A}|$, to simplify and speed up the computations \citep{}.
+analogous to the deriviation in appendix \ref{sec:marginalization}. The matrix determinant lemma, $|\vec{A} + \vec{u}\vec{v}^\top| = (1 + \vec{v}^\top\vec{A}\vec{u})|\vec{A}|$, can then be applied to simplify the expression and speed up the computations \citep{Ding2007}.
+
+\subsubsection{Numerical experiments}
+We designed four simple scenarios where the HDA is expected to perform similar, better, and worse to that of LDA and QDA. We measured performance by the misclassification risk.
+
+With varying dimensionality $p = 2, 4, 6, 8$, and $k = 3$ classes, the four scenarios of consisted of different choices of covariance matrices in the classes. The 3 covariance matrices could either be 1) equal or unequal across the classes and 2) spherical or highly elliptical.
+The mean values were chosen to $\vec{\mu}_1 = \vec{0}, \vec{\mu}_1 = 3\vec{e}_1, \vec{\mu}_1 = 3\vec{e}_2$ where $\vec{e}_j$ denotes the $j$th basisvector. The chosen mixture proportions was $\pi_1 = ... = \pi_3 = \frac{1}{3}$ in all cases.
+
+Using these parameters a traning and validation set each of $500$ observations was generated. The LDA, QDA, and HDA methods were trained and validated and the performance was measured.
+Each simulation was repeated $100$ times and the mean misclassification risk was computed.
+
+\providecommand{\red}{\color{red}}
+%latex.default(tmp, file = "", title = "$\\vSigma_1, ..., \\vSigma_3$",     rowname = gsub("NDA", "HDA", misclass.wide$method), n.rgroup = table(df.rownames)[unique(df.rownames)],     rgroup = unique(df.rownames), n.cgroup = ncol(misclass.wide) -         3, cgroup = "Mean misclassification risk (sd)", cellTexCmds = cmd,     label = "HDA_tab", caption.loc = "bottom", caption = paste("The results for the different scenarios. The minimum",         "risk is highlighted in red."))%
+\begin{table}[!tbp]
+\begin{center}
+\begin{tabular}{lllll}
+\hline\hline
+\multicolumn{1}{l}{\bfseries $\vSigma_1, ..., \vSigma_3$}&\multicolumn{4}{c}{\bfseries Mean misclassification risk (sd)}\tabularnewline
+\cline{2-5}
+\multicolumn{1}{l}{}&\multicolumn{1}{c}{$p = 2$}&\multicolumn{1}{c}{$p = 4$}&\multicolumn{1}{c}{$p = 6$}&\multicolumn{1}{c}{$p = 8$}\tabularnewline
+\hline
+{\bfseries Equal, spherical}&&&&\tabularnewline
+   ~~LDA&\red   .091 (.013)&\red   .094 (.012)&\red   .094 (.012)&\red   .095 (.012)\tabularnewline
+   ~~QDA&   .092 (.013)&   .094 (.012)&   .098 (.013)&   .100 (.015)\tabularnewline
+   ~~HDA&   .091 (.013)&   .094 (.012)&   .095 (.012)&   .095 (.013)\tabularnewline
+\hline
+{\bfseries Unequal, spherical}&&&&\tabularnewline
+   ~~LDA&   .103 (.016)&   .103 (.013)&   .105 (.014)&   .106 (.013)\tabularnewline
+   ~~QDA&\red   .102 (.015)&\red   .102 (.013)&\red   .102 (.015)&\red   .105 (.013)\tabularnewline
+   ~~HDA&   .103 (.016)&   .103 (.014)&   .105 (.014)&   .105 (.013)\tabularnewline
+\hline
+{\bfseries Equal, ellipsoidal}&&&&\tabularnewline
+   ~~LDA&\red   .083 (.013)&\red   .074 (.011)&\red   .064 (.011)&\red   .058 (.010)\tabularnewline
+   ~~QDA&   .084 (.014)&   .075 (.012)&   .067 (.012)&   .061 (.011)\tabularnewline
+   ~~HDA&   .084 (.013)&   .074 (.011)&   .064 (.011)&   .058 (.010)\tabularnewline
+\hline
+{\bfseries Unequal, ellipsoidal}&&&&\tabularnewline
+   ~~LDA&   .095 (.014)&   .086 (.013)&   .059 (.011)&   .071 (.013)\tabularnewline
+   ~~QDA&\red   .093 (.014)&\red   .083 (.012)&\red   .056 (.011)&\red   .062 (.013)\tabularnewline
+   ~~HDA&   .095 (.014)&   .086 (.013)&   .059 (.012)&   .071 (.013)\tabularnewline
+\hline
+\end{tabular}
+
+\caption{The results for the different scenarios. The minimum risk is highlighted in red.\label{HDA_tab}}\end{center}
+
+\end{table}
+
 
 
 
@@ -475,7 +516,7 @@ which was what was wanted.
 
 \section{Non-concavity of the log-likelihood}
 \label{sec:concaveloglik}
-The log-likelihood is not concave in general.
+The likelihood function is not log-concave in general.
 This section analyse the (non)-concavity of the log-likelihood function,
 \small
 \begin{align}
@@ -488,19 +529,55 @@ This section analyse the (non)-concavity of the log-likelihood function,
             \label{eq:appendloglik}
 \end{align}
 \normalsize
-This section prove the following two propositions about the likelihood.
+More precisely, the following two propositions are proved.
 \begin{proposition}[Non-concavity in $\vPsi$]
-For fixed $\nu$, the log-likelihood function \eqref{eq:appendloglik} is \emph{not} concave in $\vPsi$ (and hence not in general).
+\label{prop:nonconcavityinpsi}
+For fixed $\nu$, the log-likelihood function \eqref{eq:appendloglik} is not concave in $\vPsi$ (and hence not in general).
 \end{proposition}
 \begin{proposition}[Concavity in $\nu$]
+\label{prop:concavityinnu}
 For fixed $\vPsi \succeq 0$, the log-likelihood function \eqref{eq:appendloglik} is concave in $\nu$.
 \end{proposition}
 
-We first analyze the terms involving $\vPsi$ in \eqref{eq:appendloglik}. Not counting the constant, the first term, $\frac{\nu}{2}  \log | \vPsi |$, is concave by the well known result that the log-determinant of positive semi-definite matrix is concave \citep[See e.g.][pp. 73-74]{Boyd2004}.
+\begin{proof}[Proof of Proposition \ref{prop:nonconcavityinpsi}]
+Assume $\nu$ fixed and consider the terms involving $\vPsi$ in \eqref{eq:appendloglik}. Not counting the constant, the first term, $\frac{\nu}{2}  \log | \vPsi |$, is concave by the well known result that the log-determinant of positive semi-definite matrix is concave \citep[See e.g.][pp. 73-74]{Boyd2004}.
 The third term in \eqref{eq:appendloglik}, $- \frac{\nu + n_i}{2}\log|\vPsi + \vS_i|$, is convex by the same argument however negated by the sign.
 The sum $\vPsi +\vS_i$ is positive semi-definite since both summands are.
+The concavity is not clear from this.
 
-Next, we look at the terms involving $\nu$.
+We reduced to the one-dimensional case where
+\begin{align*}
+  \ell'(\phi)
+  = \frac{k\nu}{2}\frac{1}{\phi} +
+      \sum_{i = 1}^k \frac{\nu + n_i}{2}\frac{1}{\phi + x_i^2}
+\end{align*}
+which is not clearly convex. We see, that
+\begin{align*}
+  \lim_{\phi \to 0} \ell'(\phi) = \infty
+  \text{  and  }
+  \lim_{\phi \to \infty} \ell'(\phi) = 0
+\end{align*}
+We draw this derivative with $k = 1$ and other appropriately chosen parameters:
+\begin{knitrout}\footnotesize
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{dl} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{phi}\hlstd{,} \hlkwc{k} \hlstd{=} \hlnum{1}\hlstd{,} \hlkwc{nu} \hlstd{=} \hlnum{1}\hlstd{,} \hlkwc{ni} \hlstd{=} \hlnum{1}\hlstd{,} \hlkwc{xi} \hlstd{=} \hlnum{1}\hlstd{)  \{}
+  \hlstd{k}\hlopt{*}\hlstd{nu}\hlopt{/}\hlnum{2}\hlopt{*}\hlnum{1}\hlopt{/}\hlstd{phi} \hlopt{-} \hlstd{(nu} \hlopt{+} \hlstd{ni)}\hlopt{/}\hlnum{2} \hlopt{*} \hlnum{1}\hlopt{/}\hlstd{(phi} \hlopt{+} \hlstd{xi}\hlopt{^}\hlnum{2}\hlstd{)}
+\hlstd{\}}
+\hlstd{phi} \hlkwb{<-} \hlkwd{seq}\hlstd{(}\hlnum{0.5}\hlstd{,} \hlnum{10}\hlstd{,} \hlkwc{by} \hlstd{=} \hlnum{0.01}\hlstd{)}
+\hlkwd{plot}\hlstd{(phi,} \hlkwd{dl}\hlstd{(phi),} \hlkwc{type} \hlstd{=} \hlstr{"l"}\hlstd{,} \hlkwc{col} \hlstd{=} \hlstr{"red"}\hlstd{,} \hlkwc{lwd} \hlstd{=} \hlnum{2}\hlstd{)}
+\hlkwd{abline}\hlstd{(}\hlkwc{h} \hlstd{=} \hlnum{0}\hlstd{,} \hlkwc{col} \hlstd{=} \hlstr{"grey"}\hlstd{,} \hlkwc{lty} \hlstd{=} \hlnum{2}\hlstd{,} \hlkwc{lwd} \hlstd{=} \hlnum{2}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\includegraphics[width=\maxwidth]{figure/one_dimensional_loglik} 
+
+\end{knitrout}
+Which is be seen to have a unique root.
+However, the log-likelihood $\ell$ is not log-concave since a differentiable function of one variable is concave if and only if its derivative is monotonically non-increasing.
+\end{proof}
+
+\begin{proof}[Proof of Proposition \ref{prop:concavityinnu}]
+Consider the terms involving $\nu$.
 Cleary, the mixed terms involving both $\nu$ and $\vPsi$ are log-linear in $\nu$ and hence log-concave.
 We thus restrict our attention to the remaining terms not dependent on $\vPsi$.
 By themselves, the second term in \eqref{eq:appendloglik},
@@ -547,7 +624,7 @@ Hence, the log-likelihood is log-concave in $\nu$.
 
 
 \end{knitrout}
-
+\end{proof}
 
 
 \subsection{log-convexity of the multivariate gamma function}
@@ -573,54 +650,47 @@ Hence $\Gamma_p$ is log-convex.
 
 
 
-\subsection{One-dimensional case}
-In the one-dimensional case, we have
-\begin{align*}
-  \ell'(\phi)
-  = \frac{k\nu}{2}\frac{1}{\phi} +
-      \sum_{i = 1}^k \frac{\nu + n_i}{2}\frac{1}{\phi + x_i^2}
-\end{align*}
-which is not clearly convex. We see, that
-\begin{align*}
-  \lim_{\phi \to 0} \ell'(\phi) = \infty
-  \text{  and  }
-  \lim_{\phi \to \infty} \ell'(\phi) = 0
-\end{align*}
-We draw this derivative with $k = 1$ and other appropriately chosen parameters:
-\begin{knitrout}\footnotesize
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlstd{dl} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{phi}\hlstd{,} \hlkwc{k} \hlstd{=} \hlnum{1}\hlstd{,} \hlkwc{nu} \hlstd{=} \hlnum{1}\hlstd{,} \hlkwc{ni} \hlstd{=} \hlnum{1}\hlstd{,} \hlkwc{xi} \hlstd{=} \hlnum{1}\hlstd{)  \{}
-  \hlstd{k}\hlopt{*}\hlstd{nu}\hlopt{/}\hlnum{2}\hlopt{*}\hlnum{1}\hlopt{/}\hlstd{phi} \hlopt{-} \hlstd{(nu} \hlopt{+} \hlstd{ni)}\hlopt{/}\hlnum{2} \hlopt{*} \hlnum{1}\hlopt{/}\hlstd{(phi} \hlopt{+} \hlstd{xi}\hlopt{^}\hlnum{2}\hlstd{)}
-\hlstd{\}}
-\hlstd{phi} \hlkwb{<-} \hlkwd{seq}\hlstd{(}\hlnum{0.5}\hlstd{,} \hlnum{10}\hlstd{,} \hlkwc{by} \hlstd{=} \hlnum{0.01}\hlstd{)}
-\hlkwd{plot}\hlstd{(phi,} \hlkwd{dl}\hlstd{(phi),} \hlkwc{type} \hlstd{=} \hlstr{"l"}\hlstd{,} \hlkwc{col} \hlstd{=} \hlstr{"red"}\hlstd{,} \hlkwc{lwd} \hlstd{=} \hlnum{2}\hlstd{)}
-\hlkwd{abline}\hlstd{(}\hlkwc{h} \hlstd{=} \hlnum{0}\hlstd{,} \hlkwc{col} \hlstd{=} \hlstr{"grey"}\hlstd{,} \hlkwc{lty} \hlstd{=} \hlnum{2}\hlstd{,} \hlkwc{lwd} \hlstd{=} \hlnum{2}\hlstd{)}
-\end{alltt}
-\end{kframe}
-\includegraphics[width=\maxwidth]{figure/one_dimensional_loglik} 
 
-\end{knitrout}
-Which is be seen to have a unique root.
-However, the log-likelihood $\ell$ is not log-concave since a differentiable function of one variable is concave if and only if its derivative is monotonically non-increasing.
-
-
-
-
-\section{Negative semi-definite hessian in stationary points}
+\section{Uniqueness of log-likelihood maxima}
 \label{sec:negativedefinite}
-This section proves that the hessian is negative semi-definite in all stationary points.
-The log-likelihood in \eqref{eq:loglik}, assuming $\nu$ fixed, obey
+This section proves the following lemmas which imply the following proposition.
+
+\begin{lemma}
+\label{lem:elltominusinfty}
+For fixed $\nu$, the log-likelihood $\ell(\vPsi) \to -\infty$ whenever $\exists i : \lambda_i \to 0$, where $\lambda_i$ is a eigenvalue of $\vPsi$.
+\end{lemma}
+
+\begin{lemma}
+\label{lem:negativesemidefinite}
+The hessian of the log-likelihood \eqref{eq:appendloglik} is negative semi-definite in all stationary points for fixed $\nu$.
+\end{lemma}
+
+\begin{proposition}[Unique maximum]
+The log-likelihood \eqref{eq:appendloglik} has a unique maximum in $\vPsi$ for fixed $\nu$.
+\end{proposition}
+
+\noindent The log-likelihood in \eqref{eq:loglik}, assuming $\nu$ fixed, obey
 \begin{align}
   2\ell(\vPsi)
   = k\nu\log|\vPsi| - \sum_{a=1}^k (n_a + \nu)\log|\vPsi + \vS_a|
 \label{eq:loglik2}
 \end{align}
-up to an addition of a constant. The matrix cookbook by \citet{Petersen2008} has been a useful reference here\footnote{See equation (41, p.\ 8) and (59, p.\ 9) and pages 14 and 52-53 in \url{http://www2.imm.dtu.dk/pubdb/views/publication_details.php?id=3274}}.
+up to an addition of a constant.
 
+\begin{proof}[Proof of Proposition \ref{lem:elltominusinfty}]
+The propostion follows straight-forwardly from Lemma \ref{lem:elltominusinfty} and
+Lemma \ref{lem:negativesemidefinite}.
+\end{proof}
 
+\begin{proof}[Proof of Lemma \ref{lem:elltominusinfty}]
+The lemma is easily seen directly from the expression given in \eqref{eq:loglik2}.
+\end{proof}
 
-\subsection{1.\ order derivatives}
+\begin{proof}[Proof of Lemma \ref{lem:negativesemidefinite}]
+
+The matrix cookbook by \citet{Petersen2008} has been a useful reference here. See equations (41, p.\ 8) and (59, p.\ 9) and pages 14 and 52-53 in \citep{Petersen2008}.
+
+\subsubsection*{1.\ order derivatives}
 From the log-likelihood expression, we compute the 1.\ order derivative $\nabla_\vPsi 2\ell(\vPsi)$ which is the matrix-valued function where each entry is given by
 \begin{align}
   %\left(\frac{\partial 2\ell}{\partial \vPsi}\right)_{ij}=
@@ -638,7 +708,7 @@ The first order derivative lives in a $\binom{p+1}{2}$-dimensional vector space 
 
 
 
-\subsection{2.\ order derivatives}
+\subsubsection*{2.\ order derivatives}
 We proceed with the second order derivative $\nabla^2_\vPsi 2\ell(\vPsi)$ with entries given by
 \begin{align*}
   \frac{\partial^2 2\ell}{\partial \Psi_{kl} \partial \Psi_{ij}}
@@ -658,7 +728,7 @@ The second order derivative is a $\binom{p+1}{2} \times \binom{p+1}{2}$-dimensio
 
 
 
-\subsection{Negative semi-definiteness in stationary points}
+\subsubsection*{Negative semi-definiteness in stationary points}
 With the above expressions we now show that the hessian is negative semi-definite in all stationary points (or, extrema).
 Let $\vY = \sum_{(i,j)} y_{ij}E_{ij}$ be a symmetric matrix in the vector space where $\vY \neq \vec{0}$. The analog to $\vec{y}^\top \vec{A}\vec{y} = y_i \sum_{ij} A_{ij} y_j \leq 0$ in our vector space then becomes
 \begin{align*}
@@ -714,6 +784,9 @@ where the underbraced matrix is positive semi-definite and hence have non-negati
 Furthermore, since $\vD_a$ is diagonal also with non-negative elements, the diagonal matrix $(\vI + \vD_a)^{-1}  - \vI$ clearly have non-positive entries and is thus negative semi-definite.
 
 Since the trace of a matrix product is the sum of the element-wise products, the trace (and thus the sum) will always be non-positive and hence \eqref{eq:loglikequation2} will always hold.
+\end{proof}
+
+
 
 \section{log-likelihood of the precision}
 \label{sec:precisionloglik}
@@ -767,7 +840,6 @@ Let $\vDelta_i = \vSigma_i^{-1}$, $\vTheta = \vPsi^{-1}$, and $\vS_i = \vX_i^\to
 \end{aligned}
 \end{equation*}
 
-\listoffixmes
 
 
 \end{document}

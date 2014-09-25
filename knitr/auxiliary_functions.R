@@ -364,104 +364,115 @@ SSEs <- function(x) {
 
 
 
-if (FALSE) {
 
+#
+# LDA/QDA/NDA
+#
 
-  #
-  # LDA/QDA/NDA
-  #
+nda.fit <- function(classes, vars) {
+  p <- ncol(vars) # Dimensionality
+  counts <- table(classes) # Count observations in each class
+  split.data <- split(vars, f = classes) # Split vars object by classes
+  means <- t(sapply(split.data, colMeans))  # Compute means in each class
+  # Compute the scatter matrix in each dataset
+  S <- lapply(split.data, function(x) cov(as.matrix(x), method = "ML")*nrow(x))
 
-  nda.fit <- function(classes, vars) {
-    p <- ncol(vars) # Dimensionality
-    counts <- table(classes) # Count observations in each class
-    split.data <- split(vars, f = classes) # Split vars object by classes
-    means <- t(sapply(split.data, colMeans))  # Compute means in each class
-    # Compute the scatter matrix in each dataset
-    S <- lapply(split.data, function(x) cov(as.matrix(x), method = "ML")*nrow(x))
+  # Find "common" covariance
+  res <- fit.grem.EM(Psi.init = diag(p), nu.init = p, S = S, counts, eps = 1e-2)
+  sigma <- res$Psi/(res$nu - p - 1)
 
-    # Find "common" covariance
-    res <- fit.grem.EM(Psi.init = diag(p), nu.init = p, S = S, counts, eps = 1e-2)
-    sigma <- res$Psi/(res$nu - p - 1)
+  return(list(counts = counts,
+              means = means,
+              sigma = sigma,
+              Psi = res$Psi,
+              nu = res$nu))
+}
 
-    return(list(counts = counts,
-                means = means,
-                sigma = sigma,
-                Psi = res$Psi,
-                nu = res$nu))
+nda.predict <- function(nda.fit, newdata) {
+  K <- length(nda.fit$counts)
+  probs <- as.numeric(nda.fit$counts/sum(nda.fit$counts))
+
+  f <- function(k) {
+    probs[k] * dgrem(x = newdata, mu = nda.fit$means[k, ],
+                     Psi = nda.fit$Psi, nu = nda.fit$nu, )
   }
-
-  nda.predict <- function(nda.fit, newdata) {
-    K <- length(nda.fit$counts)
-    probs <- as.numeric(nda.fit$counts/sum(nda.fit$counts))
-
-    f <- function(k) {
-      probs[k] * dgrem(x = newdata, mu = nda.fit$means[k, ],
-                       Psi = nda.fit$Psi, nu = nda.fit$nu, )
-    }
-    scaled_dens <- sapply(seq_len(K), f)
-    post <- scaled_dens/rowSums(scaled_dens)
-    colnames(post) <- names(nda.fit$counts)
-    pred.class <- apply(post, 1, which.max)
-    return(list(class = pred.class, prob = post))
-  }
+  scaled_dens <- sapply(seq_len(K), f)
+  post <- scaled_dens/rowSums(scaled_dens)
+  colnames(post) <- names(nda.fit$counts)
+  pred.class <- apply(post, 1, which.max)
+  return(list(class = pred.class, prob = post))
+}
 
 
 
-  to.df <- function(sim) {
-    data.frame(sim$z, classes = factor(sim$K))
-  }
+to.df <- function(sim) {
+  data.frame(sim$z, classes = factor(sim$K))
+}
 
-  misclassificationRisk <- function(x) {
-    s <- sum(x)
-    return((s - sum(diag(x)))/s)
-  }
+misclassificationRisk <- function(x) {
+  s <- sum(x)
+  return((s - sum(diag(x)))/s)
+}
 
-  accuracy <- function(x) {
-    sum(diag(x))/sum(x)
-  }
+accuracy <- function(x) {
+  sum(diag(x))/sum(x)
+}
 
 
-  library("Bmisc")
-  library("mlbench")
-  library("MASS")
-  library("correlateR")
-  library("GMCM")
+library("Bmisc")
+library("mlbench")
+library("MASS")
+library("correlateR")
+library("GMCM")
 
-  K <- 3
-  N <- 500
+K <- 3
+N <- 500
+n <- 100
+
+
+p.dims <- c(2, 4, 6, 8)
+
+load("saved.RData")
+if (!exists("misclassification.risks") | recompute) {
 
   inner <- structure(vector("list", 4), names = c("eq.sph", "neq.sph",
                                                   "eq.ell", "neq.ell"))
-  p.dims <- c(2, 4, 6, 8)
+
   misclassification.risks <- replicate(length(p.dims), inner, simplify = FALSE)
   names(misclassification.risks) <- paste0("p", p.dims)
 
   st <- proc.time()
   for (p.index in seq_along(p.dims)) {
+
+    # Construct sigmas
+    # via eigendecomposition of a matrix A = QLQ^-1
+    eig.seq <- 0.9^seq(0, p-1)
+    sigma.eq.spherical <- replicate(K, diag(p), simplify = FALSE)
+    sigma.neq.spherical <- list(diag(p), 1.5*diag(p), 0.8*diag(p))
+    sigma.eq.ellipsoidal <- replicate(K, diag(eig.seq), simplify = FALSE)
+    sigma.neq.ellipsoidal <- list(diag(sample(eig.seq)),
+                                  1.5*diag(sample(eig.seq)),
+                                  0.8*diag(sample(eig.seq)))
+
     for (s in seq_len(4)) {
 
-      # Eigendecomposition of a matrix A = QLQ^-1
-      eig.seq <- 0.9^seq(0, p-1)
-      sigma.eq.spherical <- replicate(K, diag(p), simplify = FALSE)
-      sigma.neq.spherical <- list(diag(p), 1.5*diag(p), 0.8*diag(p))
-      sigma.eq.ellipsoidal <- replicate(K, diag(eig.seq), simplify = FALSE)
-      sigma.neq.ellipsoidal <- list(diag(sample(eig.seq)),
-                                    1.5*diag(sample(eig.seq)),
-                                    0.8*diag(sample(eig.seq)))
-
       p <- p.dims[p.index]
-      cases <- list(sigma.eq.spherical,
-                    sigma.neq.spherical,
-                    sigma.eq.ellipsoidal,
-                    sigma.neq.ellipsoidal)
+
+      sigmas <- switch(s,
+                       sigma.eq.spherical,
+                       sigma.neq.spherical,
+                       sigma.eq.ellipsoidal,
+                       sigma.neq.ellipsoidal)
 
       theta <- list(m = K,
                     d = p,
                     pie = c(pie1 = 1, pie2 = 1, pie3 = 1)/3,
-                    mu = list(rep(0, p), c(3, rep(0, p-1)), c(rep(0, p-1), 3)),
-                    sigma = cases[[s]])
+                    mu = list(rep(0, p),
+                              c(3, rep(0, p-1)),
+                              c(rep(0, p-1), 3)),
+                    sigma = sigmas)
 
-      n <- 100
+
       mis.risk <-
         structure(rep(NA, 3*n), dim = c(n, 3),
                   dimnames = list(NULL, c("LDA", "QDA", "NDA")))
@@ -497,7 +508,8 @@ if (FALSE) {
 
     }
   }
+
+  resave(misclassification.risks, file = "saved.RData")
 }
 
-resave(misclassification.risks, file = "res.RData")
 
