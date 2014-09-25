@@ -463,9 +463,9 @@ which was what was wanted.
 
 
 
-\section{Non-concavity of log-likelihood}
+\section{Non-concavity of the log-likelihood}
 \label{sec:concaveloglik}
-The log-likelihood is not concave.
+The log-likelihood is not concave in general.
 This section analyse the (non)-concavity of the log-likelihood function,
 \small
 \begin{align}
@@ -478,10 +478,17 @@ This section analyse the (non)-concavity of the log-likelihood function,
             \label{eq:appendloglik}
 \end{align}
 \normalsize
+This section prove the following two propositions about the likelihood.
+\begin{proposition}[Non-concavity in $\vPsi$]
+For fixed $\nu$, the log-likelihood function \eqref{eq:appendloglik} is not concave in $\vPsi$ (and hence not in general).
+\end{proposition}
+\begin{proposition}[Concavity in $\nu$]
+For fixed $\vPsi \succeq 0$, the log-likelihood function \eqref{eq:appendloglik} is concave in $\nu$.
+\end{proposition}
+
 We first analyze the terms involving $\vPsi$ in \eqref{eq:appendloglik}. Not counting the constant, the first term, $\frac{\nu}{2}  \log | \vPsi |$, is concave by the well known result that the log-determinant of positive semi-definite matrix is concave \citep[See e.g.][pp. 73-74]{Boyd2004}.
 The third term in \eqref{eq:appendloglik}, $- \frac{\nu + n_i}{2}\log|\vPsi + \vS_i|$, is convex by the same argument however negated by the sign.
 The sum $\vPsi +\vS_i$ is positive semi-definite since both summands are.
-
 
 Next, we look at the terms involving $\nu$.
 Cleary, the mixed terms involving both $\nu$ and $\vPsi$ are log-linear in $\nu$ and hence log-concave.

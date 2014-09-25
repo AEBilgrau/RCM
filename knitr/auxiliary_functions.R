@@ -1,6 +1,9 @@
-
+setwd("~/Documents/PhD/paper-structREM/knitr/")
 
 library("Bmisc")
+library("correlateR")
+library("mlbench")
+library("MASS")
 library("correlateR")
 
 # Log determinant function
@@ -377,7 +380,7 @@ if (FALSE) {
     S <- lapply(split.data, function(x) cov(as.matrix(x), method = "ML")*nrow(x))
 
     # Find "common" covariance
-    res <- fit.grem(Psi.init = diag(p), nu.init = p, S = S, counts, eps = 1e-2)
+    res <- fit.grem.EM(Psi.init = diag(p), nu.init = p, S = S, counts, eps = 1e-2)
     sigma <- res$Psi/(res$nu - p - 1)
 
     return(list(counts = counts,
@@ -391,97 +394,110 @@ if (FALSE) {
     K <- length(nda.fit$counts)
     probs <- as.numeric(nda.fit$counts/sum(nda.fit$counts))
 
-
     f <- function(k) {
       probs[k] * dgrem(x = newdata, mu = nda.fit$means[k, ],
                        Psi = nda.fit$Psi, nu = nda.fit$nu, )
     }
-
     scaled_dens <- sapply(seq_len(K), f)
-
     post <- scaled_dens/rowSums(scaled_dens)
     colnames(post) <- names(nda.fit$counts)
     pred.class <- apply(post, 1, which.max)
-
-    return(list(class = pred.class,
-                prob = post))
-
+    return(list(class = pred.class, prob = post))
   }
 
-  rm(list = ls(pattern = "^conf.|.pred$|.train$"))
+
+
+  to.df <- function(sim) {
+    data.frame(sim$z, classes = factor(sim$K))
+  }
+
+  misclassificationRisk <- function(x) {
+    s <- sum(x)
+    return((s - sum(diag(x)))/s)
+  }
+
+  accuracy <- function(x) {
+    sum(diag(x))/sum(x)
+  }
+
 
   library("Bmisc")
   library("mlbench")
+  library("MASS")
+  library("correlateR")
+  library("GMCM")
 
-  data(Satellite)
-  data(BreastCancer)
-  data(Glass)
-  data(iris)
+  K <- 3
+  N <- 500
 
-  #data <- as.data.frame(Satellite)
-  #data <- as.data.frame(BreastCancer)
-  #names(Glass) <- gsub("Type", "classes", names(Glass))
-  #data <- Glass
+  inner <- structure(vector("list", 4), names = c("eq.sph", "neq.sph",
+                                                  "eq.ell", "neq.ell"))
+  p.dims <- c(2, 4, 6, 8)
+  misclassification.risks <- replicate(length(p.dims), inner, simplify = FALSE)
+  names(misclassification.risks) <- paste0("p", p.dims)
+
+  st <- proc.time()
+  for (p.index in seq_along(p.dims)) {
+    for (s in seq_len(4)) {
+
+      # Eigendecomposition of a matrix A = QLQ^-1
+      eig.seq <- 0.9^seq(0, p-1)
+      sigma.eq.spherical <- replicate(K, diag(p), simplify = FALSE)
+      sigma.neq.spherical <- list(diag(p), 1.5*diag(p), 0.8*diag(p))
+      sigma.eq.ellipsoidal <- replicate(K, diag(eig.seq), simplify = FALSE)
+      sigma.neq.ellipsoidal <- list(diag(sample(eig.seq)),
+                                    1.5*diag(sample(eig.seq)),
+                                    0.8*diag(sample(eig.seq)))
+
+      p <- p.dims[p.index]
+      cases <- list(sigma.eq.spherical,
+                    sigma.neq.spherical,
+                    sigma.eq.ellipsoidal,
+                    sigma.neq.ellipsoidal)
+
+      theta <- list(m = K,
+                    d = p,
+                    pie = c(pie1 = 1, pie2 = 1, pie3 = 1)/3,
+                    mu = list(rep(0, p), c(3, rep(0, p-1)), c(rep(0, p-1), 3)),
+                    sigma = cases[[s]])
+
+      n <- 100
+      mis.risk <-
+        structure(rep(NA, 3*n), dim = c(n, 3),
+                  dimnames = list(NULL, c("LDA", "QDA", "NDA")))
+
+      for (i in seq_len(n)) {
+
+        train <- to.df(SimulateGMMData(N, theta = theta))
+        valid <- to.df(SimulateGMMData(N, theta = theta))
+
+        lda.train <- lda(classes ~ ., train, prior = rep(1/K, K))
+        qda.train <- qda(classes ~ ., train, prior = rep(1/K, K))
+        nda.train <- nda.fit(train$classes, train[, !grepl("classes",names(train))])
+
+        lda.pred <- predict(lda.train, newdata = valid)
+        qda.pred <- predict(qda.train, newdata = valid)
+        nda.pred <-
+          nda.predict(nda.train, newdata = valid[, !grepl("classes", names(train))])
+
+        conf.lda <- table(True = valid$classes, Pred = lda.pred$class)
+        conf.qda <- table(True = valid$classes, Pred = qda.pred$class)
+        conf.nda <- table(True = valid$classes, Pred = nda.pred$class)
 
 
-
-  data <- iris[,c(1,2,5)]
-  plot(data, col = iris[,5], cex = 1.5, pch = 16)
-  names(data) <- gsub("Species", "classes", names(data))
-  #data <- as.data.frame(mlbench.smiley(n = 100))
-  #data <- as.data.frame(mlbench.hypercube(n = 10000, d = 3, sd = 0.5))
-  #data <- as.data.frame(mlbench.twonorm(n = 20000, d = 2))
-
-  n <- 200
-  acc <- nmis <-
-    structure(rep(NA, 3*n), dim = c(n, 3),
-              dimnames = list(NULL, c("LDA", "QDA", "NDA")))
+        mis.risk[i, ] <- c(misclassificationRisk(conf.lda),
+                           misclassificationRisk(conf.qda),
+                           misclassificationRisk(conf.nda))
 
 
-  for (i in seq_len(n)) {
+      }
+      cat("p =", p, "and s =", s, "done in", (proc.time()-st)[3] %/% 60, "\n")
+      flush.console()
+      misclassification.risks[[p.index]][[s]] <- mis.risk
 
-    get <- sort(sample.int(nrow(data), size = nrow(data)/2))
-
-    train <- data[get, ]
-    valid <- data[-get, ]
-
-    K <- nlevels(data$classes)
-
-    lda.train <- lda(classes ~ ., train, prior = rep(1/K, K))
-    qda.train <- qda(classes ~ ., train, prior = rep(1/K, K))
-    nda.train <- nda.fit(train$classes, train[, !grepl("classes", names(train))])
-
-    lda.pred <- predict(lda.train, newdata = valid)
-    qda.pred <- predict(qda.train, newdata = valid)
-    nda.pred <- nda.predict(nda.train,
-                            newdata = valid[, !grepl("classes", names(train))])
-
-    conf.lda <- table(True = valid$classes, Pred = lda.pred$class)
-    conf.qda <- table(True = valid$classes, Pred = qda.pred$class)
-    conf.nda <- table(True = valid$classes, Pred = nda.pred$class)
-
-    nMisclassified <- function(x) {
-      sum(get.upper.tri(x)) + sum(get.lower.tri(x))
     }
-    accuracy <- function(x) {
-      sum(diag(x))/sum(x)
-    }
-
-    nmis[i, ] <- c(nMisclassified(conf.lda),
-                   nMisclassified(conf.qda),
-                   nMisclassified(conf.nda))
-    acc[i, ] <- c(accuracy(conf.lda), accuracy(conf.qda), accuracy(conf.nda))
-
-    cat(i, "\n"); flush.console()
   }
-
-  x <- seq(4.4,8.4, by = 0.01)
-  y <- seq(2,4.5, by = 0.01)
-  newdata <- expand.grid(x,y)
-  colnames(newdata) <- c("Sepal.Length", "Sepal.Width")
-
-  lda.reg <- predict(lda.train, newdata = newdata)
-  qda.reg <- predict(qda.train, newdata = newdata)
-  nda.reg <- nda.predict(nda.train, newdata = newdata)
-
 }
+
+resave(misclassification.risks, file = "res.RData")
+
