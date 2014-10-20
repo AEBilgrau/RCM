@@ -10,5 +10,7 @@
 *-concordance.tex
 *.log
 *.synctex.gz
-knitr/res copy.RData
+*.tex
+*.pdf
+*.RData
 
