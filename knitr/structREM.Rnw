@@ -1,7 +1,7 @@
 \documentclass{article}
 \input{preamble.tex}
 
-\title{Graphical meta analysis: Estimation of covariance matrices from multiple studies}
+\title{Graphical meta-analysis: Estimation of covariance matrices from multiple studies}
 \author{
   Anders Ellern Bilgrau \\ \texttt{abilgrau@math.aau.dk} \and
   Poul Svante Eriksen \\ \texttt{svante@math.aau.dk} \and
@@ -10,35 +10,50 @@
 
 \begin{document}
 
-<<initalization, echo=FALSE, results='hide', message=FALSE>>=
-rm(list = ls())
-recompute <- FALSE
+<<initalize_knitr, echo=FALSE, results='hide', message=FALSE>>=
 library("knitr")
-library("Hmisc")
-library("magrittr")
-library("dplyr")
 options(width = 80)
-opts_chunk$set(size = "footnotesize")
-source("auxiliary_functions.R")
+opts_chunk$set(size = "footnotesize", fig.align = "center")
+read_chunk("structREM-standalone.R")
 @
-
+<<initialize, echo=FALSE, results='hide', message=FALSE>>=
+@
+<<auxiliary_functions, echo=FALSE>>=
+@
+<<discriminant_analysis, echo=FALSE>>=
+@
 
 \maketitle
 \begin{abstract}
-This paper proposes a model and estimators for a common covariance matrix in cases where multiple datasets are present and thus provide a basis for meta analysis of gaussian graphical models. Our approach is inspired by traditional meta analysis using random effects models. We derive the basic properties and estimators of the model and compare our estimators method to the straight-forward approaches of simple averages or ``mega analysis'' were the datasets are combined, reprocessed, and plugged into the usual estimators. Though only a modest improvement, explicitly accounting for the inter-study variance is superior to the alternative. The model is also shown to be applicable as an intermediate between linear discriminant analysis (LDA) and quadratic discriminant analysis (QDA). \medskip
+We propose a hierarchical graphical model and estimators for a common covariance matrix in cases where multiple groups or datasets are present.
+It is applicable where the groups are believed to share a common covariance of interest obscured by noise.
+As such, it provides a basis for meta-analysis of gaussian graphical models where the groups are formed by datasets.
+Our approach is inspired by traditional meta-analysis using random effects models.
+We derive the basic properties and estimators of the model and compare our estimators method to the straight-forward approaches of simple averages or ``mega analysis'' were the datasets are combined, reprocessed, and plugged into the usual estimators.
+Though only a modest improvement, explicitly accounting for the inter-study variance is superior to the alternative.
+The model is also shown to be applicable as an intermediate between linear discriminant analysis (LDA) and quadratic discriminant analysis (QDA). \medskip
 
-\noindent \textbf{Keywords:} \textit{meta analysis, covariance estimation, integrative analysis, network integration, structural meta analysis, gaussian graphical modeling, linear discriminant analysis, quadratic discriminant analysis}
+\noindent \textbf{Keywords:} \textit{meta-analysis, covariance estimation, integrative analysis, network integration, structural meta-analysis, gaussian graphical modeling, linear discriminant analysis, quadratic discriminant analysis}
 \end{abstract}
 
 \newpage
 \tableofcontents
 
-
 \newpage
 \section{Introduction}
-The fundamental problem in statistics of accurately and precisely estimating the covariance matrix (or its inverse) is notoriously difficult though computationally easy. The usual bias-corrected maximum likelihood estimator (MLE), the sample covariance matrix, have long been known to perform poorly in general due to high variability \citep{Dempster1972}. The sample covariance is ill-conditioned when the sample size $n$ is less than the number of variables $p$. Because of its central statistical role the list of statistical methods and applications utilizing the estimated covariance matrix is extraordinarily long. Beside the many standard statistical methods such as principal component analysis (PCA), linear discriminant analysis (LDA), quadratic discriminant analysis (QDA), more direct applications include [examples in medicine, biology. genetics, finance, forensics, physics, engineering, signal processing]. Among this expanding list of applications is also an increasing number of high-dimensional applications and datasets publicly available at online repositories.
+The fundamental problem in statistics of accurately and precisely estimating the covariance matrix (or its inverse) is notoriously difficult though computationally easy.
+The usual bias-corrected maximum likelihood estimator (MLE), the sample covariance matrix, have long been known to perform poorly in general due to high variability \citep{Dempster1972}.
+The sample covariance is singular when the sample size $n$ is less than the number of variables $p$ and increasingly ill-conditioned as $p$ approaches $n$.
+Because of its central statistical role the list of statistical methods and applications utilizing the estimated covariance matrix is extraordinarily long.
+Beside the many standard statistical methods such as principal component analysis (PCA), linear discriminant analysis (LDA), quadratic discriminant analysis (QDA), more direct applications include [examples in medicine, biology, genetics, finance, forensics, physics, engineering, signal processing].
+Among this expanding list of applications is also an increasing number of high-dimensional applications and datasets publicly available at online repositories.
 
-In high-dimensional datasets the number of features $p$ far exceed the number of samples $n$. Since the number of parameters increase quadratically in $p$ and the sample covariance become singular when $p > n$ a plethora of shrinkage and regularization estimators have been proposed to combat the accompanying problems by effectively increasing the degrees of freedom. Instead of attempting to derive still more sophisticated estimators with diminishing improvements we attempt to alleviate the problem from a different angle by effectively increasing $n$ and using more available data.
+In high-dimensional datasets the number of features $p$ often far exceed the number of samples $n$.
+Since the number of parameters increase quadratically in $p$ and the sample covariance become singular when $p > n$ a plethora of shrinkage and regularization estimators have been proposed to combat the accompanying problems by effectively increasing the degrees of freedom.
+In cases where $p \approx n$ the covariance estimate become ill-conditioned and its inversion numerically unstable.
+Instead of attempting to derive still more sophisticated estimators with diminishing improvements we attempt to alleviate the problem from a different angle by using more available data and thus effectively increasing $n$.
+While the extension to $p > n$ is very important it is out of scope and we restrict ourselves to $p < n$ for the purposes of this paper.
+
 
 We are motivated by gene-gene interaction networks in diffuse large B-cell lymphoma (DLBCL) where the covariance matrix contain all information about the conditional dependencies of the genes. As with many other cancers, a large number of DLBCL studies are now available online and hence we wish to use these studies in combination with our own data to arrive at a good estimate of the covariance matrix and the inter-study variation.
 
@@ -46,8 +61,13 @@ We are motivated by gene-gene interaction networks in diffuse large B-cell lymph
 
 
 \section{A graphical random effects model}
-In a vein similar to regular effect-based meta analysis of \citet{Choi2003}, we think of the the different studies as related but perturbed experiments. The graphical analog to \citet{Choi2003} is the following relatively simple graphical random effects model (GREM) of the observations.
-Let $p$ be the number of features and $k$ the number of studies. We model the each sample for the $i$th study as a $p$-dimensional zero-mean multivariate gaussian vector with the covariance matrix realized from a inverse Wishart distribution, i.e.\ the hierarchical model,
+Regular meta-analysis comes principally in two difference flavors, fixed and random, corresponding to the assumption on the nature of the effects of a treatment across studies, say.
+Random-effects meta-analysis models the effects as random variables realized for each study.
+In a vein similar to the regular meta-analysis by \citet{Choi2003}, we think of the the different studies as related but perturbed experiments.
+In graphical modeling, the true covariance matrix is the effect of interest to be estimated.
+Hence, a graphical analog to \citet{Choi2003} is the following relatively simple graphical random effects model (GREM) of the observations.
+Let $p$ be the number of features and $k$ the number of studies.
+We model the each sample for the $i$th study as a $p$-dimensional zero-mean multivariate gaussian vector with the covariance matrix realized from a inverse Wishart distribution, i.e.\ the hierarchical model,
 \begin{align}
 \begin{split} \label{eq:REM}
   \vSigma_i | \vPsi, \nu  &\sim \calW^{-1}(\vPsi, \nu), \\
@@ -69,14 +89,21 @@ f(\vec{x} | \vSigma_i) =
   e^{ -\frac{1}{2}\vec{x}^\top \vSigma_i^{-1}\vx }.
 \end{align*}
 Throughout this paper, we use generic notation $f(\cdot | \cdot)$ and $f(\cdot)$ for the conditional and unconditional pdf of random variables.
-In the model, $\nu$ encodes the inter-study variation where the $\vSigma_i$'s concentrate around $\vPsi$ for $\nu\to\infty$. I.e.\ the inter-study variation goes to zero for larger $\nu$. We wish to infer the parameters $\vPsi$ and $\nu$ from the observed data.
+In the model, $\nu$ encodes the inter-study variation where the $\vSigma_i$'s concentrate around $\vPsi$ for $\nu\to\infty$. I.e.\ the inter-study variation goes to zero for larger $\nu$. We wish to infer the parameters $\vPsi$ and $\nu$ from the observed data so the common expected covariance matrix
+\begin{align}
+  \label{eq:expcovar}
+  \vSigma = \bbE[\vSigma_i] = \frac{1}{\nu - p - 1} \vPsi
+\end{align}
+can be assessed.
 
 
 
 
 \subsection{The likelihood function}
 Suppose we have $n_i$ i.i.d.\ observations, $\vx_{i1}, \dots,\vx_{in_i}$, from the $i = 1,...,k$ independent studies from the model given in \eqref{eq:REM}.
-Let $\vX_i = (\vx_{i1}, \dots,\vx_{in_i})^\top$ be the $n_i \times p$ (transposed) expression matrix of the $i$'th study where rows correspond to samples and columns to variables. By the independence assumptions, the log-likelihood is given by
+Let $\vX_i = (\vx_{i1}, \dots,\vx_{in_i})^\top$ be the $n_i \times p$ of the $i$'th study where rows correspond to samples and columns to variables.
+For the archetypal example in genomics, $\vX_i$ is transposed gene expression matrix with genes in the columns and samples in the rows.
+By the independence assumptions, the log-likelihood is given by
 \begin{align*}
   &\ell\!\left(\vPsi, \nu \big|\vX_1, ..., \vX_k  \right)
   = \log f\!\left(\vX_1, ..., \vX_k \big| \vPsi, \nu \right) \\
@@ -113,8 +140,8 @@ Since the inverse Wishart distribution is conjugate to the multivariate gaussian
 \normalsize
 where the constant terms are abbreviated by $c$ and $\Gamma_p$ is the multivariate generalization for the gamma function $\Gamma$, which can be seen in equation \eqref{eq:multigamma} of Appendix \ref{sec:multigamma}. As should be expected, the scatter matrix $\vec{S}_i =\vX_i^\top\vX_i$ and $n_i$ are sufficient statistics for each study.
 
-While we are not able to shown general log-concavity of the log-likelihood, we show that it is log-concave in $\nu$ for fixed $\vSigma$, and hence there exists a unique maxima for the marginal $\ell(\nu)$, cf.\ Appendix \ref{sec:concaveloglik}.
-Reversely, for fixed $\nu$ we can show, that the hessian in any stationary point (where $\frac{\partial\ell}{\partial\vPsi} = 0$) is negative semi-definite and hence a local maxima, cf.\ Appendix \ref{sec:negativedefinite}. This combined with the observation that $\ell(\vPsi) \to -\infty$ whenever an eigenvalue $\lambda_i(\vPsi) \to 0$, we conjecture that any stationary point indeed a global maximum.
+While we are not able to shown general log-concavity of the log-likelihood, we show that it is log-concave in $\nu$ for fixed $\vSigma$, cf.\ Appendix \ref{sec:concaveloglik}, and hence there exists a unique maxima for the marginal $\ell(\nu)$.
+Reversely, for fixed $\nu$ we show that the hessian in any stationary point (where $\frac{\partial\ell}{\partial\vPsi} = 0$) is negative semi-definite, cf.\ Appendix \ref{sec:negativedefinite}, and hence a local maxima. This combined with the observation that $\ell(\vPsi) \to -\infty$ whenever an eigenvalue $\lambda_i(\vPsi) \to 0$, we conjecture that any stationary point indeed a global maximum.
 
 In the following, estimation of $\vPsi$ for fixed $\nu$ is considered.
 
@@ -123,7 +150,7 @@ The moment estimate of $\vPsi$ is readily available. It is clear, by constructio
 \begin{align*}
   &\bbE[ \vec{S}_i ]
     = \bbE[\vX_i^\top\vX_i ]
-    = \bbE\left[\bbE[\vX_i^\top\vX_i | \vSigma_i ]\right]
+    = \bbE\!\left[\bbE[\vX_i^\top\vX_i | \vSigma_i ]\right]
     = \bbE[n_i \vSigma_i]
     = n_i\bbE[\vSigma_i]
     = n_i\frac{\vPsi}{\nu - p - 1}.
@@ -288,62 +315,39 @@ More precisely, in pseudo-code, we propose the algorithm seen in Algorithm \ref{
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
-The update function $U$ in the algorithm is be defined by the derived estimators above. That is, equations \eqref{eq:moment}, \eqref{eq:mle}, and \eqref{eq:em} define $U$ to be the moment, approximate MLE, and EM estimate respectively.
+The update function $U$ in the algorithm is defined by the derived estimators above. That is, equations \eqref{eq:moment}, \eqref{eq:mle}, or \eqref{eq:em} define $U$ to be the moment, approximate MLE, and EM estimate respectively.
 
-\section{Numerical results}
-<<num_exp, echo=FALSE, results='hide'>>=
-k  <- 3
-nu <- 15
-p  <- 10
-n.sims <- 500
-n.obs <- 4 + seq_len(10)
+This algorithm utilize the results about the log-likelihood and thus provide us with a guarantee of convergence along with the advantage of a very simple implementation. However, the obvious disadvantage is, that the idenified maxima might be a saddle-point when considering the log-likelihood jointly in $(\vPsi, \nu)$.
 
-load("saved.RData")
-if (!exists("res") | recompute) {
-  set.seed(644031)
-  st <- proc.time()
-  res <- list()
-  it <- 1
-  for (i in seq_along(n.obs)) {
-    for (j in seq_len(n.sims)) {
-      res[[it]] <- test.grem(k = 3, n = n.obs[i], p = p, nu = nu)
-      it <- it  + 1
-      cat("it =", it, "of", length(n.obs)*n.sims, "done after",
-          (proc.time()-st)[3] %/% 60, "mins.\n")
-      flush.console()
-    }
-  }
-  resave(res, file = "saved.RData")
-}
+\section{Assessment of estimation procedure}
+<<numerical_experiment, echo=FALSE, results='hide'>>=
 @
-
-To assess the model and the stability of the estimation procedure we generated data from \eqref{eq:REM} for $p = \Sexpr{p}$ variables in $k = \Sexpr{k}$ studies each with an equal number of observations, $n = n_1 = n_2 = n_3$. We chose the parameters $\nu = \Sexpr{nu}$ and
+To assess the precision and stability of the estimation procedure we generated data from \eqref{eq:REM} for $p = \Sexpr{par.ne[["p"]]}$ variables in $k = \Sexpr{par.ne[["k"]]}$ studies each with an equal number of observations, $n = n_1 = n_2 = n_3$. We chose the parameters $\nu = \Sexpr{par.ne[["nu"]]}$ and
 \begin{align*}
 \vPsi =
   \begin{bmatrix}
-     1 & 0.5 & 0.5 \\
-     0.5 & 1 & 0.5 \\
-     0.5 & 0.5 & 1 \\
+     1 & 0.5 & 0.5 & \cdots\\
+     0.5 & 1 & 0.5 & \cdots\\
+     0.5 & 0.5 & 1 & \cdots\\
+     \vdots & \vdots & \vdots & \ddots
   \end{bmatrix}.
 \end{align*}
-The number of observations is each study, $n_i$, was varied range $\Sexpr{paste0("[", min(n.obs), ",", max(n.obs), "]")}$.
+The number of observations is each study $n$ was varied range $\Sexpr{paste0("[", min(par.ne$n.obs), ",", max(par.ne$n.obs), "]")}$.
 
-We measure the precision of the estimates values against the expected covariance matrix given by
-\begin{align*}
-  \vSigma = \bbE[\vSigma_i] = \frac{1}{\nu - p - 1}\vPsi.
-\end{align*}
-Let $\hvPsi$ and $\hat{\nu}$ be the estimates obtained in the model described and let
-\begin{align*}
+We measure the precision of the estimates values against the expected covariance matrix given by \eqref{eq:expcovar}.
+Let $\hvPsi$ and $\hat{\nu}$ be the estimates obtained using the moment, EM, or approximate MLE in the model described. We then use the plug-in estimate
+\begin{align}
+  \label{eq:sigma_plugin}
   \hat{\vSigma}_\text{GREM} = \frac{1}{\hat{\nu} - p - 1}\hvPsi
-\end{align*}
-be an estimate of $\vSigma$. We benchmark this against the pooled covariance matrix,
-\begin{align*}
+\end{align}
+of $\vSigma$. We benchmark the three proposed methods against the pooled covariance matrix,
+\begin{align}
+  \label{eq:pooled}
   \hvSigma_\text{pool}
     = \frac{1}{k} \sum_{i = 1}^k \frac{1}{n_i} S_i,
-    %= \frac{1}{k} \sum_{i = 1}^k \hvSigma_i.
-\end{align*}
+\end{align}
 as a simple alternative estimate of $\vSigma$.
-We benchmark the two against each other using the following sum of squared errors,
+The benchmarking measure used is the following sum of squared errors,
 \begin{align*}
   \text{SSE}(\hvSigma) = \sum_{i \leq j} \frac{(\hat{\Sigma}_{ij}- \Sigma_{ij})^2}{\var(\Sigma_{ij})}
 \end{align*}
@@ -352,46 +356,36 @@ where
  \var(\Sigma_{ij}) = n(\Psi_{ij}^2 + \Psi_{ii}\Psi_{jj}).
 \end{align*}
 
-For each $n$ from $\Sexpr{min(n.obs)}$ to $\Sexpr{max(n.obs)}$, the squared sum of errors for each estimator, $\text{SSE}(\hvSigma_\text{GREM})$, and $\text{SSE}(\hvSigma_\text{pool})$ where computed for $\Sexpr{n.sims}$ datasets and the average of these values seen in figure \ref{fig:num_exp_plot} as function of $n$.
-Unsurprisingly, the model outperforms the simple pool average covariance matrix.
-
-<<num_exp_plot, echo=FALSE, results='hide', fig.pos="ht", fig.height=7, fig.width=7, fig.scap = "", fig.cap=paste0("The average sum or squared errors (SSE), of ", n.sims, " simulations, as a function of the number of samples $n_i$ in each study.")>>=
-df <- as.data.frame(t(sapply(res, SSEs)))
-df <- aggregate(cbind(SSE.grem.em, SSE.grem.mle, SSE.grem.mom, SSE.mean) ~
-                  n + nu + k + p, mean, data = df)
-plot(df$n, df$SSE.grem.em, col = "blue", type = "b", axes = FALSE,
-     xlab = expression(n = n[i]),
-     ylim = range(df[,-(1:4)]),
-     ylab = "average SSE", pch = 15, lty = 1,
-     main = paste0("k = ", df$k, ", nu = ", df$nu, ", p = ", df$p)[1])
-lines(df$n, df$SSE.mean, col = "red", type = "b", pch = 16, lty = 2)
-lines(df$n, df$SSE.grem.mle, col = "orange", type = "b", pch = 17, lty = 3)
-lines(df$n, df$SSE.grem.mom, col = "green", type = "b", pch = 18, lty = 4)
-legend("topright", legend = c("GREM (EM)", "pool",
-                              "GREM (MLE)", "GREM (Moment)"),
-       lty = 1:4, pch = c(15, 16, 17, 18), lwd = 2,
-       col = c("blue", "red", "orange", "green"))
-axis(1)
-axis(2)
-grid()
+For each $n$ from $\Sexpr{min(par.ne$n.obs)}$ to $\Sexpr{max(par.ne$n.obs)}$, the squared sum of errors for each estimator, $\text{SSE}(\hvSigma_\text{GREM})$ and $\text{SSE}(\hvSigma_\text{pool})$, where computed for $\Sexpr{par.ne[["n.sims"]]}$ datasets and the average of these values seen in figure \ref{fig:numerical_experiment_plot} as function of $n$.
+<<numerical_experiment_plot, echo=FALSE, results='markup', fig.pos="htb", fig.height=7, fig.width=7, out.width = ".8\\linewidth", fig.scap = "", fig.cap=paste0("The average sum or squared errors (SSE), of ", par.ne$n.sims, " simulations, as a function of the number of samples $n_i$ in each study.")>>=
 @
+Unsurprisingly, the model can outperform the simple average covariance matrix.
+We see that the EM estimation is the superior to that of the approximate MLE and moment.
+Also seen is that the moment estimate yield the exact same results as using the pooled average, which could be expected by looking at \eqref{eq:moment}, \eqref{eq:sigma_plugin}, and \eqref{eq:pooled}.
+
+The algorithm along with the different estimators were implemented in the statistical programming language R \cite{R}.
 
 
 \section{Applications}
-\subsection{Supervised classification}
-The estimate obtained from the model can be utilized in supervised learning as a intermediate case of linear discriminant analysis (LDA) and quadratic discriminant analysis (QDA) to regularized linear discriminant analysis (RDA).
+\subsection{DLBCL graphical meta-analysis}
 
-Let $Y$ be a random variable denoting the class $1, ..., k$ and suppose $\vx$ is a random vector of the explanatory variables. Recall, that QDA (and LDA) finds the class $y$ maximizing
+\subsection{Supervised classification}
+An quite different application of the GREM estimate is found as a novel version of discriminant analysis.
+As seen below, the estimates obtained can be utilized in supervised learning as a intermediate case of linear discriminant analysis (LDA) and quadratic discriminant analysis (QDA).
+
+Suppose $Y$ is a random variable denoting the class $1, ..., k$ and suppose $\vx$ is a random vector of the explanatory variables. Recall, that QDA (and LDA) finds the class $y$ maximizing
 \begin{align*}
   P(Y = y | \vX = \vx) =
     \frac{\pi_y f(\vx | Y = y)}
          {\sum_{y' = 1}^k \pi_{y'} f(\vx | Y = y')}
 \end{align*}
-where $\vx | Y = y$ is assumed multivariate normal, i.e.\
+where $\vx | Y = y$ is assumed multivariate gaussian, i.e.\
 \begin{align*}
-  (\vx | Y = y) \sim \calN_p(\vec{\mu}_y, \vSigma_y).
+  \vx | Y = y \sim \calN_p(\vec{\mu}_y, \vSigma_y).
 \end{align*}
-LDA differs from QDA only by the additional assumption that $\vSigma = \vSigma_y$ for all classes $y$. An intermediate classifier of LDA and QDA can thus be constructed by assuming the $\vSigma_y$'s inversely Wishart distributed as in \eqref{eq:REM}, i.e.\ $\vSigma_y \sim \calW^{-1}(\vPsi, \nu)$. This hierarchical discriminant analysis (HDA) is thus straight-forward to implement given that
+LDA differs from QDA by the additional assumption that $\vSigma = \vSigma_y$ for all classes $y$.
+An intermediate classifier of LDA and QDA can thus be constructed by assuming the $\vSigma_y$'s inversely Wishart distributed as in \eqref{eq:REM}, i.e., $\vSigma_y \sim \calW^{-1}(\vPsi, \nu)$, and using the estimates of a common $\vSigma$ discussed above.
+This hierarchical discriminant analysis (HDA), for lack of a better name, is thus straight-forward to implement given that
 \begin{align*}
 f(\vx | Y = y)
   &= \int f(\vx| \vSigma_y, Y = y) f(\vSigma_y | Y = y) d\vSigma_y \\
@@ -399,80 +393,33 @@ f(\vx | Y = y)
           { \pi^{-\frac{n}{2}} |\vPsi + (\vx-\mu_k)(\vx-\mu_k)^\top|^{\frac{\nu + 1}{2}}
             \Gamma_p\!\left(\frac{\nu}{2}\right)},
 \end{align*}
-analogous to the deriviation in appendix \ref{sec:marginalization}. The matrix determinant lemma, $|\vec{A} + \vec{u}\vec{v}^\top| = (1 + \vec{v}^\top\vec{A}\vec{u})|\vec{A}|$, can then be applied to simplify the expression and speed up the computations \citep{Ding2007}.
+analogous to the derivation in appendix \ref{sec:marginalization}. The matrix determinant lemma, $|\vec{A} + \vec{u}\vec{v}^\top| = (1 + \vec{v}^\top\vec{A}\vec{u})|\vec{A}|$, can then be applied to simplify the expression and speed up the computations \citep{Ding2007}.
+Note also that HDA thus generalizes the LDA in some sense to have multivariate $t$-like distribution.
+
 
 \subsubsection{Numerical experiments}
-We designed four simple scenarios where the HDA is expected to perform similar, better, and worse to that of LDA and QDA. We measured performance by the misclassification risk.
+We designed four simple scenarios, inspired by \citep{Friedman1989}, to test where the HDA is expected perform similar, better, or worse compared to LDA and QDA as measured by the misclassifications risk.
+With varying dimensionality $p = \Sexpr{paste(par.xda[["p.dims"]], collapse = ", ")}$, and $k = \Sexpr{par.xda[["K"]]}$ classes, the four scenarios of consisted of different choices of covariance matrices for the classes. The \Sexpr{par.xda[["K"]]} covariance matrices were chosen to either be (a) equal or unequal across the classes and (b) spherical or highly elliptical.
+The mean values were chosen to $\vec{\mu}_1 = \vec{0}, \vec{\mu}_2 = 3\vec{e}_1, \vec{\mu}_3 = 4\vec{e}_2$ where $\vec{e}_j$ denotes the $j$th basis-vector. The chosen mixture proportions was $\pi_1 = ... = \pi_3 = \frac{1}{3}$ in all cases.
 
-With varying dimensionality $p = \Sexpr{paste(p.dims, collapse = ", ")}$, and $k = \Sexpr{K}$ classes, the four scenarios of consisted of different choices of covariance matrices in the classes. The \Sexpr{K} covariance matrices could either be 1) equal or unequal across the classes and 2) spherical or highly elliptical.
-The mean values were chosen to $\vec{\mu}_1 = \vec{0}, \vec{\mu}_1 = 3\vec{e}_1, \vec{\mu}_1 = 3\vec{e}_2$ where $\vec{e}_j$ denotes the $j$th basisvector. The chosen mixture proportions was $\pi_1 = ... = \pi_3 = \frac{1}{3}$ in all cases.
-
-Using these parameters a traning and validation set each of $\Sexpr{N}$ observations was generated. The LDA, QDA, and HDA methods were trained and validated and the performance was measured.
-Each simulation was repeated $\Sexpr{n}$ times and the mean misclassification risk was computed.
+Using the above parameters a training and validation set each of $\Sexpr{par.xda[["n.obs"]]}$ observations was generated for each the four scenarios.
+For each method the classifier was trained on the training data followed by classification of the validation data and computation of the misclassification risk.
+Each simulation was repeated $\Sexpr{par.xda[["n.runs"]]}$ times and the mean misclassification risk was computed.
 
 \providecommand{\red}{\color{red}}
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\providecommand{\green}{\color{mygreen}}
 <<hda_table_res, echo=FALSE, results='asis'>>=
-# Formatting results in misclassification.risks
-cm  <- rapply(misclassification.risks, colMeans)
-csd <- rapply(misclassification.risks, colSds)
-tmp <- t(simplify2array(strsplit(names(cm), "\\.")))
-
-# Format
-misclass.df <-
-  data.frame(t(simplify2array(strsplit(names(cm), "\\.")))) %.%
-  dplyr::select(p = X1, equal = X2, spherical = X3, method = X4) %.%
-  mutate(p = gsub("p", "", p)) %.%
-  mutate(risk = sprintf("%.03f (%.3f)", cm, csd), mean = cm, sd = csd) %.%
-  mutate(risk = gsub("0\\.", ".", risk)) %.%
-  group_by(p, equal, spherical) %.%
-  mutate(is.min = mean == min(mean))
-
-
-misclass.wide <-
-  reshape(misclass.df, idvar = c("method", "spherical", "equal"),
-          drop = c("mean", "sd", "is.min"),
-          timevar = "p", v.names = "risk", direction = "wide")
-names(misclass.wide) <-
-  gsub("risk\\.([0-9]+)", "$p = \\1$", names(misclass.wide))
-
-misclass.wide.is.min <-
-  reshape(misclass.df, idvar = c("method", "spherical", "equal"),
-          drop = c("mean", "sd", "risk"),
-          timevar = "p", v.names = "is.min", direction = "wide")
-
-df.rownames <-
-  sprintf("%s, %s",
-          ifelse(misclass.wide$equal == "eq", "Equal", "Unequal"),
-          ifelse(misclass.wide$spherical == "sph", "spherical", "ellipsoidal"))
-
-tmp <- misclass.wide[, -(1:3)]
-tmp2 <- misclass.wide.is.min[, -(1:3)]
-cmd <- ifelse(as.matrix(tmp2), "red", "")
-
-# Create LaTeX table
-latex(tmp, file = "",
-      title = "$\\vSigma_1, ..., \\vSigma_3$",
-      rowname = gsub("NDA", "HDA", misclass.wide$method),
-      n.rgroup = table(df.rownames)[unique(df.rownames)],
-      rgroup = unique(df.rownames),
-      n.cgroup = ncol(misclass.wide) - 3,
-      cgroup = "Mean misclassification risk (sd)",
-      cellTexCmds = cmd,
-      label = "HDA_tab",
-      caption.loc = "bottom",
-      caption = paste("The results for the different scenarios. The minimum",
-                      "risk is highlighted in red."))
-
-rm(cm, csd, tmp, df.rownames)
 @
 
 
 
-\subsection{DLBCL graphical meta analysis}
+
+
 
 
 \section{Concluding remarks}
-While the improvements are modest, the results above demonstrate an advantage of modelling the inter-study variance as a hierachical random effects model. However, the virtue of such a model is not from improvement in accuracy alone. Also desireable is the explicit quantification of the inter-study variance. If $\hat{\nu}$ is estimated to be large, the studies exhibit  a largely common covariance structure, and vice-versa when $\hat{\nu}$ is small.
+While the improvements are modest, the results above demonstrate an advantage of modelling the inter-study variance as a hierarchical random effects model. However, the virtue of such a model is not from improvement in accuracy alone. Also desirable is the explicit quantification of the inter-study variance. If $\hat{\nu}$ is estimated to be large, the studies exhibit  a largely common covariance structure, and vice-versa when $\hat{\nu}$ is small.
 
 The generalization of the model to $n \gg p$ is extremely interesting though out of scope for this article.
 
@@ -573,15 +520,8 @@ which is not clearly convex. We see, that
   \text{  and  }
   \lim_{\phi \to \infty} \ell'(\phi) = 0
 \end{align*}
-We draw this derivative with $k = 1$ and other appropriately chosen parameters:
-<<one_dimensional_loglik, echo = -1, fig.height=3, fig.width=3>>=
-par(mar = c(2,2,0,0)+0.2)
-dl <- function(phi, k = 1, nu = 1, ni = 1, xi = 1)  {
-  k*nu/2*1/phi - (nu + ni)/2 * 1/(phi + xi^2)
-}
-phi <- seq(0.5, 10, by = 0.01)
-plot(phi, dl(phi), type = "l", col = "red", lwd = 2)
-abline(h = 0, col = "grey", lty = 2, lwd = 2)
+We draw this derivative with $k = 1$ and other appropriately chosen parameters as seen in Figure \ref{fig:one_dimensional_loglik}
+<<one_dimensional_loglik, echo = TRUE, fig.height=3, fig.width=3, fig.pos="htb", ig.scap = "", fig.cap = "One-dimensional case of the derivative of log-likelihood.">>=
 @
 Which is be seen to have a unique root.
 However, the log-likelihood $\ell$ is not log-concave since a differentiable function of one variable is concave if and only if its derivative is monotonically non-increasing.
@@ -589,7 +529,7 @@ However, the log-likelihood $\ell$ is not log-concave since a differentiable fun
 
 \begin{proof}[Proof of Proposition \ref{prop:concavityinnu}]
 Consider the terms involving $\nu$.
-Cleary, the mixed terms involving both $\nu$ and $\vPsi$ are log-linear in $\nu$ and hence log-concave.
+Clearly, the mixed terms involving both $\nu$ and $\vPsi$ are log-linear in $\nu$ and hence log-concave.
 We thus restrict our attention to the remaining terms not dependent on $\vPsi$.
 By themselves, the second term in \eqref{eq:appendloglik},
 $
@@ -681,7 +621,7 @@ The log-likelihood \eqref{eq:appendloglik} has a unique maximum in $\vPsi$ for f
 up to an addition of a constant.
 
 \begin{proof}[Proof of Proposition \ref{lem:elltominusinfty}]
-The propostion follows straight-forwardly from Lemma \ref{lem:elltominusinfty} and
+The proposition follows straight-forwardly from Lemma \ref{lem:elltominusinfty} and
 Lemma \ref{lem:negativesemidefinite}.
 \end{proof}
 
