@@ -12,6 +12,10 @@ library("dplyr")
 library("MCMCpack")
 load("saved.RData")
 
+# Multicore support
+library("foreach")
+library("doMC") #library("doParallel") # Use this package on windows
+registerDoMC(detectCores())
 
 ## ---- auxiliary_functions ----
 
@@ -24,6 +28,7 @@ logdet <- function(x, ...) {
 
 # Log-likelihood of GREM model
 loglik <- function(Psi, nu, S, ns) {
+  stopifnot(nu >= nrow(Psi) - 1)
   stopifnot(length(nu) == 1)
 
   k <- length(S)
@@ -62,18 +67,18 @@ get.nu <- function(Psi, nu, S, ns, interval) {
   interval <- c(nrow(Psi) - 1 + 1e-10, 1e6)
   res <- optimize(f = loglik_nu, interval = interval, maximum = TRUE)$maximum
   return(res)
-
-  # # Find extrema as root
-  # diff_loglik_nu <- function(nu) { # Derivative as a function of nu
-  #   dloglik(Psi, nu, S, ns)
-  # }
-  # res2 <- uniroot(f = diff_dloglik_nu, interval = interval)$root
-  #
-  # if (abs((res-res2)/res) >= 1e-4) {
-  #   stop("methods do not agree on maxima")
-  # }
-  # return((res + res2)/2)
 }
+
+get.nu2 <- function(Psi, nu, S, ns, interval) {
+  # Find extrema as root
+  diff_loglik_nu <- function(nu) { # Derivative as a function of nu
+    dloglik(Psi, nu, S, ns)
+  }
+  res2 <- uniroot(f = diff_dloglik_nu, interval = interval)$root
+  return(res2)
+
+}
+
 
 # Compute new Psi from Psi, nu, S, ns using the EM step
 EMstep <- function(Psi, nu, S, ns) {
@@ -102,7 +107,12 @@ MLEstep <- function(nu, S, ns) {
   return(Psi)
 }
 
-fit.grem.EM <- function(Psi.init, nu.init, S, ns,
+#' @param Psi.init A matrix giving the initial estimate of nu.
+#' @param nu.init A numeric of length 1 giving the initial nu parameter.
+fit.grem.EM <- function(Psi.init,
+                        nu.init,
+                        S,
+                        ns,
                         max.ite = 1000, eps = 1e-3,
                         verbose = FALSE) {
   p <- nrow(S)
@@ -133,6 +143,8 @@ fit.grem.EM <- function(Psi.init, nu.init, S, ns,
   if (i == max.ite) warning("max iterations (", max.ite, ") hit!")
   return(list("Psi" = Psi.new, "nu" = nu.new, "iterations" = i))
 }
+
+
 
 
 # MLE alg
@@ -250,7 +262,7 @@ fit.grem.Moment <- function(nu.init, S, ns,
 #   return(ans)
 # }
 
-# Denisty of the GREM model
+# Density of the GREM model
 dgrem <- function(x, mu, Psi, nu, logarithm = FALSE) {
   p <- nrow(Psi)
   if (is.null(dim(x))) {
@@ -385,18 +397,16 @@ hda.fit <- function(classes, vars, ...) {
   # Compute the scatter matrix in each dataset
   S <- lapply(split.data, function(x)
     cov(as.matrix(x, nrow = nrow(x)), method = "ML")*nrow(x))
-
-  #Psi.init <- diag(p)
   Psi.init <- Reduce("+", S)/(nrow(vars) - length(S))
 
   # Find "common" covariance
-  res <- fit.grem.EM(Psi.init = Psi.init, nu.init = p, S = S, counts,
-                     eps = 1e-2, ...)
+  res <- fit.grem.EM(Psi.init = Psi.init, nu.init = p, S = S, ns = counts, ...)
   sigma <- res$Psi/(res$nu - p - 1)
 
   return(list(counts = counts, means = means, sigma = sigma,
               Psi = res$Psi, nu = res$nu))
 }
+
 
 hda.predict <- function(hda.fit, newdata) {
   K <- length(hda.fit$counts)
@@ -528,24 +538,23 @@ hda.predict <- function(hda.fit, newdata) {
 par.ne <- list(k = 3,
                nu = 15,
                p = 10,
-               n.sims = 1000,
-               n.obs = 4 + seq_len(10))
+               n.sims = 200,
+               n.obs = seq(4, 10, by = 1))
 #rm(res)
 if (!exists("res") | recompute) {
-  set.seed(644031)
+  set.seed(64403101)
   st <- proc.time()
   res <- list()
-  it <- 1
   for (i in seq_along(par.ne$n.obs)) {
-    for (j in seq_len(par.ne$n.sims)) {
-      res[[it]] <- test.grem(k = par.ne$k, n = par.ne$n.obs[i],
-                             p = par.ne$p, nu = par.ne$nu)
-      it <- it  + 1
-      cat("it =", it, "of", length(par.ne$n.obs)*par.ne$n.sims, "done after",
-          (proc.time()-st)[3] %/% 60, "mins.\n")
-      flush.console()
+    tmp <- foreach(j = seq_len(par.ne$n.sims)) %dopar% {
+      test.grem(k = par.ne$k, n = par.ne$n.obs[i],
+                p = par.ne$p, nu = par.ne$nu)
     }
+    res <- c(res, tmp)
+    cat("loop =", i, "of", length(par.ne$n.obs), "done after",
+        (proc.time()-st)[3] %/% 60, "mins.\n")
   }
+  rm(tmp)
   resave(res, file = "saved.RData")
 }
 ## ---- end ----
@@ -602,12 +611,14 @@ e <- function(i, p) { # ith standard basis vector of length p
   vec[i] <- 1
   return(vec)
 }
-set.seed(10)
+
 par.xda <- list(K = 3,
                 n.obs = 40,
                 n.obs.valid = 100,
-                n.runs = 500,
+                n.runs = 100, #500,
                 p.dims = c(5, 10, 20, 35))
+
+#set.seed(15)
 #rm(misclassification.risks)
 if (!exists("misclassification.risks") | recompute) {
 
@@ -638,18 +649,14 @@ if (!exists("misclassification.risks") | recompute) {
       theta$mu <- list(rep(0, p), 3*e(1, p), 4*e(1, p))
 
       if (method == "EqualEllipsoidal") { # Low-variance subspace
-        e <- eigen(theta$sigma[[1]])$vectors
-        l <- eigen(theta$sigma[[1]])$values
-        w2 <- ( seq(sqrt(0.5), sqrt(4), length.out = d)^2)
-        w3 <- (-seq(sqrt(0.5), sqrt(3), length.out = d)^2)
-        mu1 <- rep(0, d)
-        mu2 <- c(e %*% (sqrt(l)*w2))
-        mu3 <- c(e %*% (sqrt(l)*w3))
+        evec <- eigen(theta$sigma[[1]])$vectors
+        eval <- eigen(theta$sigma[[1]])$values
+        w2 <- ( seq(sqrt(0.5), sqrt(4), length.out = p)^2) # reverse t
+        w3 <- (-seq(sqrt(0.5), sqrt(3), length.out = p)^2) # reverse
+        mu1 <- rep(0, p)
+        mu2 <- c(evec %*% (sqrt(eval)*w2))
+        mu3 <- c(evec %*% (sqrt(eval)*w3))
         theta$mu <- list(mu1, mu2, mu3)
-#         theta$mu <-
-#           list(rep(0, p),
-#                tcrossprod(s, t(seq(2, 0, length.out = p)^4)),
-#                tcrossprod(s, t(seq(0, 2, length.out = p)^4)))
       }
 
       mis.risk <-
@@ -670,7 +677,7 @@ if (!exists("misclassification.risks") | recompute) {
 
         qda.train <- qda.fit(train$classes, select(train, -classes))
         lda.train <- qda2lda(qda.train)
-        hda.train <- hda.fit(train$classes, select(train, -classes))
+        hda.train <- hda.fit(train$classes, select(train, -classes), eps = 1e-1)
 
         lda.pred <- lda.predict(lda.train, newdata = select(valid, -classes))
         qda.pred <- qda.predict(qda.train, newdata = select(valid, -classes))
