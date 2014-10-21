@@ -370,10 +370,10 @@ The algorithm along with the different estimators were implemented in the statis
 \subsection{DLBCL graphical meta-analysis}
 
 \subsection{Supervised classification}
-An quite different application of the GREM estimate is found as a novel version of discriminant analysis.
+An quite different application of the GREM estimate can be found as a novel version of discriminant analysis.
 As seen below, the estimates obtained can be utilized in supervised learning as a intermediate case of linear discriminant analysis (LDA) and quadratic discriminant analysis (QDA).
 
-Suppose $Y$ is a random variable denoting the class $1, ..., k$ and suppose $\vx$ is a random vector of the explanatory variables. Recall, that QDA (and LDA) finds the class $y$ maximizing
+Suppose $Y$ is a random variable denoting the class $1, ..., k$ and suppose $\vx$ is a random vector of the explanatory variables. Recall that QDA (and LDA) finds the class $y$ maximizing
 \begin{align*}
   P(Y = y | \vX = \vx) =
     \frac{\pi_y f(\vx | Y = y)}
@@ -394,25 +394,49 @@ f(\vx | Y = y)
             \Gamma_p\!\left(\frac{\nu}{2}\right)},
 \end{align*}
 analogous to the derivation in appendix \ref{sec:marginalization}. The matrix determinant lemma, $|\vec{A} + \vec{u}\vec{v}^\top| = (1 + \vec{v}^\top\vec{A}\vec{u})|\vec{A}|$, can then be applied to simplify the expression and speed up the computations \citep{Ding2007}.
-Note also that HDA thus generalizes the LDA in some sense to have multivariate $t$-like distribution.
+Note also that HDA thus also generalizes the LDA in some sense to have multivariate $t$-like distribution.
 
 
-\subsubsection{Numerical experiments}
-We designed four simple scenarios, inspired by \citep{Friedman1989}, to test where the HDA is expected perform similar, better, or worse compared to LDA and QDA as measured by the misclassifications risk.
-With varying dimensionality $p = \Sexpr{paste(par.xda[["p.dims"]], collapse = ", ")}$, and $k = \Sexpr{par.xda[["K"]]}$ classes, the four scenarios of consisted of different choices of covariance matrices for the classes. The \Sexpr{par.xda[["K"]]} covariance matrices were chosen to either be (a) equal or unequal across the classes and (b) spherical or highly elliptical.
-The mean values were chosen to $\vec{\mu}_1 = \vec{0}, \vec{\mu}_2 = 3\vec{e}_1, \vec{\mu}_3 = 4\vec{e}_2$ where $\vec{e}_j$ denotes the $j$th basis-vector. The chosen mixture proportions was $\pi_1 = ... = \pi_3 = \frac{1}{3}$ in all cases.
+\subsubsection{Benchmarking of HDA}
+We designed four different scenarios to test and identify where HDA can be expected perform similar, better, or worse compared to LDA and QDA as gauged by the misclassification risk. The simulation experiment was inspired by the one seen in \citet{Friedman1989}.
 
-Using the above parameters a training and validation set each of $\Sexpr{par.xda[["n.obs"]]}$ observations was generated for each the four scenarios.
+In all four scanarios, we generated a training dataset of a total of $n = \Sexpr{par.xda[["n.obs"]]}$ observations belonging to $k = \Sexpr{par.xda[["K"]]}$ classes.
+First, class labels was generated from a multinomial distribution with equal probabilities for each class, $\pi_1 = \pi_2 = \pi_3 = \frac{1}{3}$.
+Hence, in each simulation round $\Sexpr{round(par.xda[["n.obs"]]/par.xda[["K"]], 2)}$ observations was expected.
+Conditional on the class label the observations where drawn i.i.d.\ from a multivariate gaussian distribution, i.e.\ for the $i$th observation, $x_{i}|K = k \sim \calN_p(\vmu_k, \vSigma_k)$.
+The four scenarios of consisted of different choices, described later, of covariance matrices $\vSigma_k$ and mean values $\vmu_k$ for each class.
+
+The \Sexpr{par.xda[["K"]]} covariance matrices were chosen to either be (1) equal and spherical, (2) unqual and spherical, (3) equal and highly elliptical, and (4) unequal and highly elliptical.
+In scenario (1), $\vSigma_1 = \vSigma_2 = \vSigma_3 = \vI$.
+In scenario (2), $\vSigma_k = k \vI$.
+In scenario (3), the covariance matrices equal, $\vSigma_1 = \vSigma_2 = \vSigma_3$, and chosen such that the squareroot of the $d$ eigenvalues are chosen equidistantly on the interval 10 to 1 and a randomly (uniformly) oriented orthonormal basis is chosen and used for all components \citep{Friedman1989}.
+In scenario (4), the eigenvalues are chosen as in scenario (3) for all $\vSigma_k$ but the orientation of the orthonormal basis of eigenvectors differs.
+
+In all scenarios expect (3) the mean values were chosen to $\vec{\mu}_1 = \vec{0}, \vec{\mu}_2 = 3\vec{e}_1, \vec{\mu}_3 = 4\vec{e}_2$ where $\vec{e}_j$ denotes the $j$th basis-vector.
+In scenario (3), $\vec{\mu}_1 = \vec{0}$ and the remaning means values are chosen such that the differences project main onto the low-variance subspace
+
+Each of the four scnarios where probed with varying dimensionality $p = \Sexpr{paste(par.xda[["p.dims"]], collapse = ", ")}$.
+
+Using the described parameters a training and validation set each of $\Sexpr{par.xda[["n.obs"]]}$ and $\Sexpr{par.xda[["n.obs.valid"]]}$ observations, respectively, observations was generated.
 For each method the classifier was trained on the training data followed by classification of the validation data and computation of the misclassification risk.
-Each simulation was repeated $\Sexpr{par.xda[["n.runs"]]}$ times and the mean misclassification risk was computed.
-
+Each simulation setup was repeated $\Sexpr{par.xda[["n.runs"]]}$ times and the mean and standard deviation of the misclassification risks were computed.
+Table \ref{HDA_tab} shows the results of the simulation experiments.
 \providecommand{\red}{\color{red}}
 \definecolor{mygreen}{rgb}{0,0.6,0}
 \providecommand{\green}{\color{mygreen}}
 <<hda_table_res, echo=FALSE, results='asis'>>=
 @
 
+In the equal and spherical case, HDA yields almost identical results to LDA which unsurprisingly outperformes QDA.
+Also perhaps expected, the difference between LDA and QDA is less prominent for low dimensional spaces.
+In the unqual and spherical case, HDA insubstantially outperforms LDA which both outperform QDA.
+In the highest dimensional case where $n$ is of the same size as $p$, HDA is substatially better than the alternatives.
 
+
+Most interestingly, HDA is seen to always perform at least as good as LDA in all scenarios for all practical purposes.
+
+The above demonstrate that HDA as potentially useful addition to the descriminant analysis toolbox.
+However, we recognize that further and more sophisticated simulation experiments are needed  to explore the scenarios where HDA should be considered a serious alternative.
 
 
 
