@@ -13,4 +13,4 @@
 *.tex
 *.pdf
 *.RData
-
+knitr/prof.R
