@@ -19,281 +19,12 @@ registerDoMC(detectCores())
 
 ## ---- auxiliary_functions ----
 
-# Compute the log determinant easily
-logdet <- function(x, ...) {
-  z <- determinant(x, logarithm = TRUE, ...)
-  stopifnot(z$sign == 1)
-  return(z$modulus)
-}
-
-# Log-likelihood of GREM model
-loglik <- function(Psi, nu, S, ns) {
-  stopifnot(nu >= nrow(Psi) - 1)
-  stopifnot(length(nu) == 1)
-
-  k <- length(S)
-  p <- nrow(S[[1]])
-
-  cs <- (nu + ns)/2
-  logdetPsi <- logdet(Psi)
-  logdetPsiPlusS <- sapply(S, function(s) logdet(Psi + s))
-
-  const <- sum(((ns * p)/2) * log(2))
-  t1 <- k*nu/2 * logdetPsi
-  t2 <- sum(lgammap(cs, p = p))
-  t3 <- -sum(cs * logdetPsiPlusS)
-  t4 <- -k*lgammap(nu/2, p = p)
-
-  return(const + t1 + t2 + t3 + t4)
-}
-
-# Derivative of the log-likelihood of GREM model
-dloglik <- function(Psi, nu, S, ns) {  #
-  k <- length(S)
-  p <- nrow(S[[1]])
-  t1 <-  k/2 * logdet(Psi)
-  t2 <-  1/2 * sum(sapply(ns, function(ni) digammap((nu + ni)/2, p = p)))
-  t3 <- -1/2 * sum(sapply(S, function(s) logdet(Psi + s)))
-  t4 <- -k/2 * digammap(nu/2, p = p)
-  return(t1 + t2 + t3 + t4)
-}
-
-# Optimize loglik wrt nu
-get.nu <- function(Psi, nu, S, ns, interval) {
-  # Find maxima with optimize
-  loglik_nu <- function(nu) { # log-likelihood as a function of nu, fixed Psi
-    loglik(Psi, nu, S, ns)
-  }
-  interval <- c(nrow(Psi) - 1 + 1e-10, 1e6)
-  res <- optimize(f = loglik_nu, interval = interval, maximum = TRUE)$maximum
-  return(res)
-}
-
-get.nu2 <- function(Psi, nu, S, ns, interval) {
-  # Find extrema as root
-  diff_loglik_nu <- function(nu) { # Derivative as a function of nu
-    dloglik(Psi, nu, S, ns)
-  }
-  res2 <- uniroot(f = diff_dloglik_nu, interval = interval)$root
-  return(res2)
-
-}
-
-
-# Compute new Psi from Psi, nu, S, ns using the EM step
-EMstep <- function(Psi, nu, S, ns) {
-  k <- length(S)
-  p <- nrow(S[[1]])
-  co <- 1/(k*nu)
-  t <- lapply(seq_along(S), function(i) (co*(ns[i] + nu))*solve(Psi + S[[i]]))
-  Psi_new <- solve(Reduce("+", t))  # Sum the matrices in t
-  return(Psi_new)
-}
-
-# Compute new Psi from nu, S, ns using moment estimate
-Momentstep <- function(nu, S, ns) {
-  k <- length(ns)
-  Psi <- Reduce("+", lapply(seq_along(ns), function(i) S[[i]]/ns[i]))/k
-  p <- nrow(Psi)
-  fac <- nu - p - 1
-  return(fac*Psi)
-}
-
-# Compute new Psi from nu, S, ns using approximate MLE
-MLEstep <- function(nu, S, ns) {
-  n.tot <- sum(ns)
-  fac <- nu + ns
-  Psi <- Reduce("+", lapply(seq_along(ns), function(i) fac[i]*S[[i]]))/n.tot
-  return(Psi)
-}
-
-#' @param Psi.init A matrix giving the initial estimate of nu.
-#' @param nu.init A numeric of length 1 giving the initial nu parameter.
-fit.grem.EM <- function(Psi.init,
-                        nu.init,
-                        S,
-                        ns,
-                        max.ite = 1000, eps = 1e-3,
-                        verbose = FALSE) {
-  p <- nrow(S)
-  interval <- c(p - 1 + 1e-5, 1e6)
-
-  Psi.old <- Psi.init
-  nu.old <- nu.init
-
-  for (i in seq_len(max.ite)) {
-    ll.old <- loglik(Psi.old, nu.old, S, ns)
-
-    Psi.new <- EMstep(Psi.old, nu.old, S, ns)
-    nu.new  <- get.nu(Psi.new, nu.old, S, ns, interval)
-    ll.new  <- loglik(Psi.new, nu.new, S, ns)
-
-    stopifnot(ll.new > ll.old)
-    if (ll.new - ll.old < eps) {
-      break
-    } else {
-      Psi.old <- Psi.new
-      nu.old <- nu.new
-    }
-    if (verbose) {
-      cat("ite =", i, ":", "ll.new - ll.old =", ll.new - ll.old, "\n");
-      flush.console()
-    }
-  }
-  if (i == max.ite) warning("max iterations (", max.ite, ") hit!")
-  return(list("Psi" = Psi.new, "nu" = nu.new, "iterations" = i))
-}
-
-
-
-
-# MLE alg
-fit.grem.MLE <- function(nu.init, S, ns,
-                         max.ite = 1000, eps = 1e-3,
-                         verbose = FALSE) {
-  p <- nrow(S)
-  interval <- c(p - 1 + 1e-5, 1e6)
-
-  nu.old <- nu.init
-  Psi.old <- MLEstep(nu = nu.old, S = S, ns = ns)
-
-  for (i in seq_len(max.ite)) {
-    ll.old <- loglik(Psi.old, nu.old, S, ns)
-
-    nu.new  <- get.nu(Psi.old, nu.old, S, ns, interval)
-    Psi.new <- MLEstep(nu.new, S, ns)
-
-    ll.new  <- loglik(Psi.new, nu.new, S, ns)
-
-    stopifnot(ll.new > ll.old)
-    if (ll.new - ll.old < eps) {
-      break
-    } else {
-      Psi.old <- Psi.new
-      nu.old  <- nu.new
-    }
-
-    if (verbose) {
-      cat("ite =", i, ":", "ll.new - ll.old =", ll.new - ll.old, "\n");
-      flush.console()
-    }
-
-  }
-
-  if (i == max.ite) warning("max iterations (", max.ite, ") hit!")
-
-  return(list("Psi" = Psi.new, "nu" = nu.new, "iterations" = i))
-}
-
-# Estimation using moment
-fit.grem.Moment <- function(nu.init, S, ns,
-                            max.ite = 1000, eps = 1e-3,
-                            verbose = FALSE) {
-  p <- nrow(S[[1]])
-  interval <- c(p - 1 + 1e-5, 1e6)
-
-  nu.old <- nu.init
-  Psi.old <- Momentstep(nu = nu.old, S = S, ns = ns)
-
-  for (i in seq_len(max.ite)) {
-    nu.new  <- get.nu(Psi.old, nu.old, S, ns, interval)
-    fac     <- (nu.new - p - 1)/(nu.old - p - 1)
-    Psi.new <- Psi.old * fac
-
-    if (verbose) {
-      cat("ite =", i, ":", "nu.new - nu.old =", nu.new - nu.old,
-          "fac =", fac, "nu =", nu.new, "\n");
-      flush.console()
-    }
-
-    if (abs(nu.new - nu.old) < eps) {
-      break
-    } else {
-      Psi.old <- Psi.new
-      nu.old  <- nu.new
-    }
-
-  }
-  if (i == max.ite) warning("max iterations (", max.ite, ") hit!")
-  return(list("Psi" = Psi.new, "nu" = nu.new, "iterations" = i))
-}
-
-
-
 #
 # HDA
 #
 
-# dgrem3 <- function(x, mu, Psi, nu, log = FALSE) {
-#   stopifnot(length(x) == length(mu))
-#   p <- nrow(Psi)
-#
-#   n1 <- nu/2*logdet(Psi)
-#   n2 <- lgammap((nu + 1)/2, p = p)
-#   d1 <- -p/2*log(pi)
-#   d2 <- (nu + 1)/2 * logdet(Psi + tcrossprod(x - mu))
-#   d3 <- lgammap(nu/2, p = p)
-#
-#   ans <- n1 + n2 - d1 - d2 - d3
-#
-#   if (!log) {
-#     ans <- exp(ans)
-#   }
-#   attributes(ans) <- NULL
-#   return(ans)
-# }
-#
-#
-# dgrem2 <- function(x, mu, Psi, nu, log = FALSE) {
-#   stopifnot(length(x) == length(mu))
-#   p <- nrow(Psi)
-#   t1 <- lgammap((nu + 1)/2, p = p)
-#   t2 <- -lgammap(nu/2, p = p)
-#   t3 <- p/2*log(pi)
-#   t4 <- -1/2*logdet(Psi)
-#   t5 <- -(nu + 1)/2 * log(1 + sum(solve(Psi) * tcrossprod(x - mu)))
-#
-#   ans <- t1 + t2 + t3 + t4 + t5
-#
-#   if (!log) {
-#     ans <- exp(ans)
-#   }
-#   attributes(ans) <- NULL
-#   return(ans)
-# }
-
 # Density of the GREM model
-dgrem <- function(x, mu, Psi, nu, logarithm = FALSE) {
-  p <- nrow(Psi)
-  if (is.null(dim(x))) {
-    dim(x) <- c(1, p)
-  }
-  Q <- function(x, A) {
-    rowSums(tcrossprod(x, A) * x)
-  }
-  stopifnot(ncol(x) == length(mu))
-  t1 <- lgammap((nu + 1)/2, p = p)
-  t2 <- -lgammap(nu/2, p = p)
-  t3 <- p/2*log(pi)
-  t4 <- -1/2*logdet(Psi)
-
-  x.center <- t(t(x) - mu)
-  t5 <- -(nu + 1)/2 * log(1 + Q(x.center, solve(Psi)))
-
-  ans <- t1 + t2 + t3 + t4 + t5
-
-  if (!logarithm) {
-    ans <- exp(ans)
-  }
-  attributes(ans) <- NULL
-  return(ans)
-}
-
-# drem(x = 1:4, mu = 1:4, Psi, nu)
-# drem2(x = 1:4 + 0.1, mu = 1:4, Psi, nu)
-# drem3(x = 1:4 + 0.1, mu = 1:4, Psi, nu)
-# drem3(x = rbind(1:4, 1:4, 1:4 + 0.1), mu = 1:4, Psi, nu)
-
+dgrem <- correlateR::dgrem
 
 # Simulate data
 test.grem <- function(k = 4, n = 10, ns = rep(n, k), p = 10,
@@ -312,18 +43,18 @@ test.grem <- function(k = 4, n = 10, ns = rep(n, k), p = 10,
 
   # Simulate data
   Sigmas <- replicate(length(ns), riwish(nu, Psi), simplify = FALSE)
-  S <- lapply(seq_along(ns), function(i) rwishart(ns[i], Sigmas[[i]]))
+  S  <- lapply(seq_along(ns), function(i) rwishart(ns[i], Sigmas[[i]]))
   SS <- lapply(seq_along(S), function(i) S[[i]]/ns[i])
 
   # Fit model
   t1 <- system.time({
-    res1 <- fit.grem.EM(Psi.init = diag(p), nu.init = p + 1, S, ns, eps = 1e-2)
+    res1 <- fit.grem(Psi.init = diag(p), nu.init = p + 1, S, ns, eps = 1e-2)
   })
   t2 <- system.time({
     res2 <- fit.grem.MLE(nu.init = p + 1, S = S, ns = ns, eps = 1e-2)
   })
   t3 <- system.time({
-    res3 <- fit.grem.Moment(nu.init = p + 1e7, S = S, ns = ns, eps = 1e-2)
+    res3 <- fit.grem.moment(nu.init = p + 1e7, S = S, ns = ns, eps = 1e-2)
   })
 
   expected.covariance <- Psi/(nu - p - 1)
@@ -359,7 +90,7 @@ SSEs <- function(x) {
   sse.grem.em  <- get.SSE(x$grem.em,  x$expected, n = n)
   sse.grem.mle <- get.SSE(x$grem.mle, x$expected, n = n)
   sse.grem.mom <- get.SSE(x$grem.mom, x$expected, n = n)
-  sse.mean     <- get.SSE(x$mean, x$expected, n = n)
+  sse.mean     <- get.SSE(x$mean,     x$expected, n = n)
 
   stopifnot(all(x$ns == x$ns[1]))
   return(c(n  = x$ns[1],
@@ -400,13 +131,12 @@ hda.fit <- function(classes, vars, ...) {
   Psi.init <- Reduce("+", S)/(nrow(vars) - length(S))
 
   # Find "common" covariance
-  res <- fit.grem.EM(Psi.init = Psi.init, nu.init = p, S = S, ns = counts, ...)
+  res <- fit.grem(Psi.init = Psi.init, nu.init = p, S = S, ns = counts, ...)
   sigma <- res$Psi/(res$nu - p - 1)
 
   return(list(counts = counts, means = means, sigma = sigma,
               Psi = res$Psi, nu = res$nu))
 }
-
 
 hda.predict <- function(hda.fit, newdata) {
   K <- length(hda.fit$counts)
@@ -417,120 +147,11 @@ hda.predict <- function(hda.fit, newdata) {
                      Psi = hda.fit$Psi, nu = hda.fit$nu)
   }
   scaled_dens <- sapply(seq_len(K), f)
-  #post <- scaled_dens/rowSums(scaled_dens)
-  #colnames(post) <- names(hda.fit$counts)
-  #pred.class <- apply(post, 1, which.max)
+  post <- scaled_dens/rowSums(scaled_dens)
+  colnames(post) <- names(hda.fit$counts)
   pred.class <- apply(scaled_dens, 1, which.max)
   return(list(class = pred.class))#, prob = post))
 }
-#
-# #
-# # QDA
-# #
-#
-# # kappa2 <- function(A) {
-# #   ev <- eigen(A)$val
-# #   abs(max(ev)/min(ev))
-# # }
-# #
-# # correctForStableInversion2 <- function(A, verbose = TRUE) {
-# #   p <- ncol(A)
-# #   while (rcond(A) < .Machine$double.eps) {
-# #     if (verbose) {cat("+"); flush.console()}
-# #     A <- A + 10*diag(.Machine$double.eps, p)
-# #   }
-# #   return(A)
-# # }
-#
-# correctForStableInversion <- function(A) {
-#   if (rcond(A) < .Machine$double.eps) {
-#     eps <- .Machine$double.eps
-#     spec <- eigen(A)
-#     lambda.min <- min(spec$values)
-#     lambda.max <- max(spec$values)
-#     a <- (1e2*eps*lambda.max - lambda.min)/(1e2*eps + 1)
-#     spec$values <- spec$values + a
-#     A <- spec$vectors %*% (t(spec$vectors) * spec$values)
-#   }
-#   return(A)
-# }
-#
-#
-# qda.fit <- function(classes, vars) {
-#   counts <- table(classes)
-#   split.vars <- split(vars, f = classes)
-#   means <- t(sapply(split.vars, colMeans))
-#   sigmas <- list()
-#   for (i in seq_along(counts)) {
-#     tmp <- as.matrix(split.vars[[i]], nrow = nrow(split.vars[[i]]))
-#     sigmas[[i]] <- stats::cov(tmp)
-#   }
-#   return(list(counts = counts, means = means, sigmas = sigmas))
-# }
-#
-#
-# qda.predict <- function(myqda, newdata) {
-#   theta <- myqda
-#   theta$means <- lapply(seq_along(theta$sigmas), function(i) theta$means[i,])
-#   theta$counts <- as.vector(theta$counts)/sum(theta$counts)
-#   theta <- c(list(m = length(theta$counts), d = nrow(theta$sigmas[[1]])), theta)
-#   vars <- as.matrix(newdata)
-#   names(theta) <- c("m", "d", "pie", "mu", "sigma")
-#   theta$sigma <- lapply(theta$sigma, correctForStableInversion)
-#   kap <- GMCM:::EStep(x = as.matrix(vars), theta = theta)
-#   return(list(class = apply(kap, 1, which.max), posterior = kap))
-# }
-#
-# #
-# # LDA
-# #
-#
-# # lda.fit2 <- function(classes, vars) {
-# #   p <- ncol(vars)
-# #   counts <- table(classes)
-# #   K <- length(counts)
-# #   split.vars <- split(vars, f = classes)
-# #   means <- t(sapply(split.vars, colMeans))
-# #   sigma <- matrix(0, p, p)
-# #   for (i in seq_len(K)) {
-# #     tmp <- as.matrix(split.vars[[i]], nrow = nrow(split.vars[[i]]))
-# #     sigma <- sigma + (nrow(tmp) - 1)*stats::cov(tmp)
-# #   }
-# #   sigma <- sigma/(nrow(vars) - K)
-# #   sigmas <- replicate(K, sigma, simplify = FALSE)
-# #   return(list(counts = counts, means = means, sigmas = sigmas))
-# # }
-# qda2lda <- function(myqda) {
-#   K <- length(myqda$counts)
-#   p <- nrow(myqda$sigmas[[1]])
-#   sigma <- matrix(0, p, p)
-#   for (i in seq_len(K)) {
-#     sigma <- sigma + (myqda$counts[i] - 1)*myqda$sigmas[[i]]
-#   }
-#   sigma <- sigma/(sum(myqda$counts) - K)
-#   myqda$sigmas <- replicate(K, sigma, simplify = FALSE)
-#   return(myqda)
-# }
-#
-# lda.fit <- function(classes, vars) {
-#   qda <- qda.fit(classes, vars)
-#   return(qda2lda(qda))
-# }
-#
-# lda.predict <- function(mylda, newdata) {
-#   theta <- mylda
-#   K <- length(theta$counts)
-#   theta$means <- lapply(seq_len(K), function(i) theta$means[i,])
-#   theta$counts <- as.vector(theta$counts)/sum(theta$counts)
-#   theta <- c(list(m = length(theta$counts), d = nrow(theta$sigmas[[1]])), theta)
-#   vars <- as.matrix(newdata)
-#   names(theta) <- c("m", "d", "pie", "mu", "sigma")
-#   theta$sigma <- lapply(theta$sigma, correctForStableInversion)
-#   stopifnot(is.theta(theta))
-#   kap <- GMCM:::EStep(x = as.matrix(vars), theta = theta)
-#   return(list(class = apply(kap, 1, which.max), posterior = kap))
-# }
-
 
 
 
@@ -538,7 +159,7 @@ hda.predict <- function(hda.fit, newdata) {
 par.ne <- list(k = 3,
                nu = 15,
                p = 10,
-               n.sims = 200,
+               n.sims = 1000,
                n.obs = seq(4, 10, by = 1))
 #rm(res)
 if (!exists("res") | recompute) {
@@ -547,8 +168,7 @@ if (!exists("res") | recompute) {
   res <- list()
   for (i in seq_along(par.ne$n.obs)) {
     tmp <- foreach(j = seq_len(par.ne$n.sims)) %dopar% {
-      test.grem(k = par.ne$k, n = par.ne$n.obs[i],
-                p = par.ne$p, nu = par.ne$nu)
+      test.grem(k = par.ne$k, n = par.ne$n.obs[i], p = par.ne$p, nu = par.ne$nu)
     }
     res <- c(res, tmp)
     cat("loop =", i, "of", length(par.ne$n.obs), "done after",
@@ -559,7 +179,10 @@ if (!exists("res") | recompute) {
 }
 ## ---- end ----
 
+
+
 ## ---- numerical_experiment_plot ----
+par(mfrow = c(2,2))
 df <- as.data.frame(t(sapply(res, SSEs)))
 df <- aggregate(cbind(SSE.grem.em, SSE.grem.mle, SSE.grem.mom, SSE.mean) ~
                   n + nu + k + p, mean, data = df)
@@ -578,6 +201,46 @@ legend("topright", legend = c("GREM (EM)", "pool",
 axis(1)
 axis(2)
 grid()
+
+
+get.nu <- function(x) {
+  c(n  = x$ns[1], k  = x$k, nu = x$nu, p  = nrow(x$Psi),
+    em = x$res.em$nu, mle = x$res.mle$nu, mom = x$res.mom$nu)
+}
+
+get.psi.diag <- function(x) {
+  cbind(n  = x$ns[1], k  = x$k, nu = x$nu, p  = nrow(x$Psi),
+        em = diag(x$res.em$Psi), mle = diag(x$res.mle$Psi),
+        mom = diag(x$res.mom$Psi))
+}
+
+get.psi.lower.tri <- function(x) {
+  cbind(n  = x$ns[1], k  = x$k, nu = x$nu, p  = nrow(x$Psi),
+        em = get.lower.tri(x$res.em$Psi), mle = get.lower.tri(x$res.mle$Psi),
+        mom = get.lower.tri(x$res.mom$Psi))
+}
+
+res.nu <- as.data.frame(t(sapply(res, get.nu)))
+res.psi.diag <- as.data.frame(do.call(rbind, lapply(res, get.psi.diag)))
+res.psi.lower <- as.data.frame(do.call(rbind, lapply(res, get.psi.lower.tri)))
+
+# A
+boxplot(em ~ n, data = res.nu, outline = FALSE, main = "nu", col = "blue")
+points(jitter(res.nu$n) - res.nu$k, res.nu$em, cex = 0.2, pch = 16)
+abline(h = par.ne$nu, lwd = 3, lty = 2)
+
+# B
+boxplot(em ~ n, data = res.psi.diag, outline = FALSE,
+        main = "diagonal of Psi", col = "blue")
+#with(res.psi.diag, points(jitter(n) - k, em, cex = 0.2, pch = 16, col = "blue"))
+abline(h = res[[1]]$Psi[1,1], lwd = 3, lty = 2)
+
+# C
+boxplot(em ~ n, data = res.psi.lower, outline = FALSE,
+        main = "Off-diagnal of Psi", col = "blue")
+#with(res.psi.lower,points(jitter(n) - k, em, cex = 0.2, pch = 16, col = "blue"))
+abline(h = res[[1]]$Psi[1,2], lwd = 3, lty = 2)
+
 ## ---- end ----
 
 #
@@ -715,17 +378,19 @@ misclass.df <-
   mutate(risk = gsub("0\\.", ".", risk)) %>%
   group_by(p, equal, spherical) %>%
   mutate(is.min = mean==min(mean), is.max = mean==max(mean))
+misclass.df <- as.data.frame(misclass.df)
 
 
 misclass.wide <-
-  reshape(misclass.df, idvar = c("method", "spherical", "equal"),
+  reshape(misclass.df,
+          idvar = c("method", "spherical", "equal"),
           drop = c("mean", "sd", "is.min", "is.max"),
           timevar = "p", v.names = "risk", direction = "wide")
 names(misclass.wide) <-
   gsub("risk\\.([0-9]+)", "$p = \\1$", names(misclass.wide))
 
 misclass.wide.is.min <-
-  reshape(misclass.df, idvar = c("method", "spherical", "equal"),
+  reshape(as.data.frame(misclass.df), idvar = c("method", "spherical", "equal"),
           drop = c("mean", "sd", "risk", "is.max"),
           timevar = "p", v.names = "is.min", direction = "wide")
 
