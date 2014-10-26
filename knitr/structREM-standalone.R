@@ -19,16 +19,16 @@ registerDoMC(detectCores())
 
 ## ---- auxiliary_functions ----
 
-#
-# HDA
-#
-
 # Density of the GREM model
 dgrem <- correlateR::dgrem
 
 # Simulate data
-test.grem <- function(k = 4, n = 10, ns = rep(n, k), p = 10,
-                      nu = 15, Psi) {
+test.grem <- function(k = 4,
+                      n = 10,  # Observations in each dataset
+                      ns = rep(n, k),
+                      p = 10,
+                      nu = 15,
+                      Psi) {
   stopifnot(nu > p + 1)
   rwishart <- function(n, Sigma) {
     X <- rmvnormal(n = n, mu = rep(0, nrow(Sigma)), sigma = Sigma)
@@ -48,13 +48,13 @@ test.grem <- function(k = 4, n = 10, ns = rep(n, k), p = 10,
 
   # Fit model
   t1 <- system.time({
-    res1 <- fit.grem(Psi.init = diag(p), nu.init = p + 1, S, ns, eps = 1e-2)
+    res1 <- fit.grem(S, ns, eps = 1e-2)
   })
   t2 <- system.time({
-    res2 <- fit.grem.MLE(nu.init = p + 1, S = S, ns = ns, eps = 1e-2)
+    res2 <- correlateR:::fit.grem.MLE(S = S, ns = ns, eps = 1e-2)
   })
   t3 <- system.time({
-    res3 <- fit.grem.moment(nu.init = p + 1e7, S = S, ns = ns, eps = 1e-2)
+    res3 <- correlateR:::fit.grem.moment(S = S, ns = ns, eps = 1e-2)
   })
 
   expected.covariance <- Psi/(nu - p - 1)
@@ -64,13 +64,13 @@ test.grem <- function(k = 4, n = 10, ns = rep(n, k), p = 10,
   grem.mom.covariance <- res3$Psi/(res3$nu - p - 1)
 
   return(list(expected = expected.covariance,
-              mean = mean.covariance,
+              mean     = mean.covariance,
               grem.em  = grem.em.covariance,
               grem.mle = grem.mle.covariance,
               grem.mom = grem.mom.covariance,
-              res.em = res1,
-              res.mle = res2,
-              res.mom = res3,
+              res.em   = res1,
+              res.mle  = res2,
+              res.mom  = res3,
               t1 = t1, t2 = t2, t3 = t3,
               Sigmas = Sigmas, S = S, k = k,
               ns = ns, nu = nu, Psi = Psi))
@@ -156,33 +156,32 @@ hda.predict <- function(hda.fit, newdata) {
 
 
 ## ---- numerical_experiment ----
-par.ne <- list(k = 3,
-               nu = 15,
-               p = 10,
-               n.sims = 1000,
+par.ne <- list(k = 3, nu = 15, p = 10, n.sims = 2000,
                n.obs = seq(4, 10, by = 1))
-#rm(res)
 if (!exists("res") | recompute) {
   set.seed(64403101)
   st <- proc.time()
   res <- list()
   for (i in seq_along(par.ne$n.obs)) {
-    tmp <- foreach(j = seq_len(par.ne$n.sims)) %dopar% {
-      test.grem(k = par.ne$k, n = par.ne$n.obs[i], p = par.ne$p, nu = par.ne$nu)
+    tmp <- foreach(j = seq_len(par.ne$n.sims),
+                   .packages = c("MCMCpack", "GMCM", "correlateR")) %dopar% {
+      return(test.grem(k = par.ne$k, n = par.ne$n.obs[i],
+                       p = par.ne$p, nu = par.ne$nu))
+
     }
     res <- c(res, tmp)
     cat("loop =", i, "of", length(par.ne$n.obs), "done after",
         (proc.time()-st)[3] %/% 60, "mins.\n")
   }
-  rm(tmp)
   resave(res, file = "saved.RData")
+  rm(tmp)
 }
 ## ---- end ----
 
 
 
 ## ---- numerical_experiment_plot ----
-par(mfrow = c(2,2))
+par(mfrow = c(1,2))
 df <- as.data.frame(t(sapply(res, SSEs)))
 df <- aggregate(cbind(SSE.grem.em, SSE.grem.mle, SSE.grem.mom, SSE.mean) ~
                   n + nu + k + p, mean, data = df)
@@ -229,17 +228,17 @@ boxplot(em ~ n, data = res.nu, outline = FALSE, main = "nu", col = "blue")
 points(jitter(res.nu$n) - res.nu$k, res.nu$em, cex = 0.2, pch = 16)
 abline(h = par.ne$nu, lwd = 3, lty = 2)
 
-# B
-boxplot(em ~ n, data = res.psi.diag, outline = FALSE,
-        main = "diagonal of Psi", col = "blue")
-#with(res.psi.diag, points(jitter(n) - k, em, cex = 0.2, pch = 16, col = "blue"))
-abline(h = res[[1]]$Psi[1,1], lwd = 3, lty = 2)
-
-# C
-boxplot(em ~ n, data = res.psi.lower, outline = FALSE,
-        main = "Off-diagnal of Psi", col = "blue")
-#with(res.psi.lower,points(jitter(n) - k, em, cex = 0.2, pch = 16, col = "blue"))
-abline(h = res[[1]]$Psi[1,2], lwd = 3, lty = 2)
+# # B
+# boxplot(em ~ n, data = res.psi.diag, outline = FALSE,
+#         main = "diagonal of Psi", col = "blue")
+# #with(res.psi.diag, points(jitter(n) - k, em, cex = 0.2, pch = 16, col = "blue"))
+# abline(h = res[[1]]$Psi[1,1], lwd = 3, lty = 2)
+#
+# # C
+# boxplot(em ~ n, data = res.psi.lower, outline = FALSE,
+#         main = "Off-diagnal of Psi", col = "blue")
+# #with(res.psi.lower,points(jitter(n) - k, em, cex = 0.2, pch = 16, col = "blue"))
+# abline(h = res[[1]]$Psi[1,2], lwd = 3, lty = 2)
 
 ## ---- end ----
 
@@ -278,10 +277,10 @@ e <- function(i, p) { # ith standard basis vector of length p
 par.xda <- list(K = 3,
                 n.obs = 40,
                 n.obs.valid = 100,
-                n.runs = 100, #500,
+                n.runs = 1000,
                 p.dims = c(5, 10, 20, 35))
 
-#set.seed(15)
+set.seed(15)
 #rm(misclassification.risks)
 if (!exists("misclassification.risks") | recompute) {
 
@@ -322,41 +321,35 @@ if (!exists("misclassification.risks") | recompute) {
         theta$mu <- list(mu1, mu2, mu3)
       }
 
-      mis.risk <-
-        structure(rep(NA, 3*par.xda$n.runs), dim = c(par.xda$n.runs, 3),
-                  dimnames = list(NULL, c("LDA", "QDA", "HDA")))
+      misclassification.risks[[p.index]][[s]] <-
+        foreach(i = seq_len(par.xda$n.runs), .combine = rbind) %dopar% {
 
-      for (i in seq_len(par.xda$n.runs)) {
-        cat("i =", i, " "); flush.console()
-
-        repeat {
-          train <- to.df(SimulateGMMData(par.xda$n.obs,       theta = theta))
-          valid <- to.df(SimulateGMMData(par.xda$n.obs.valid, theta = theta))
-          # Make sure that we have a least two observations in each group
-          if (all(table(train$classes) > 2) && all(table(valid$classes) > 2)) {
-            break
+          repeat {
+            train <- to.df(SimulateGMMData(par.xda$n.obs,       theta = theta))
+            valid <- to.df(SimulateGMMData(par.xda$n.obs.valid, theta = theta))
+            # Make sure that we have a least two observations in each group
+            if (all(table(train$classes) > 2) && all(table(valid$classes) > 2)) {
+              break
+            }
           }
+
+          qda.train <- qda.fit(train$classes, select(train, -classes))
+          lda.train <- qda2lda(qda.train)
+          hda.train <- hda.fit(train$classes, select(train, -classes), eps = 1e-1)
+
+          lda.pred <- lda.predict(lda.train, newdata = select(valid, -classes))
+          qda.pred <- qda.predict(qda.train, newdata = select(valid, -classes))
+          hda.pred <- hda.predict(hda.train, newdata = select(valid, -classes))
+
+          conf.lda <- table(True = valid$classes, Pred = lda.pred$class)
+          conf.qda <- table(True = valid$classes, Pred = qda.pred$class)
+          conf.hda <- table(True = valid$classes, Pred = hda.pred$class)
+
+          return(c(misclassificationRisk(conf.lda),
+                   misclassificationRisk(conf.qda),
+                   misclassificationRisk(conf.hda)))
         }
-
-        qda.train <- qda.fit(train$classes, select(train, -classes))
-        lda.train <- qda2lda(qda.train)
-        hda.train <- hda.fit(train$classes, select(train, -classes), eps = 1e-1)
-
-        lda.pred <- lda.predict(lda.train, newdata = select(valid, -classes))
-        qda.pred <- qda.predict(qda.train, newdata = select(valid, -classes))
-        hda.pred <- hda.predict(hda.train, newdata = select(valid, -classes))
-
-        conf.lda <- table(True = valid$classes, Pred = lda.pred$class)
-        conf.qda <- table(True = valid$classes, Pred = qda.pred$class)
-        conf.hda <- table(True = valid$classes, Pred = hda.pred$class)
-
-        mis.risk[i, ] <- c(misclassificationRisk(conf.lda),
-                           misclassificationRisk(conf.qda),
-                           misclassificationRisk(conf.hda))
-        cat("\n")
-      }
-      misclassification.risks[[p.index]][[s]] <- mis.risk
-
+      colnames(misclassification.risks[[p.index]][[s]]) <- c("LDA", "QDA", "HDA")
     }
   }
 
