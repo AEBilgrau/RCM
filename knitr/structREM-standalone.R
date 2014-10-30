@@ -19,16 +19,16 @@ registerDoMC(detectCores())
 
 ## ---- auxiliary_functions ----
 
+#
+# HDA
+#
+
 # Density of the GREM model
 dgrem <- correlateR::dgrem
 
 # Simulate data
-test.grem <- function(k = 4,
-                      n = 10,  # Observations in each dataset
-                      ns = rep(n, k),
-                      p = 10,
-                      nu = 15,
-                      Psi) {
+test.grem <- function(k = 4, n = 10, ns = rep(n, k), p = 10,
+                      nu = 15, Psi) {
   stopifnot(nu > p + 1)
   rwishart <- function(n, Sigma) {
     X <- rmvnormal(n = n, mu = rep(0, nrow(Sigma)), sigma = Sigma)
@@ -48,13 +48,13 @@ test.grem <- function(k = 4,
 
   # Fit model
   t1 <- system.time({
-    res1 <- fit.grem(S, ns, eps = 1e-2)
+    res1 <- fit.grem(Psi.init = diag(p), nu.init = p + 1, S, ns, eps = 1e-2)
   })
   t2 <- system.time({
-    res2 <- correlateR:::fit.grem.MLE(S = S, ns = ns, eps = 1e-2)
+    res2 <- fit.grem.MLE(nu.init = p + 1, S = S, ns = ns, eps = 1e-2)
   })
   t3 <- system.time({
-    res3 <- correlateR:::fit.grem.moment(S = S, ns = ns, eps = 1e-2)
+    res3 <- fit.grem.moment(nu.init = p + 1e7, S = S, ns = ns, eps = 1e-2)
   })
 
   expected.covariance <- Psi/(nu - p - 1)
@@ -64,13 +64,13 @@ test.grem <- function(k = 4,
   grem.mom.covariance <- res3$Psi/(res3$nu - p - 1)
 
   return(list(expected = expected.covariance,
-              mean     = mean.covariance,
+              mean = mean.covariance,
               grem.em  = grem.em.covariance,
               grem.mle = grem.mle.covariance,
               grem.mom = grem.mom.covariance,
-              res.em   = res1,
-              res.mle  = res2,
-              res.mom  = res3,
+              res.em = res1,
+              res.mle = res2,
+              res.mom = res3,
               t1 = t1, t2 = t2, t3 = t3,
               Sigmas = Sigmas, S = S, k = k,
               ns = ns, nu = nu, Psi = Psi))
@@ -156,32 +156,32 @@ hda.predict <- function(hda.fit, newdata) {
 
 
 ## ---- numerical_experiment ----
-par.ne <- list(k = 3, nu = 15, p = 10, n.sims = 2000,
+par.ne <- list(k = 3,
+               nu = 15,
+               p = 10,
+               n.sims = 1000,
                n.obs = seq(4, 10, by = 1))
+#rm(res)
 if (!exists("res") | recompute) {
   set.seed(64403101)
   st <- proc.time()
   res <- list()
   for (i in seq_along(par.ne$n.obs)) {
-    tmp <- foreach(j = seq_len(par.ne$n.sims),
-                   .packages = c("MCMCpack", "GMCM", "correlateR")) %dopar% {
-      return(test.grem(k = par.ne$k, n = par.ne$n.obs[i],
-                       p = par.ne$p, nu = par.ne$nu))
-
+    tmp <- foreach(j = seq_len(par.ne$n.sims)) %dopar% {
+      test.grem(k = par.ne$k, n = par.ne$n.obs[i], p = par.ne$p, nu = par.ne$nu)
     }
     res <- c(res, tmp)
     cat("loop =", i, "of", length(par.ne$n.obs), "done after",
         (proc.time()-st)[3] %/% 60, "mins.\n")
   }
-  resave(res, file = "saved.RData")
   rm(tmp)
+  resave(res, file = "saved.RData")
 }
 ## ---- end ----
 
 
 
 ## ---- numerical_experiment_plot ----
-par(mfrow = c(1,2))
 df <- as.data.frame(t(sapply(res, SSEs)))
 df <- aggregate(cbind(SSE.grem.em, SSE.grem.mle, SSE.grem.mom, SSE.mean) ~
                   n + nu + k + p, mean, data = df)
@@ -200,58 +200,49 @@ legend("topright", legend = c("GREM (EM)", "pool",
 axis(1)
 axis(2)
 grid()
-
-
-get.nu <- function(x) {
-  c(n  = x$ns[1], k  = x$k, nu = x$nu, p  = nrow(x$Psi),
-    em = x$res.em$nu, mle = x$res.mle$nu, mom = x$res.mom$nu)
-}
-
-get.psi.diag <- function(x) {
-  cbind(n  = x$ns[1], k  = x$k, nu = x$nu, p  = nrow(x$Psi),
-        em = diag(x$res.em$Psi), mle = diag(x$res.mle$Psi),
-        mom = diag(x$res.mom$Psi))
-}
-
-get.psi.lower.tri <- function(x) {
-  cbind(n  = x$ns[1], k  = x$k, nu = x$nu, p  = nrow(x$Psi),
-        em = get.lower.tri(x$res.em$Psi), mle = get.lower.tri(x$res.mle$Psi),
-        mom = get.lower.tri(x$res.mom$Psi))
-}
-
-res.nu <- as.data.frame(t(sapply(res, get.nu)))
-res.psi.diag <- as.data.frame(do.call(rbind, lapply(res, get.psi.diag)))
-res.psi.lower <- as.data.frame(do.call(rbind, lapply(res, get.psi.lower.tri)))
-
-# A
-boxplot(em ~ n, data = res.nu, outline = FALSE, main = "nu", col = "blue")
-points(jitter(res.nu$n) - res.nu$k, res.nu$em, cex = 0.2, pch = 16)
-abline(h = par.ne$nu, lwd = 3, lty = 2)
-
-# # B
-# boxplot(em ~ n, data = res.psi.diag, outline = FALSE,
-#         main = "diagonal of Psi", col = "blue")
-# #with(res.psi.diag, points(jitter(n) - k, em, cex = 0.2, pch = 16, col = "blue"))
-# abline(h = res[[1]]$Psi[1,1], lwd = 3, lty = 2)
-#
-# # C
-# boxplot(em ~ n, data = res.psi.lower, outline = FALSE,
-#         main = "Off-diagnal of Psi", col = "blue")
-# #with(res.psi.lower,points(jitter(n) - k, em, cex = 0.2, pch = 16, col = "blue"))
-# abline(h = res[[1]]$Psi[1,2], lwd = 3, lty = 2)
-
 ## ---- end ----
 
+# par.ne$nu
+# str(res[[1]])
+# res[[1]]$res.mle$nu
+# x <- res[[1]]
 #
-# HDA vs LDA vs QDA
+# get.nu <- function(x) {
+#   c(n  = x$ns[1], k  = x$k, nu = x$nu, p  = nrow(x$Psi),
+#     em = x$res.em$nu, mle = x$res.mle$nu, mom = x$res.mom$nu)
+# }
+# get.psi.diag <- function(x) {
+#   cbind(n  = x$ns[1], k  = x$k, nu = x$nu, p  = nrow(x$Psi),
+#         em = mean(diag(x$res.em$Psi))
+#         mle = mean(diag(x$res.mle$nu$Psi)),
+#         mom = diag(x$res.mom$nu)
+# }
 #
 
-# Testing
-# theta <- rtheta()
-# theta$pie <- c(1,1,1)/3
+# nu.res <- as.data.frame(t(sapply(res, get.nu)))
 #
-# train <- to.df(SimulateGMMData(n = 100, theta = theta))
-# valid <- to.df(SimulateGMMData(n = 1000, theta = theta))
+# boxplot(em ~ n, data = nu.res, col = "grey", outline = FALSE)
+# points(jitter(nu.res$n) - nu.res$k, nu.res$em, cex = 0.2, pch = 16)
+# abline(h = par.ne$nu)
+#
+#
+#
+#
+#
+# abline(v = par.ne$nu)
+# (sapply(res, function(x) x[["res.mle"]][["nu"]]))
+# res$
+
+  #
+  # HDA vs LDA vs QDA
+  #
+
+  # Testing
+  # theta <- rtheta()
+  # theta$pie <- c(1,1,1)/3
+  #
+  # train <- to.df(SimulateGMMData(n = 100, theta = theta))
+  # valid <- to.df(SimulateGMMData(n = 1000, theta = theta))
 #
 # myxda.train <- lda.fit(train$classes, vars = select(train, -classes))
 # myxda.pred  <- lda.predict(myxda.train, select(valid, -classes))
@@ -277,10 +268,10 @@ e <- function(i, p) { # ith standard basis vector of length p
 par.xda <- list(K = 3,
                 n.obs = 40,
                 n.obs.valid = 100,
-                n.runs = 1000,
+                n.runs = 100, #500,
                 p.dims = c(5, 10, 20, 35))
 
-set.seed(15)
+#set.seed(15)
 #rm(misclassification.risks)
 if (!exists("misclassification.risks") | recompute) {
 
@@ -321,35 +312,41 @@ if (!exists("misclassification.risks") | recompute) {
         theta$mu <- list(mu1, mu2, mu3)
       }
 
-      misclassification.risks[[p.index]][[s]] <-
-        foreach(i = seq_len(par.xda$n.runs), .combine = rbind) %dopar% {
+      mis.risk <-
+        structure(rep(NA, 3*par.xda$n.runs), dim = c(par.xda$n.runs, 3),
+                  dimnames = list(NULL, c("LDA", "QDA", "HDA")))
 
-          repeat {
-            train <- to.df(SimulateGMMData(par.xda$n.obs,       theta = theta))
-            valid <- to.df(SimulateGMMData(par.xda$n.obs.valid, theta = theta))
-            # Make sure that we have a least two observations in each group
-            if (all(table(train$classes) > 2) && all(table(valid$classes) > 2)) {
-              break
-            }
+      for (i in seq_len(par.xda$n.runs)) {
+        cat("i =", i, " "); flush.console()
+
+        repeat {
+          train <- to.df(SimulateGMMData(par.xda$n.obs,       theta = theta))
+          valid <- to.df(SimulateGMMData(par.xda$n.obs.valid, theta = theta))
+          # Make sure that we have a least two observations in each group
+          if (all(table(train$classes) > 2) && all(table(valid$classes) > 2)) {
+            break
           }
-
-          qda.train <- qda.fit(train$classes, select(train, -classes))
-          lda.train <- qda2lda(qda.train)
-          hda.train <- hda.fit(train$classes, select(train, -classes), eps = 1e-1)
-
-          lda.pred <- lda.predict(lda.train, newdata = select(valid, -classes))
-          qda.pred <- qda.predict(qda.train, newdata = select(valid, -classes))
-          hda.pred <- hda.predict(hda.train, newdata = select(valid, -classes))
-
-          conf.lda <- table(True = valid$classes, Pred = lda.pred$class)
-          conf.qda <- table(True = valid$classes, Pred = qda.pred$class)
-          conf.hda <- table(True = valid$classes, Pred = hda.pred$class)
-
-          return(c(misclassificationRisk(conf.lda),
-                   misclassificationRisk(conf.qda),
-                   misclassificationRisk(conf.hda)))
         }
-      colnames(misclassification.risks[[p.index]][[s]]) <- c("LDA", "QDA", "HDA")
+
+        qda.train <- qda.fit(train$classes, select(train, -classes))
+        lda.train <- qda2lda(qda.train)
+        hda.train <- hda.fit(train$classes, select(train, -classes), eps = 1e-1)
+
+        lda.pred <- lda.predict(lda.train, newdata = select(valid, -classes))
+        qda.pred <- qda.predict(qda.train, newdata = select(valid, -classes))
+        hda.pred <- hda.predict(hda.train, newdata = select(valid, -classes))
+
+        conf.lda <- table(True = valid$classes, Pred = lda.pred$class)
+        conf.qda <- table(True = valid$classes, Pred = qda.pred$class)
+        conf.hda <- table(True = valid$classes, Pred = hda.pred$class)
+
+        mis.risk[i, ] <- c(misclassificationRisk(conf.lda),
+                           misclassificationRisk(conf.qda),
+                           misclassificationRisk(conf.hda))
+        cat("\n")
+      }
+      misclassification.risks[[p.index]][[s]] <- mis.risk
+
     }
   }
 
@@ -422,11 +419,149 @@ rm(cm, csd, tmp, df.rownames)
 
 
 ## ---- one_dimensional_loglik ----
-par(mar = c(2,2,0,0) + 0.2)
-dl <- function(phi, k = 1, nu = 1, ni = 1, xi = 1)  {
-  k*nu/2*1/phi - (nu + ni)/2 * 1/(phi + xi^2)
+l <- function(psi, k = 1, nu = 1, ni = 1, xi = 1) {
+  k*nu/2*log(psi) - (nu + ni)/2*log(psi + xi^2)
 }
-phi <- seq(0.5, 10, by = 0.01)
-plot(phi, dl(phi), type = "l", col = "red", lwd = 2)
-abline(h = 0, col = "grey", lty = 2, lwd = 2)
+dl <- function(psi, k = 1, nu = 1, ni = 1, xi = 1)  {
+  k*nu/2*1/psi - (nu + ni)/2 * 1/(psi + xi^2)
+}
+par(mfrow = 1:2, mar = c(2, 2, 2, 0) + 0.2)
+psi <- seq(0.5, 10, by = 0.01)
+plot(psi, l(psi), type = "l", col = "red", lwd = 2, main = "loglik")
+abline(v = 1, col = "grey", lty = 2, lwd = 2)
+plot(psi, dl(psi), type = "l", col = "red", lwd = 2, main = "dloglik")
+abline(h = 0, v = 1, col = "grey", lty = 2, lwd = 2)
 ## ---- end ----
+
+
+## ---- log_gamma_ratio ----
+logGammaRatio <- function(x, a) {
+  lgamma(x + a) - lgamma(x) #= log(gamma(x + a)/gamma(x))
+}
+xs <- seq(0.01, 2, by = 0.01)
+par(mfrow = c(1,2), mar = c(2, 2, 0, 0)+ 0.5)
+plot(xs, logGammaRatio(xs, a = 2),    type = "l", xlab = "", ylab = "",
+     col = "red", lwd = 2)
+plot(xs, logGammaRatio(xs, a = 1e-3), type = "l", xlab = "", ylab = "",
+     col = "red", lwd = 2)
+## ---- end ----
+
+#
+# DLBCL analysis
+#
+
+## ---- dlbcl ----
+library("WGCNA")
+library("correlateR")
+library("Bmisc")
+library("affy")
+load("saved.RData")
+load("studies.RData")
+dlbcl.par <- list(top.n = 100)
+if (!exists("dlbcl.grem") | !exists("dlbcl.pool") |
+      !exists("var.pool") | recompute | TRUE) {
+  load("gep.ensg.RData")
+  vars      <- sapply(gep, function(x) rowSds(exprs(x))*(ncol(x) - 1))
+  var.pool  <- rowSums(vars)/(sum(sapply(gep, ncol)) - length(gep))
+  use.genes <- names(sort(var.pool, decreasing = TRUE)[seq_len(dlbcl.par$top.n)])
+  gep <- lapply(gep, function(x) exprs(x)[use.genes, ])
+  ns  <- sapply(gep, ncol)
+  S   <- lapply(gep, function(x) scatter(t(x)))
+  dlbcl.grem <- fit.grem(S = S, ns = ns, verbose = TRUE)
+  dlbcl.pool <- Reduce("+", S)/sum(ns - 1)
+  dimnames(dlbcl.grem$Psi) <- dimnames(dlbcl.pool)
+  resave(dlbcl.grem, dlbcl.pool, use.genes, var.pool, file = "saved.RData")
+}
+
+dlbcl.exp <- with(dlbcl.grem, Psi2Sigma(Psi, nu))
+
+## ---- dlbcl_plot_1 ----
+# hist((get.lower.tri(dlbcl.adjMat)), main = "cor", breaks = 50,
+#      col = "grey", prob = TRUE)
+dlbcl.adjMat <- abs(cov2cor(dlbcl.exp))
+hist(-log(get.lower.tri(dlbcl.adjMat)), main = "-log(cor)", breaks = 50,
+     col = "grey", prob = TRUE)
+
+
+## ---- dlbcl_plot_2 ----
+dlbcl.tom <- TOMdist(adjMat = dlbcl.adjMat)
+dimnames(dlbcl.tom) <- dimnames(dlbcl.adjMat) # Keep names
+dlbcl.clust  <- flashClust(as.dist(dlbcl.tom), method = "average")
+dlbcl.modules <- labels2colors(cutreeDynamicTree(dlbcl.clust, minModuleSize=9))
+names(dlbcl.modules) <- dlbcl.clust$labels
+
+
+o <- dlbcl.clust$order
+layout(rbind(c(0,0,5,6), c(0,0,2,6), c(4,1,3,6)),
+       widths = c(4, 1, 15, 15), heights = c(4, 1, 15))
+TOMplot(dissim = dlbcl.adjMat, dendro = dlbcl.clust,
+        Colors = dlbcl.modules, setLayout = FALSE)
+
+layout.custom <- function(graph,...) {
+  l <- layout.circle(graph)
+  layout.fruchterman.reingold(graph, niter = 10000,
+                              area = vcount(graph)/2,
+                              maxdelta = 10*vcount(graph),
+                              repulserad = vcount(graph),
+                              weights = 10*E(graph)$weight,
+                              start = l,
+                              ...)
+}
+get.size <- function(x) {
+  s <- rowSums(x)
+  return((s - min(s))/max(s))
+}
+tmp <- soft(dlbcl.adjMat[o,o], .175)
+gr <- plotModuleGraph(tmp,
+                      labels = "",
+                      diff.exprs = get.size(tmp)*3 + 3,
+                      layout = layout.custom,
+                      mark.shape = .5,
+                      ecol = "black",
+                      vcol = dlbcl.modules[o])
+scale.layout <- function(x) {
+  xx <- apply(x, 2, function(x) (x - min(x))/max(x - min(x)))
+  return(2*xx - 1)
+}
+points(scale.layout(gr$layout), pch = 16, cex = 0.7)
+
+# dlbcl.g <- graph.adjacency(tmp, mode = "undirected",
+#                            weighted = TRUE, diag = FALSE)
+# library("ape")
+# plotHierarchicalEdgeBundles(as.phylo(dlbcl.clust),
+#                             dlbcl.g,
+#                             beta = 0.4,
+#                             use.mrca = FALSE,
+#                             simplify = FALSE,
+#                             type = "fan",
+#                             debug = FALSE,
+#                             args.lines = list(col = "#FF000021", lwd = 2))
+# aa <- plot.phylo(as.phylo(dlbcl.clust), type = "fan")
+
+# ## ---- dlbcl_go_analysis ----
+# library("biomaRt")
+# if (!exists("gene.info") | recompute) {
+#   mart <- useMart(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")
+#   attributes <- c("hgnc_symbol", "chromosome_name", "start_position",
+#                   "end_position", "strand", "band", "ensembl_gene_id", "go_id",
+#                   "name_1006", "definition_1006", "go_linkage_type",
+#                   "namespace_1003")
+#   gene.info <-
+#     getBM(attributes = attributes,
+#           filters = "arrayexpress", #"ens_hs_gene",
+#           values = gsub("_at$", "", names(sort(var.pool, decreasing = TRUE))),
+#           mart = mart)
+#
+#   resave(gene.info, file = "saved.RData")
+# }
+#
+# # Mappings between ENSG and GO id
+# gid2go <- split(gene.info$go_id, gene.info$ensembl_gene_id)
+#
+#
+# dlbcl.modules
+#
+#
+#
+# 1-phyper(q  = 69, m = 1870, n = 10000 - 1870, k = 290)
+
