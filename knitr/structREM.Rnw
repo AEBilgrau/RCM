@@ -16,11 +16,9 @@ options(width = 80)
 opts_chunk$set(size = "footnotesize", fig.align = "center")
 read_chunk("structREM-standalone.R")
 @
-<<initialize, echo=FALSE, results='hide', message=FALSE>>=
+<<initialize_script, echo=FALSE, results='hide', message=FALSE>>=
 @
 <<auxiliary_functions, echo=FALSE>>=
-@
-<<discriminant_analysis, echo=FALSE>>=
 @
 
 \maketitle
@@ -130,7 +128,7 @@ Since the inverse Wishart distribution is conjugate to the multivariate gaussian
     \frac{|\vPsi|^\frac{\nu}{2} \Gamma_p\!\left(\frac{\nu+n_i}{2}\right)}
          {2^\frac{n_i p}{2} |\vPsi +\vX_i^\top\vX_i|^\frac{\nu+n_i}{2}
           \Gamma_p\!\left(\frac{\nu}{2}\right)}          \notag\\
-  &= c + \sum_{i=1}^k \!\Big[
+  &= c + \sum_{i=1}^k \!\bigg[
             \frac{\nu}{2}  \log |\vPsi|
             + \log \Gamma_p\!\left(\frac{\nu + n_i}{2}\right)
             - \frac{\nu + n_i}{2}\log|\vPsi +\vX_i^\top\vX_i|
@@ -344,6 +342,9 @@ That is, equations \eqref{eq:meanestimate}, \eqref{eq:mle}, or \eqref{eq:em} def
 This algorithm utilize the results about the log-likelihood and thus provide us with a guarantee of convergence along with the advantage of a very simple implementation.
 However the obvious disadvantage is that the identified maxima might be a saddle-point when considering the log-likelihood jointly in $(\vPsi, \nu)$.
 
+
+
+
 \section{Assessment of estimation procedure}
 <<numerical_experiment, echo=FALSE, results='hide'>>=
 @
@@ -375,21 +376,79 @@ where
 \end{align*}
 
 For each $n$ from $\Sexpr{min(par.ne$n.obs)}$ to $\Sexpr{max(par.ne$n.obs)}$, the squared sum of errors for each estimator, $\text{SSE}(\hvSigma)$, where computed for $\Sexpr{par.ne[["n.sims"]]}$ datasets and the average of these values seen in Figure \ref{fig:numerical_experiment_plot} as function of the number of samples in each dataset $n_i$.
-<<numerical_experiment_plot, echo=FALSE, results='markup', fig.pos="htb", fig.height=7, fig.width=7*2, out.width = ".8\\linewidth", fig.scap = "", fig.cap=paste0("The average sum of squared errors (SSE), of ", par.ne$n.sims, " simulations, as a function of the number of samples $n_i$ in each study.")>>=
+<<numerical_experiment_plot, echo=FALSE, results='markup', fig.pos="tb", fig.height=7, fig.width=7*2, out.width = ".8\\linewidth", fig.scap = "", fig.cap=paste0("\\it The average sum of squared errors (SSE), of ", par.ne$n.sims, " simulations, as a function of the number of samples $n_i$ in each study.")>>=
 @
 Unsurprisingly, the proper EM estimation outperform the simple alternative estimates.
 We see that the EM estimation is the superior to that of the approximate MLE and moment.
 Also seen is that the moment estimate yield the exact same results as using the mean, which could be expected by looking at \eqref{eq:meanestimate}, \eqref{eq:sigma_plugin}, and \eqref{eq:pooledest}.\fxnote{Is this surprising?}
 
-The algorithm along with the different estimators were implemented in the statistical programming language R \cite{R}.
+
+\subsection{Implementation and availability}
+The algorithm along with the different estimators is implemented in the statistical programming language R \cite{R} with workhorse functions in C++ using packages Rcpp and RcppArmadillo \citep{Eddelbuettel2011, RcppArmadillo}.
+
+
 
 
 \section{Applications}
-\subsection{DLBCL graphical meta-analysis}
+\subsection{Graphical meta-analysis in DLBCL}
+<<dlbcl_analysis, echo=FALSE, results='hide', message=FALSE>>=
+@
+Diffuse large B-cell lymphoma (DLBCL) is an aggresive cancer subtype of accounting for approximately $31 \%$ \citep{Project1997} of non-Hodgkin's lymphoma (NHL) which itself consititue about $90 \%$ of all lymphomas.
+A further molecular subclassfication of DLBCL into germinal centre B-cell-like (GCB) DBLCL and activated B-cell-like (ABC) DLCBL exist with very large differences at gene expression and molecular level.
+The GCB cases exhibit a clinically favorable overall survial prognosis compared to that of ABCs.
+
+\subsubsection{Data and preprocessing}
+A large amount of DLBCL datasets are now available online at the NCBI (National Center for Biotechnology Information) Gene Expression Omnibus (GEO) website. We downloaded 10 DLBCL gene expression studies and preprocessed using the custom brainarray chip definition files (CDF) and RMA-normalization [7, 3]. The corresponding GEO-accession numbers are \Sexpr{paste(grep("XXX", unique(studies$GSE), invert = TRUE, value = TRUE), collapse = ", ")} of various microarray platforms. The downloaded data together with our own yields a total of \Sexpr{rowSums(dlbcl.dims)["Samples"]} samples with studies sizes in the range \Sexpr{paste(range(dlbcl.dims["Samples",]), collapse = "-")}. The summarization using brainarray CDFs facilitates cross-platform integration.
+
+After the RMA normalization and summarization, the data was brought to a common scale by quantile normalizing all data to the common cumulative distribution function of all arrays.
+
+The datasets were reduced to the total of \Sexpr{dim(gep[[1]])["Features"]} common features represented in all studies and array platforms.
+
+\subsubsection{Graphical meta-analysis}
+We wanted to perform coexpression network (i.e.\ correlation network) analysis across all datasets.
+For each dataset the scatter matrix $\vS_i$ of the top \Sexpr{dlbcl.par$top.n} most variable genes (as measured by the pooled variance across studies) was computed as the suffcient statistics along with the number of samples.
+
+The parameters of the GREM model was estimated using the EM algorithm and yielded
+
+<<Psi, echo=FALSE, fig.height=7/2, fig.width = 7>>=
+r <- order(rowSums(abs(dlbcl.grem$Psi)))
+img <- dlbcl.grem$Psi[r,r]
+img <- img[ncol(img):1,]
+par(mar = c(0,0,0,0))
+graphics::image(img, axes = FALSE, asp = 1,
+                col = heat.colors(20))
+text(-0.05, 0.5, expression(hat(bold(Psi)) == phantom(a)))
+@
+
+\noindent and a $\hat{\nu} = \Sexpr{round(dlbcl.grem[["nu"]], 2)}$.\fxnote{Interpretation of $\nu$?}
+Subsequently, $\hvPsi$ was scaled to the corresponding correlation matrix $\hat{\vec{R}}$.
+Note, that the expected covariance $(\nu - p - 1)^{-1}\hvPsi$ yields the same correlation matrix $\hat{\vec{R}}$.
+Figure \ref{fig:dlbcl_plot_1} shows a histogram of the distibution of correlations.
+
+<<dlbcl_plot_1, echo = FALSE, fig.height=7/3, fig.width=7, fig.pos="htb", fig.scap = "", fig.cap="\\it Distribution of the correlation coefficents given by the entries of $\\vec{\\hat{R}}$.">>=
+@
+
+<<dlbcl_plot_2, echo = FALSE, message=FALSE, results='hide', fig.height=7, fig.width=2*7, fig.pos="htb", fig.scap = "", fig.cap="\\it Left: dendrograms of the hierachical clustering of the TOM-distance measure, the modules based on the clustering, and the correlation matrix. Right: a graphical representation of the correlation matrix as laid out by the Fruchterman-Reingold force-based algorithm using the edge-weights. The nodes are coloured after the identified modules with sizes proportional to their connectivity. The opacity of the edges are drawn as function of the edge weight.">>=
+@
+
+We have thus estimated a correlation matrix across all studies to which standard correlation network analyses can be employed.
+To identify subgraphs, we used agglomerative hierachical clustering with \Sexpr{dlbcl.clust$method} linkage on the distance measure defined by topological overlap matrix (TOM) \citep{Horvath2011} using the WGCNA-package \citep{Langfelder2008}.
+The tree was pruned at dynamic heights (using the function \texttt{cutreeDynamicTree}) which identified \Sexpr{length(unique(dlbcl.modules))} tightly connected subgraphs or modules coloured and named arbitrarily by colors.
+Figure \ref{fig:dlbcl_plot_2} show these results.
+The sizes of the modules are:
+
+<<>>=
+table(dlbcl.modules)
+@
+
+Next, the modules were screened for biological relevance using GO (Gene Ontology) enrichment analysis.
+
 
 \subsection{Supervised classification}
+<<discriminant_analysis, echo=FALSE, message=FALSE, results='hide'>>=
+@
 An quite different application of the GREM estimate can be found as a novel discriminant analysis.
-As seen below, the estimates obtained can be utilized in supervised learning as a intermediate case of linear discriminant analysis (LDA) and quadratic discriminant analysis (QDA).
+As seen below, the estimates obtained can be utilized in supervised learning as a intermediate case of linear discriminant analysis (LDA) and quadratic discriminant analysis (QDA).x
 
 Suppose $Y$ is a random variable denoting the class $1, ..., k$ and suppose $\vx$ is a random vector of the explanatory variables. Recall that QDA (and LDA) finds the class $y$ maximizing
 \begin{align*}
@@ -458,8 +517,6 @@ However, we recognize that further and more sophisticated simulation experiments
 
 
 
-
-
 \section{Concluding remarks}
 While the improvements are modest, the results above demonstrate an advantage of modelling the inter-study variance as a hierarchical random effects model. However, the virtue of such a model is not from improvement in accuracy alone. Also desirable is the explicit quantification of the inter-study variance. If $\hat{\nu}$ is estimated to be large, the studies exhibit  a largely common covariance structure, and vice-versa when $\hat{\nu}$ is small.
 
@@ -518,7 +575,6 @@ which was as wanted.
 
 
 
-
 \section{Non-concavity of the log-likelihood}
 \label{sec:concaveloglik}
 The likelihood function is not log-concave in general.
@@ -526,12 +582,12 @@ This section analyse the (non)-concavity of the log-likelihood function,
 \small
 \begin{align}
   &\ell\!\left(\vPsi, \nu \big| \vX_1, ..., \vX_k \right) \notag \\
-  &= c + \sum_{i=1}^k \left(
+  &= c + \sum_{i=1}^k \bigg[
             \frac{\nu}{2}  \log |\vPsi|
             + \log \Gamma_p\!\left(\frac{\nu + n_i}{2}\right)  %\notag\\
            - \frac{\nu + n_i}{2}\log|\vPsi +\vS_i|
             - \log \Gamma_p\!\left(\frac{\nu}{2}\right)
-            \right).
+            \bigg].
             \label{eq:appendloglik}
 \end{align}
 \normalsize
@@ -564,7 +620,7 @@ which is not clearly convex. We see, that
   \lim_{\psi \to \infty} \ell'(\psi) = 0
 \end{align*}
 We draw the likelihood and its derivative with $k = 1$ and other appropriately chosen parameters as seen in Figure \ref{fig:one_dimensional_loglik} generated by
-<<one_dimensional_loglik, echo=-3, fig.height=3, fig.width=6, fig.pos="htb", ig.scap = "", fig.cap = "One-dimensional log-likelihood and its the derivative.">>=
+<<one_dimensional_loglik, echo=-3, fig.height=3, fig.width=6, fig.pos="htb", ig.scap = "", fig.cap = "\\it One-dimensional log-likelihood and its the derivative.">>=
 @
 Clearly, the log-likelihood $\ell$ is not log-concave since a differentiable function of one variable is concave if and only if its derivative is monotonically non-increasing.
 A unique root, however, is seen.
@@ -602,7 +658,7 @@ which can be seen to be concave since $n_i \geq 2$ for all $i$ and
 is concave for all $x>0$ and $a > 0$.
 While we do not provide a proof of this the mapping is plotted in Figure \ref{fig:log_gamma_ratio}.
 Hence, the log-likelihood is log-concave in $\nu$.
-<<log_gamma_ratio, echo=-3, fig.height=4.5/2, fig.width=4.5, fig.pos="ht", fig.scap = "", fig.cap="Plots of the mapping given in \\eqref{eq:logGammaRatio} for diffent values of $a$.">>=
+<<log_gamma_ratio, echo=-3, fig.height=4.5/2, fig.width=4.5, fig.pos="ht", fig.scap = "", fig.cap="\\it Plots of the mapping given in \\eqref{eq:logGammaRatio} for diffent values of $a$.">>=
 @
 \end{proof}
 
@@ -637,7 +693,7 @@ This section proves the following lemmas which imply the following proposition.
 
 \begin{lemma}
 \label{lem:elltominusinfty}
-If $\nu$ is fixed and $\sum_{a=1}^k x_a \geq p$ then the log-likelihood $\ell(\vPsi) \to -\infty$ whenever $\exists i : \lambda_i \to 0$, where $\lambda_i$ is a eigenvalue of $\vPsi$.
+If $\nu$ is fixed and $n_\bullet = \sum_{a=1}^k n_a \geq p$ then the log-likelihood $\ell(\vPsi) \to -\infty$ whenever $\exists i : \lambda_i \to 0 \vee \lambda_i \to \infty$, where $\lambda_i$ is a eigenvalue of $\vPsi$.
 \end{lemma}
 
 \begin{lemma}
@@ -665,7 +721,15 @@ Lemma \ref{lem:negativesemidefinite}.
 
 \begin{proof}[Proof of Lemma \ref{lem:elltominusinfty}]
 Assume the hypothesis of the lemma and consider the expression given in \eqref{eq:loglik2}.
-Let
+If $\lambda_i \to \infty$ then
+\begin{align*}
+  \ell(\vPsi)
+  &= \frac{k\nu}{2}\log|\vPsi| - \sum_{i = 1}^k \frac{\nu + n_i}{2} \log |\vPsi+\vS_i| \\
+  &\leq \frac{k\nu}{2}\log|\vPsi| - \sum_{i = 1}^k \frac{\nu + n_i}{2} \log |\vPsi|
+  =  - \frac{n_\bullet}{2} \log |\vPsi| \to -\infty.
+\end{align*}
+This proves the first case where the largest eigenvalue diverge to infinity.
+Suppose $\lambda_i \to 0$ and let
 \begin{align*}
   C = \sum_{i = 1}^k \frac{(\nu + n_i)}{2} = \frac{k\nu}{2} + \frac{n_\bullet}{2},
 \end{align*}
@@ -843,6 +907,10 @@ Let $\vDelta_i = \vSigma_i^{-1}$, $\vTheta = \vPsi^{-1}$, and $\vS_i = \vX_i^\to
 \end{equation*}
 
 
+\section{Session Info}
+<<>>=
+sessionInfo()
+@
 
 \end{document}
 

@@ -1,6 +1,6 @@
 setwd("~/Documents/PhD/paper-structREM/knitr/")
 
-## ---- initialize ----
+## ---- initialize_script ----
 rm(list = ls())
 recompute <- FALSE
 library("Hmisc")
@@ -8,8 +8,13 @@ library("Bmisc")
 library("correlateR")
 library("GMCM")
 library("MASS")
+#library("MCMCpack")
+library("WGCNA")
+library("affy")
+library("biomaRt")
+library("ape")
 library("dplyr")
-library("MCMCpack")
+library("topGO")
 load("saved.RData")
 
 # Multicore support
@@ -161,7 +166,6 @@ par.ne <- list(k = 3,
                p = 10,
                n.sims = 1000,
                n.obs = seq(4, 10, by = 1))
-#rm(res)
 if (!exists("res") | recompute) {
   set.seed(64403101)
   st <- proc.time()
@@ -177,9 +181,6 @@ if (!exists("res") | recompute) {
   rm(tmp)
   resave(res, file = "saved.RData")
 }
-## ---- end ----
-
-
 
 ## ---- numerical_experiment_plot ----
 df <- as.data.frame(t(sapply(res, SSEs)))
@@ -202,61 +203,10 @@ axis(2)
 grid()
 ## ---- end ----
 
-# par.ne$nu
-# str(res[[1]])
-# res[[1]]$res.mle$nu
-# x <- res[[1]]
-#
-# get.nu <- function(x) {
-#   c(n  = x$ns[1], k  = x$k, nu = x$nu, p  = nrow(x$Psi),
-#     em = x$res.em$nu, mle = x$res.mle$nu, mom = x$res.mom$nu)
-# }
-# get.psi.diag <- function(x) {
-#   cbind(n  = x$ns[1], k  = x$k, nu = x$nu, p  = nrow(x$Psi),
-#         em = mean(diag(x$res.em$Psi))
-#         mle = mean(diag(x$res.mle$nu$Psi)),
-#         mom = diag(x$res.mom$nu)
-# }
-#
 
-# nu.res <- as.data.frame(t(sapply(res, get.nu)))
 #
-# boxplot(em ~ n, data = nu.res, col = "grey", outline = FALSE)
-# points(jitter(nu.res$n) - nu.res$k, nu.res$em, cex = 0.2, pch = 16)
-# abline(h = par.ne$nu)
+# Discriminant analysis
 #
-#
-#
-#
-#
-# abline(v = par.ne$nu)
-# (sapply(res, function(x) x[["res.mle"]][["nu"]]))
-# res$
-
-  #
-  # HDA vs LDA vs QDA
-  #
-
-  # Testing
-  # theta <- rtheta()
-  # theta$pie <- c(1,1,1)/3
-  #
-  # train <- to.df(SimulateGMMData(n = 100, theta = theta))
-  # valid <- to.df(SimulateGMMData(n = 1000, theta = theta))
-#
-# myxda.train <- lda.fit(train$classes, vars = select(train, -classes))
-# myxda.pred  <- lda.predict(myxda.train, select(valid, -classes))
-#
-# xda.train <- lda(classes ~ ., data = train)
-# xda.pred  <- predict(xda.train, newdata = valid)
-#
-# table(xda.pred$class, myxda.pred$class)
-#
-# plot(xda.pred$posterior[,1], myxda.pred$posterior[,1], cex = .2)
-# for (i in 2:3)
-#   points(xda.pred$posterior[,i], myxda.pred$posterior[,i], cex = .2, col = i)
-# abline(0, 1)
-
 
 ## ---- discriminant_analysis ----
 e <- function(i, p) { # ith standard basis vector of length p
@@ -268,11 +218,8 @@ e <- function(i, p) { # ith standard basis vector of length p
 par.xda <- list(K = 3,
                 n.obs = 40,
                 n.obs.valid = 100,
-                n.runs = 100, #500,
+                n.runs = 2500,
                 p.dims = c(5, 10, 20, 35))
-
-#set.seed(15)
-#rm(misclassification.risks)
 if (!exists("misclassification.risks") | recompute) {
 
   inner <- structure(vector("list", 4),
@@ -315,37 +262,41 @@ if (!exists("misclassification.risks") | recompute) {
       mis.risk <-
         structure(rep(NA, 3*par.xda$n.runs), dim = c(par.xda$n.runs, 3),
                   dimnames = list(NULL, c("LDA", "QDA", "HDA")))
+      misclassification.risks[[p.index]][[s]]  <-
+        tmp <- foreach(i = seq_len(par.xda$n.runs), .combine = rbind,
+                       .packages = c("dplyr", "correlateR")) %dopar% {
+          cat("i =", i, "\n"); flush.console()
 
-      for (i in seq_len(par.xda$n.runs)) {
-        cat("i =", i, " "); flush.console()
-
-        repeat {
-          train <- to.df(SimulateGMMData(par.xda$n.obs,       theta = theta))
-          valid <- to.df(SimulateGMMData(par.xda$n.obs.valid, theta = theta))
-          # Make sure that we have a least two observations in each group
-          if (all(table(train$classes) > 2) && all(table(valid$classes) > 2)) {
-            break
+          repeat {
+            train <- to.df(SimulateGMMData(par.xda$n.obs,       theta = theta))
+            valid <- to.df(SimulateGMMData(par.xda$n.obs.valid, theta = theta))
+            # Make sure that we have a least two observations in each group
+            if (all(table(train$classes) > 2) && all(table(valid$classes) > 2)){
+              break
+            }
           }
+
+          qda.train <- qda.fit(train$classes, dplyr::select(train, -classes))
+          lda.train <- qda2lda(qda.train)
+          hda.train <-
+            hda.fit(train$classes, dplyr::select(train, -classes), eps=1e-2)
+
+          lda.pred <-
+            lda.predict(lda.train, newdata = dplyr::select(valid, -classes))
+          qda.pred <-
+            qda.predict(qda.train, newdata = dplyr::select(valid, -classes))
+          hda.pred <-
+            hda.predict(hda.train, newdata = dplyr::select(valid, -classes))
+
+          conf.lda <- table(True = valid$classes, Pred = lda.pred$class)
+          conf.qda <- table(True = valid$classes, Pred = qda.pred$class)
+          conf.hda <- table(True = valid$classes, Pred = hda.pred$class)
+
+          return(c(misclassificationRisk(conf.lda),
+                   misclassificationRisk(conf.qda),
+                   misclassificationRisk(conf.hda)))
         }
-
-        qda.train <- qda.fit(train$classes, select(train, -classes))
-        lda.train <- qda2lda(qda.train)
-        hda.train <- hda.fit(train$classes, select(train, -classes), eps = 1e-1)
-
-        lda.pred <- lda.predict(lda.train, newdata = select(valid, -classes))
-        qda.pred <- qda.predict(qda.train, newdata = select(valid, -classes))
-        hda.pred <- hda.predict(hda.train, newdata = select(valid, -classes))
-
-        conf.lda <- table(True = valid$classes, Pred = lda.pred$class)
-        conf.qda <- table(True = valid$classes, Pred = qda.pred$class)
-        conf.hda <- table(True = valid$classes, Pred = hda.pred$class)
-
-        mis.risk[i, ] <- c(misclassificationRisk(conf.lda),
-                           misclassificationRisk(conf.qda),
-                           misclassificationRisk(conf.hda))
-        cat("\n")
-      }
-      misclassification.risks[[p.index]][[s]] <- mis.risk
+      colnames(misclassification.risks[[p.index]][[s]]) <- c("LDA","QDA","HDA")
 
     }
   }
@@ -432,7 +383,7 @@ abline(v = 1, col = "grey", lty = 2, lwd = 2)
 plot(psi, dl(psi), type = "l", col = "red", lwd = 2, main = "dloglik")
 abline(h = 0, v = 1, col = "grey", lty = 2, lwd = 2)
 ## ---- end ----
-
+dev.off()
 
 ## ---- log_gamma_ratio ----
 logGammaRatio <- function(x, a) {
@@ -445,43 +396,44 @@ plot(xs, logGammaRatio(xs, a = 2),    type = "l", xlab = "", ylab = "",
 plot(xs, logGammaRatio(xs, a = 1e-3), type = "l", xlab = "", ylab = "",
      col = "red", lwd = 2)
 ## ---- end ----
+dev.off()
 
 #
 # DLBCL analysis
 #
 
-## ---- dlbcl ----
-library("WGCNA")
-library("correlateR")
-library("Bmisc")
-library("affy")
-load("saved.RData")
+## ---- dlbcl_analysis ----
+
 load("studies.RData")
+load("gep.ensg.RData")
+studies <- studies[studies$Study != "Celllines", ]
+dlbcl.dims <- sapply(rev(gep)[-1], dim)
 dlbcl.par <- list(top.n = 100)
 if (!exists("dlbcl.grem") | !exists("dlbcl.pool") |
-      !exists("var.pool") | recompute | TRUE) {
-  load("gep.ensg.RData")
+      !exists("var.pool") | recompute) {
   vars      <- sapply(gep, function(x) rowSds(exprs(x))*(ncol(x) - 1))
   var.pool  <- rowSums(vars)/(sum(sapply(gep, ncol)) - length(gep))
   use.genes <- names(sort(var.pool, decreasing = TRUE)[seq_len(dlbcl.par$top.n)])
   gep <- lapply(gep, function(x) exprs(x)[use.genes, ])
-  ns  <- sapply(gep, ncol)
-  S   <- lapply(gep, function(x) scatter(t(x)))
-  dlbcl.grem <- fit.grem(S = S, ns = ns, verbose = TRUE)
-  dlbcl.pool <- Reduce("+", S)/sum(ns - 1)
+  dlbcl.ns  <- sapply(gep, ncol)
+  dlbcl.S   <- lapply(gep, function(x) scatter(t(x)))
+  dlbcl.grem <- fit.grem(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE)
+  dlbcl.pool <- Reduce("+", dlbcl.S)/sum(dlbcl.ns - 1)
   dimnames(dlbcl.grem$Psi) <- dimnames(dlbcl.pool)
   resave(dlbcl.grem, dlbcl.pool, use.genes, var.pool, file = "saved.RData")
 }
-
 dlbcl.exp <- with(dlbcl.grem, Psi2Sigma(Psi, nu))
 
 ## ---- dlbcl_plot_1 ----
-# hist((get.lower.tri(dlbcl.adjMat)), main = "cor", breaks = 50,
-#      col = "grey", prob = TRUE)
-dlbcl.adjMat <- abs(cov2cor(dlbcl.exp))
-hist(-log(get.lower.tri(dlbcl.adjMat)), main = "-log(cor)", breaks = 50,
-     col = "grey", prob = TRUE)
-
+dlbcl.cor <- cov2cor(dlbcl.exp)
+dlbcl.adjMat <- abs(dlbcl.cor)
+par(mfrow = c(1,2), mar = c(4,4,0,0) + .2)
+hist(get.lower.tri(dlbcl.cor), col = "grey", breaks = 50, main = "",
+     xlab = "corelation",  prob = TRUE)
+hist(-log(get.lower.tri(dlbcl.adjMat)), breaks = 50, col = "grey", main = "",
+     xlab = "-log(abs(correlation))",  prob = TRUE)
+## ---- end ----
+dev.off()
 
 ## ---- dlbcl_plot_2 ----
 dlbcl.tom <- TOMdist(adjMat = dlbcl.adjMat)
@@ -511,10 +463,10 @@ get.size <- function(x) {
   s <- rowSums(x)
   return((s - min(s))/max(s))
 }
-tmp <- soft(dlbcl.adjMat[o,o], .175)
-gr <- plotModuleGraph(tmp,
+thresholded <- soft(dlbcl.adjMat[o,o], .175)
+gr <- plotModuleGraph(thresholded,
                       labels = "",
-                      diff.exprs = get.size(tmp)*3 + 3,
+                      diff.exprs = get.size(thresholded)*3 + 3,
                       layout = layout.custom,
                       mark.shape = .5,
                       ecol = "black",
@@ -525,43 +477,61 @@ scale.layout <- function(x) {
 }
 points(scale.layout(gr$layout), pch = 16, cex = 0.7)
 
-# dlbcl.g <- graph.adjacency(tmp, mode = "undirected",
-#                            weighted = TRUE, diag = FALSE)
-# library("ape")
-# plotHierarchicalEdgeBundles(as.phylo(dlbcl.clust),
-#                             dlbcl.g,
-#                             beta = 0.4,
-#                             use.mrca = FALSE,
-#                             simplify = FALSE,
-#                             type = "fan",
-#                             debug = FALSE,
-#                             args.lines = list(col = "#FF000021", lwd = 2))
-# aa <- plot.phylo(as.phylo(dlbcl.clust), type = "fan")
+## ---- end ----
+dev.off()
 
-# ## ---- dlbcl_go_analysis ----
-# library("biomaRt")
-# if (!exists("gene.info") | recompute) {
-#   mart <- useMart(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")
-#   attributes <- c("hgnc_symbol", "chromosome_name", "start_position",
-#                   "end_position", "strand", "band", "ensembl_gene_id", "go_id",
-#                   "name_1006", "definition_1006", "go_linkage_type",
-#                   "namespace_1003")
-#   gene.info <-
-#     getBM(attributes = attributes,
-#           filters = "arrayexpress", #"ens_hs_gene",
-#           values = gsub("_at$", "", names(sort(var.pool, decreasing = TRUE))),
-#           mart = mart)
-#
-#   resave(gene.info, file = "saved.RData")
-# }
-#
-# # Mappings between ENSG and GO id
-# gid2go <- split(gene.info$go_id, gene.info$ensembl_gene_id)
-#
-#
-# dlbcl.modules
-#
-#
-#
-# 1-phyper(q  = 69, m = 1870, n = 10000 - 1870, k = 290)
+## ---- dlbcl_go_analysis ----
+all.genes <- gsub("_at$", "", names(sort(var.pool, decreasing = TRUE)))
+if (!exists("gene.info") | recompute) {
+  mart <- useMart(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")
+  attributes <- c("hgnc_symbol", "chromosome_name", "start_position",
+                  "end_position", "strand", "band", "ensembl_gene_id", "go_id",
+                  "name_1006", "definition_1006", "go_linkage_type",
+                  "namespace_1003")
+  gene.info <- getBM(attributes = attributes, filters = "arrayexpress",
+                     values = all.genes, mart = mart)
+  resave(gene.info, file = "saved.RData")
+}
+
+# Mappings between ENSG and GO id
+gid2go <- split(gene.info$go_id, gene.info$ensembl_gene_id)
+gid2hugo <- with(dplyr::select(gene.info, hgnc_symbol, ensembl_gene_id) %>%
+                   distinct(hgnc_symbol, ensembl_gene_id),
+                 structure(hgnc_symbol, names = ensembl_gene_id))
+
+# GO analysis
+mod.genes <- gsub("_at$", "", names(dlbcl.modules[dlbcl.modules == "blue"]))
+geneList <- factor(as.integer(all.genes %in% mod.genes))
+names(geneList) <- all.genes
+GOdata <- new("topGOdata", ontology = "MF", allGenes = geneList,
+              annot = annFUN.gene2GO, gene2GO = gid2go)
+result.fisher <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
+all.res <- GenTable(GOdata, classicFisher = result.fisher, topNodes = 10)
+
+gid2hugo[mod.genes]
+
+## ---- dlbcl_extra ----
+convert <- function(ensx) {
+  e <- gsub("_at$", "", ensx)
+  ans <- gid2hugo[e]
+  names(ans) <- e
+  ans[is.na(ans)] <- e[is.na(ans)]
+  return(ans)
+}
+
+dlbcl.g <- graph.adjacency(thresholded, mode = "undirected",
+                           weighted = TRUE, diag = FALSE)
+
+V(dlbcl.g)$name <- convert(V(dlbcl.g)$name)
+phylo <- as.phylo(dlbcl.clust)
+phylo$tip.label <- convert(phylo$tip.label)
+
+par(mar = c(0,0,0,0))
+plotHierarchicalEdgeBundles(phylo,
+                            dlbcl.g,
+                            beta = 0.4,
+                            type = "fan",
+                            args.lines = list(col = "#FF000021", lwd = 2))
+## ---- end ----
+dev.off()
 
