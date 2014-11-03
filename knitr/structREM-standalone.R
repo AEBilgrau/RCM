@@ -403,47 +403,49 @@ dev.off()
 #
 
 ## ---- dlbcl_analysis ----
-
 load("studies.RData")
 load("gep.ensg.RData")
 studies <- studies[studies$Study != "Celllines", ]
 dlbcl.dims <- sapply(rev(gep)[-1], dim)
-dlbcl.par <- list(top.n = 100)
-if (!exists("dlbcl.grem") | !exists("dlbcl.pool") |
-      !exists("var.pool") | recompute) {
+
+dlbcl.par <- list(top.n = 300,
+                  linkage = "average",
+                  go.alpha.level = 0.01,
+                  ontology = "MF",
+                  minModuleSize = 9)
+
+if (!exists("dlbcl.grem") | !exists("var.pool") | recompute) {
   vars      <- sapply(gep, function(x) rowSds(exprs(x))*(ncol(x) - 1))
   var.pool  <- rowSums(vars)/(sum(sapply(gep, ncol)) - length(gep))
   use.genes <- names(sort(var.pool, decreasing = TRUE)[seq_len(dlbcl.par$top.n)])
   gep <- lapply(gep, function(x) exprs(x)[use.genes, ])
   dlbcl.ns  <- sapply(gep, ncol)
-  dlbcl.S   <- lapply(gep, function(x) scatter(t(x)))
+  dlbcl.S   <- lapply(gep, function(x) correlateR::scatter(t(x)))
   dlbcl.grem <- fit.grem(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE)
-  dlbcl.pool <- Reduce("+", dlbcl.S)/sum(dlbcl.ns - 1)
-  dimnames(dlbcl.grem$Psi) <- dimnames(dlbcl.pool)
-  resave(dlbcl.grem, dlbcl.pool, use.genes, var.pool, file = "saved.RData")
+  dimnames(dlbcl.grem$Psi) <- dimnames(dlbcl.S[[1]])
+  resave(dlbcl.grem, use.genes, var.pool, file = "saved.RData")
 }
-dlbcl.exp <- with(dlbcl.grem, Psi2Sigma(Psi, nu))
+dlbcl.exp <- with(dlbcl.grem, Psi2Sigma(Psi, nu))  # Expectec covariance matrix
 
 ## ---- dlbcl_plot_1 ----
 dlbcl.cor <- cov2cor(dlbcl.exp)
 dlbcl.adjMat <- abs(dlbcl.cor)
 par(mfrow = c(1,2), mar = c(4,4,0,0) + .2)
 hist(get.lower.tri(dlbcl.cor), col = "grey", breaks = 50, main = "",
-     xlab = "corelation",  prob = TRUE)
+     xlab = "correlation",  prob = TRUE)
 hist(-log(get.lower.tri(dlbcl.adjMat)), breaks = 50, col = "grey", main = "",
      xlab = "-log(abs(correlation))",  prob = TRUE)
-## ---- end ----
-dev.off()
 
 ## ---- dlbcl_plot_2 ----
 dlbcl.tom <- TOMdist(adjMat = dlbcl.adjMat)
 dimnames(dlbcl.tom) <- dimnames(dlbcl.adjMat) # Keep names
-dlbcl.clust  <- flashClust(as.dist(dlbcl.tom), method = "average")
-dlbcl.modules <- labels2colors(cutreeDynamicTree(dlbcl.clust, minModuleSize=9))
+dlbcl.clust  <- flashClust(as.dist(dlbcl.tom), method = dlbcl.par$linkage)
+dlbcl.modules <- labels2colors(
+  cutreeDynamicTree(dlbcl.clust, minModuleSize = dlbcl.par$minModuleSize)
+)
 names(dlbcl.modules) <- dlbcl.clust$labels
 
-
-o <- dlbcl.clust$order
+# PLOT
 layout(rbind(c(0,0,5,6), c(0,0,2,6), c(4,1,3,6)),
        widths = c(4, 1, 15, 15), heights = c(4, 1, 15))
 TOMplot(dissim = dlbcl.adjMat, dendro = dlbcl.clust,
@@ -463,6 +465,7 @@ get.size <- function(x) {
   s <- rowSums(x)
   return((s - min(s))/max(s))
 }
+o <- dlbcl.clust$order
 thresholded <- soft(dlbcl.adjMat[o,o], .175)
 gr <- plotModuleGraph(thresholded,
                       labels = "",
@@ -471,18 +474,18 @@ gr <- plotModuleGraph(thresholded,
                       mark.shape = .5,
                       ecol = "black",
                       vcol = dlbcl.modules[o])
-scale.layout <- function(x) {
-  xx <- apply(x, 2, function(x) (x - min(x))/max(x - min(x)))
-  return(2*xx - 1)
-}
-points(scale.layout(gr$layout), pch = 16, cex = 0.7)
 
+scaleToLayout <- function(x) {
+  return(2*apply(x, 2, function(x) (x - min(x))/max(x - min(x))) - 1)
+}
+points(scaleToLayout(gr$layout), pch = 16, cex = 0.7)
+rm(o, gr)
 ## ---- end ----
-dev.off()
+
 
 ## ---- dlbcl_go_analysis ----
 all.genes <- gsub("_at$", "", names(sort(var.pool, decreasing = TRUE)))
-if (!exists("gene.info") | recompute) {
+if (!exists("gene.info") || recompute) {
   mart <- useMart(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")
   attributes <- c("hgnc_symbol", "chromosome_name", "start_position",
                   "end_position", "strand", "band", "ensembl_gene_id", "go_id",
@@ -499,39 +502,108 @@ gid2hugo <- with(dplyr::select(gene.info, hgnc_symbol, ensembl_gene_id) %>%
                    distinct(hgnc_symbol, ensembl_gene_id),
                  structure(hgnc_symbol, names = ensembl_gene_id))
 
-# GO analysis
-mod.genes <- gsub("_at$", "", names(dlbcl.modules[dlbcl.modules == "blue"]))
-geneList <- factor(as.integer(all.genes %in% mod.genes))
-names(geneList) <- all.genes
-GOdata <- new("topGOdata", ontology = "MF", allGenes = geneList,
-              annot = annFUN.gene2GO, gene2GO = gid2go)
-result.fisher <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
-all.res <- GenTable(GOdata, classicFisher = result.fisher, topNodes = 10)
-
-gid2hugo[mod.genes]
-
-## ---- dlbcl_extra ----
-convert <- function(ensx) {
-  e <- gsub("_at$", "", ensx)
-  ans <- gid2hugo[e]
-  names(ans) <- e
-  ans[is.na(ans)] <- e[is.na(ans)]
+map2hugo <- function(ensg) {
+  ensg <- gsub("_at$", "", ensg)
+  ans <- gid2hugo[ensg]
+  isna <- is.na(ans)
+  ans[isna] <- ensg[isna]
+  names(ans) <- ensg
   return(ans)
 }
 
-dlbcl.g <- graph.adjacency(thresholded, mode = "undirected",
-                           weighted = TRUE, diag = FALSE)
+# GO analysis
+if (!exists("dlbcl.module.genes") || !exists("dlbcl.go.analysis")||recompute) {
+  dlbcl.module.genes <- list()
+  dlbcl.go.analysis <- list()
 
-V(dlbcl.g)$name <- convert(V(dlbcl.g)$name)
-phylo <- as.phylo(dlbcl.clust)
-phylo$tip.label <- convert(phylo$tip.label)
+  for (col in unique(dlbcl.modules)) {
+    dlbcl.module.genes[[col]] <- mod.genes <-
+      gsub("_at$", "", names(dlbcl.modules[dlbcl.modules == col]))
+    geneList <- factor(as.integer(all.genes %in% mod.genes))
+    names(geneList) <- all.genes
+    GOdata <- new("topGOdata", ontology = ontology, allGenes = geneList,
+                  annot = annFUN.gene2GO, gene2GO = gid2go)
+    result.fisher <-
+      runTest(GOdata, algorithm = "classic", statistic = "fisher")
+    mod.res <- GenTable(GOdata, classicFisher = result.fisher, topNodes = 100)
+    dlbcl.go.analysis[[col]] <-
+      mod.res %>% filter(classicFisher <= dlbcl.par$go.alpha.level)
+  }
+  dlbcl.module.genes <- lapply(dlbcl.module.genes, map2hugo)
+  resave(dlbcl.module.genes, dlbcl.go.analysis, file = "saved.RData")
+}
 
-par(mar = c(0,0,0,0))
-plotHierarchicalEdgeBundles(phylo,
-                            dlbcl.g,
-                            beta = 0.4,
-                            type = "fan",
-                            args.lines = list(col = "#FF000021", lwd = 2))
+
+## ---- dlbcl_mod_tab ----
+mod.genes <- lapply(dlbcl.module.genes, function(x) paste0(names(x), "_at"))
+# Order by rowSums
+dlbcl.exp.sub <- lapply(mod.genes, function(ensg) dlbcl.exp[ensg, ensg])
+dlbcl.exp.sub <- lapply(dlbcl.exp.sub, function(x) {
+  o <- order(rowSums(x), decreasing = TRUE)
+  x[o,o]
+})
+tmp <- lapply(dlbcl.exp.sub, rownames)
+m <- max(table(dlbcl.modules))  # Get largest module
+
+# Construct table
+dlbcl.mod.tab.genes <-
+  sapply(tmp, function(x) unname(c(map2hugo(x), rep(NA, m - length(x)))))
+
+# First letter capitalized
+cgroup <- gsub("(^|[[:space:]])([[:alpha:]])",
+               "\\1\\U\\2", names(dlbcl.module.genes), perl = TRUE)
+colnames(dlbcl.mod.tab.genes) <- # Number of gens in each module
+  paste0("n = ", colSums(!is.na(dlbcl.mod.tab.genes)))
+
+is.ensg <- structure(grepl("^ENSG", dlbcl.mod.tab.genes),
+                     dim = dim(dlbcl.mod.tab.genes))
+nn <- 40
+latex(dlbcl.mod.tab.genes[seq_len(nn), ],
+      cgroup = cgroup,
+      size = "tiny",
+      caption = paste("The identified modules and their sizes and selected",
+                      "member genes. For each module, the genes are sorted",
+                      "by their intra-module connectivity from highest to",
+                      "lowest. Only a maximum of", nn, "genes is shown."),
+      cellTexCmds = ifelse(is.ensg, "tiny", "")[seq_len(nn), ],
+      caption.loc = "bottom",
+      label = "tab:dlbcl_mod_tab",
+      landscape = TRUE,
+      file = "")
+
+
+## ---- GO_tabs ----
+go.table <- do.call(rbind, dlbcl.go.analysis)
+go.col <- gsub("(^|[[:space:]])([[:alpha:]])",
+               "\\1\\U\\2", gsub("\\.[0-9]+$", "", rownames(go.table)),
+               perl = TRUE)
+colnames(go.table)[3:6] <- c("$N$", "$O$", "$E$", "$P$-val")
+rownames(go.table) <- NULL
+  latex(go.table[, -c(1, 3)],
+        rowname = go.table[, 1],
+        rgroup = unique(go.col),
+        n.rgroup = table(go.col)[unique(go.col)],
+        title = "GO ID",
+        size = "tiny",
+        caption = paste0("The significant GO terms in the modules at ",
+                        "$\\alpha$-level ", dlbcl.par$go.alpha.level, "."),
+        #caption.loc = "bottom",
+        label = paste0("tab:GO_tabs"),
+        longtable = TRUE,
+        lines.page = 80,
+        file = "")
 ## ---- end ----
-dev.off()
 
+# dlbcl.g <- graph.adjacency(thresholded, mode = "undirected",
+#                            weighted = TRUE, diag = FALSE)
+#
+# V(dlbcl.g)$name <- convert(V(dlbcl.g)$name)
+# phylo <- as.phylo(dlbcl.clust)
+# phylo$tip.label <- convert(phylo$tip.label)
+#
+# par(mar = c(0,0,0,0))
+# plotHierarchicalEdgeBundles(phylo,
+#                             dlbcl.g,
+#                             beta = 0.4,
+#                             type = "fan",
+#                             args.lines = list(col = "#FF000021", lwd = 2))

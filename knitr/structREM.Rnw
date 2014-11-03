@@ -21,6 +21,8 @@ read_chunk("structREM-standalone.R")
 <<auxiliary_functions, echo=FALSE>>=
 @
 
+\listoffixmes
+
 \maketitle
 \begin{abstract}
 We propose a hierarchical graphical model and estimators for a common covariance matrix in cases where multiple groups or datasets are present.
@@ -40,10 +42,10 @@ The model is also shown to be applicable as an intermediate between linear discr
 \newpage
 \section{Introduction}
 The fundamental problem in statistics of accurately and precisely estimating the covariance matrix (or its inverse) is notoriously difficult though computationally easy.
-The usual bias-corrected maximum likelihood estimator (MLE), the sample covariance matrix, have long been known to perform poorly in general due to high variability \citep{Dempster1972}.
-The sample covariance is singular when the sample size $n$ is less than the number of variables $p$ and increasingly ill-conditioned as $p$ approaches $n$.
-Because of its central statistical role the list of statistical methods and applications utilizing the estimated covariance matrix is extraordinarily long.
-Beside the many standard statistical methods such as principal component analysis (PCA), linear discriminant analysis (LDA), quadratic discriminant analysis (QDA), more direct applications include [examples in medicine, biology, genetics, finance, forensics, physics, engineering, signal processing].
+The usual bias-corrected maximum likelihood estimator (MLE), the sample covariance matrix, has long been known to perform poorly in general due to high variability \citep{Dempster1972}.
+The sample covariance become increasingly ill-conditioned as number of variables $p$ approaches the sample size $n$ and singular $p$ exceeds $n$.
+Because of its central statistical role the list of statistical methods and applications utilizing the estimated covariance matrix is long.
+Beside the many standard statistical methods such as principal component analysis (PCA), linear discriminant analysis (LDA), and quadratic discriminant analysis (QDA), more direct applications include [examples in medicine, biology, genetics, finance, forensics, physics, engineering, signal processing].
 Among this expanding list of applications is also an increasing number of high-dimensional applications and datasets publicly available at online repositories.
 
 In high-dimensional datasets the number of features $p$ often far exceed the number of samples $n$.
@@ -59,13 +61,13 @@ As with many other cancers, a large number of DLBCL studies are now available on
 
 
 \section{A graphical random effects model}
-Regular meta-analysis comes principally in two difference flavors, fixed and random, corresponding to the assumption on the nature of the effects of a treatment across studies, say.
+Meta-analysis comes principally in two different flavors, fixed and random, corresponding to the assumption on the nature of the treatment effect.
 Random-effects models (REM) for meta-analysis model the effects as random variables realized for each study.
 In a vein similar to the regular meta-analysis by \citet{Choi2003}, we think of the the different studies as related but perturbed experiments.
 In graphical modeling, the true covariance matrix is the effect of interest to be estimated.
 Hence, a graphical analog to \citet{Choi2003} is the following relatively simple graphical random effects model (GREM) of the observations.
 Let $p$ be the number of features and $k$ the number of studies.
-We model the each sample for the $i$th study as a $p$-dimensional zero-mean multivariate gaussian vector with the covariance matrix realized from a inverse Wishart distribution, i.e.\ the hierarchical model
+We model each sample of the $i$th study as a $p$-dimensional zero-mean multivariate gaussian vector with covariance matrix realized from an inverse Wishart distribution, i.e.\ the hierarchical model
 \begin{align}
 \begin{split} \label{eq:REM}
   \vSigma_i | \vPsi, \nu  &\sim \calW^{-1}(\vPsi, \nu), \\
@@ -86,8 +88,8 @@ f(\vec{x} | \vSigma_i) =
   (2\pi)^{-\frac{p}{2}} \det(\vSigma_i)^{-\frac{1}{2}}
   e^{ -\frac{1}{2}\vx^\top \vSigma_i^{-1}\vx }.
 \end{align*}
-Throughout this paper, we use generic notation $f(\cdot | \cdot)$ and $f(\cdot)$ for the conditional and unconditional pdf of random variables.
-In the model, $\nu$ encodes the inter-study variation where the $(\nu - p - 1)\vSigma_i$ concentrate around $\vPsi$ for $\nu\to\infty$. I.e.\ the inter-study variation goes to zero for larger $\nu$. We wish to infer the parameters $\vPsi$ and $\nu$ from the observed data so the common expected covariance matrix
+Throughout this paper, we use the generic notation $f(\cdot | \cdot)$ and $f(\cdot)$ for the conditional and unconditional pdf of random variables, respectively.
+In the model, $\nu$ controls the inter-study variation where the $(\nu - p - 1)\vSigma_i$ concentrate around $\vPsi$ for $\nu\to\infty$. I.e.\ the inter-study variation goes to zero for larger $\nu$. We wish to infer the parameters $\vPsi$ and $\nu$ from the observed data so the common expected covariance matrix
 \begin{align}
   \label{eq:expcovar}
   \vSigma = \bbE[\vSigma_i] = \frac{1}{\nu - p - 1} \vPsi
@@ -101,7 +103,7 @@ can be assessed.
 Suppose we have $n_i$ i.i.d.\ observations, $\vx_{i1}, \dots,\vx_{in_i}$, from the $i = 1,...,k$ independent studies from the model given in \eqref{eq:REM}.
 Let $\vX_i = (\vx_{i1}, \dots,\vx_{in_i})^\top$ be the $n_i \times p$ of the $i$'th study where rows correspond to samples and columns to variables.
 For the archetypal example in genomics, $\vX_i$ is transposed gene expression matrix with genes in the columns and samples in the rows.
-By the independence assumptions, the log-likelihood is given by
+By the independence assumptions, the log-likelihood for $\vPsi$ and $\nu$ is given by
 \begin{align*}
   &\ell\!\left(\vPsi, \nu \big|\vX_1, ..., \vX_k  \right)
   = \log f\!\left(\vX_1, ..., \vX_k \big| \vPsi, \nu \right) \\
@@ -120,7 +122,7 @@ By the independence assumptions, the log-likelihood is given by
                f(\vSigma_i | \vPsi, \nu)
                d\vSigma_i.
 \end{align*}
-Since the inverse Wishart distribution is conjugate to the multivariate gaussian distribution the integral, of which the integrand forms a gaussian-inverse-Wishart distribution, can be evaluated. Hence $\vSigma_i$ can be marginalized out, cf.\  Appendix \ref{sec:marginalization}, and we arrive at the following expression for the log-likelihood,
+Since the inverse Wishart distribution is conjugate to the multivariate gaussian distribution the integral, of which the integrand forms a gaussian-inverse-Wishart distribution, can be evaluated. Hence $\vSigma_i$ can be marginalized out, cf.\  Appendix \ref{sec:marginalization}, and we arrive at the following expression for the log-likelihood function,
 \small
 \begin{align}
   &\ell\!\left(\vPsi, \nu \big| \vX_1, ..., \vX_k \right) %\notag\\
@@ -137,14 +139,18 @@ Since the inverse Wishart distribution is conjugate to the multivariate gaussian
     \label{eq:loglik}
 \end{align}
 \normalsize
-where the constant terms are abbreviated by $c$ and $\Gamma_p$ is the multivariate generalization for the gamma function $\Gamma$, which can be seen in equation \eqref{eq:multigamma} of Appendix \ref{sec:multigamma}. As should be expected, the scatter matrix $\vec{S}_i =\vX_i^\top\vX_i$ and $n_i$ are sufficient statistics for each study. Note also that $\vS_i$ is Wishart distributed $\vS_i|\vSigma_i ~ \calW(\vPsi, n_i)$ by construction.
+where the constant terms are abbreviated by $c$ and $\Gamma_p$ is the multivariate generalization of the gamma function $\Gamma$ seen in Appendix \ref{sec:multigamma}.
+As should be expected, the scatter matrix $\vec{S}_i =\vX_i^\top\vX_i$ and study sample size $n_i$ are sufficient statistics for each study.
+Note also that $\vS_i$ is Wishart distributed $\vS_i|\vSigma_i ~ \calW(\vPsi, n_i)$ by construction.
 
-While we are not able to shown general log-concavity of the log-likelihood, we show that it is log-concave in $\nu$ for fixed $\vSigma$, cf.\ Appendix \ref{sec:concaveloglik}, and hence there exists a unique maxima for the marginal $\ell(\nu)$.
-Reversely, for fixed $\nu$ we show that the hessian in any stationary point (where $\frac{\partial\ell}{\partial\vPsi} = 0$) is negative semi-definite, cf.\ Appendix \ref{sec:negativedefinite}, and hence a local maxima. This combined with the observation that $\ell(\vPsi) \to -\infty$ whenever an eigenvalue $\lambda_i(\vPsi) \to 0$, we conjecture that any stationary point indeed a global maximum.
-
-In the following, estimation of $\vPsi$ for fixed $\nu$ is considered.
+In general, the likelihood is not log-concave, cf.\ Proposition \ref{prop:nonconcavityinpsi} in Appendix \ref{sec:concaveloglik}.
+We show that it is log-concave in $\nu$ for fixed $\vPsi$, cf.\ Proposition \ref{prop:concavityinnu} in Appendix \ref{sec:concaveloglik}, and hence there exists a unique maxima for the marginal $\ell(\nu)$.
+Reversely, for fixed $\nu$ we show that the Hessian in any stationary point (i.e.\ where $\frac{\partial\ell}{\partial\vPsi} = 0$) is negative semi-definite, cf.\ Lemma \ref{lem:negativesemidefinite} in Appendix \ref{sec:negativedefinite}, and hence a local maxima.
+This combined with the observation that $\ell(\vPsi) \to -\infty$ whenever an eigenvalue $\lambda_i \to 0$ or $\lambda_i \to \infty$, cf.\ Lemma \ref{lem:elltominusinfty} in Appendix \ref{sec:negativedefinite}, we prove that any stationary point indeed is a global maximum, cf.\ Proposition \ref{prop:uniquemax} in Appendix \ref{sec:negativedefinite}.
+Hence we have existence and uniqueness of a global maximum in $\vPsi$.
 
 \subsection{Moment estimate}
+In the following, estimation of $\vPsi$ for fixed $\nu$ is considered.
 With the GREM framework, we show that, properly scaled, the pooled covariance and mean covariance matrices can be viewed as different moment estimators.
 These straight-forward estimators are thus movtivated by the model.
 Simple estimates of $\vPsi$ are readily available by the hierachical construction.
@@ -182,7 +188,7 @@ which gives the estimator
   = (\nu - p - 1) \frac{1}{k} \sum_{i = 1}^k \frac{1}{n_i}\vS_i.
 \end{align}
 This estimate is a scaled average of the sample covariance matrices.
-Both estimates of $\vPsi$ are seen to be unbiased.\fxnote{Efficientcy and consistency?}
+Both estimates of $\vPsi$ are seen to be unbiased.\fxnote{Can we say anything about efficiency and consistency?}
 Note that if the common or expected covariance matrix is of interest, then the pooled and mean covariance are obtained as estimators by plugging \eqref{eq:pooledest} and \eqref{eq:meanestimate} into \eqref{eq:expcovar}, respectively, which cancels out the scaling factor.
 
 
@@ -309,7 +315,7 @@ for $\vTheta$. The connection to the likelihood equation \eqref{eq:firstordderiv
 \subsection{Estimation procedure}
 We propose an alternating procedure between estimating $\nu$ and $\vPsi$ while keeping the other fixed.
 Given parameters $\hat{\nu}_{(t)}$ and $\hvPsi_{(t)}$ at iteration $t$, we estimate $\hvPsi_{(t+1)}$ using the fixed $\hat{\nu}_{(t)}$. Subsequently, we find $\hat{\nu}_{(t+1)}$ by a standard one-dimensional numerical optimization procedure using the fixed $\hvPsi_{(t+1)}$.
-This coordinate ascent-like\fxnote{Or what is it?} approach is repeated until convergence.
+This coordinate ascent-like\fxnote{Or what type of algorithm is it?} approach is repeated until convergence.
 More precisely, in pseudo-code, we propose the algorithm seen in Algorithm \ref{alg:grem}.
 \begin{algorithm}
 \caption{Pseudo-code for the GREM estimation procedure}\label{alg:grem}
@@ -380,11 +386,13 @@ For each $n$ from $\Sexpr{min(par.ne$n.obs)}$ to $\Sexpr{max(par.ne$n.obs)}$, th
 @
 Unsurprisingly, the proper EM estimation outperform the simple alternative estimates.
 We see that the EM estimation is the superior to that of the approximate MLE and moment.
-Also seen is that the moment estimate yield the exact same results as using the mean, which could be expected by looking at \eqref{eq:meanestimate}, \eqref{eq:sigma_plugin}, and \eqref{eq:pooledest}.\fxnote{Is this surprising?}
+Also seen is that the moment estimate yield the exact same results as using the mean, which could be expected by looking at \eqref{eq:meanestimate}, \eqref{eq:sigma_plugin}, and \eqref{eq:pooledest}.\fxnote{Is this result surprising/trivial? I cannot really tell.}
 
 
 \subsection{Implementation and availability}
 The algorithm along with the different estimators is implemented in the statistical programming language R \cite{R} with workhorse functions in C++ using packages Rcpp and RcppArmadillo \citep{Eddelbuettel2011, RcppArmadillo}.
+They are incorporated in the open-source R-package \texttt{correlateR} freely available for forking and editing at \url{http://github.com/AEBilgrau/correlateR}.
+See the documentiation here for further details.
 
 
 
@@ -398,15 +406,20 @@ A further molecular subclassfication of DLBCL into germinal centre B-cell-like (
 The GCB cases exhibit a clinically favorable overall survial prognosis compared to that of ABCs.
 
 \subsubsection{Data and preprocessing}
-A large amount of DLBCL datasets are now available online at the NCBI (National Center for Biotechnology Information) Gene Expression Omnibus (GEO) website. We downloaded 10 DLBCL gene expression studies and preprocessed using the custom brainarray chip definition files (CDF) and RMA-normalization [7, 3]. The corresponding GEO-accession numbers are \Sexpr{paste(grep("XXX", unique(studies$GSE), invert = TRUE, value = TRUE), collapse = ", ")} of various microarray platforms. The downloaded data together with our own yields a total of \Sexpr{rowSums(dlbcl.dims)["Samples"]} samples with studies sizes in the range \Sexpr{paste(range(dlbcl.dims["Samples",]), collapse = "-")}. The summarization using brainarray CDFs facilitates cross-platform integration.
+A large amount of DLBCL datasets are now available online at the NCBI (National Center for Biotechnology Information) Gene Expression Omnibus (GEO) website.
+We downloaded 10 DLBCL large-scale gene expression studies and preprocessed these using the custom brainarray chip definition files (CDF) and RMA-normalization [7, 3].
+The corresponding GEO-accession numbers are \Sexpr{paste(grep("XXX", unique(studies$GSE), invert = TRUE, value = TRUE), collapse = ", ")} of various microarray platforms.
+The downloaded data together with our own yields a total of \Sexpr{rowSums(dlbcl.dims)["Samples"]} samples with studies sizes in the range \Sexpr{paste(range(dlbcl.dims["Samples",]), collapse = "-")}.
+The summarization using brainarray CDFs facilitates cross-platform integration.
 
 After the RMA normalization and summarization, the data was brought to a common scale by quantile normalizing all data to the common cumulative distribution function of all arrays.
 
-The datasets were reduced to the total of \Sexpr{dim(gep[[1]])["Features"]} common features represented in all studies and array platforms.
+Lastly, the datasets were reduced to the total of \Sexpr{dim(gep[[1]])["Features"]} common features represented in all studies and array platforms.
 
 \subsubsection{Graphical meta-analysis}
-We wanted to perform coexpression network (i.e.\ correlation network) analysis across all datasets.
+We wanted to perform coexpression network (i.e.\ weighted correlation network) analysis across all datasets.
 For each dataset the scatter matrix $\vS_i$ of the top \Sexpr{dlbcl.par$top.n} most variable genes (as measured by the pooled variance across studies) was computed as the suffcient statistics along with the number of samples.
+Hence, we investigate \Sexpr{(dlbcl.par$top.n*(dlbcl.par$top.n + 1)/2)} pairwise interactions.
 
 The parameters of the GREM model was estimated using the EM algorithm and yielded
 
@@ -415,17 +428,21 @@ r <- order(rowSums(abs(dlbcl.grem$Psi)))
 img <- dlbcl.grem$Psi[r,r]
 img <- img[ncol(img):1,]
 par(mar = c(0,0,0,0))
-graphics::image(img, axes = FALSE, asp = 1,
-                col = heat.colors(20))
+n.cols <- 255
+brks <- c(min(img),
+          seq(quantile(img, 0.001), quantile(img, 1-0.01), l = n.cols - 1),
+          max(img))
+graphics::image(img, axes = FALSE, asp = 1, breaks = brks,
+                col = colorRampPalette(c("red", "black", "blue"))(n.cols))
 text(-0.05, 0.5, expression(hat(bold(Psi)) == phantom(a)))
 @
 
-\noindent and a $\hat{\nu} = \Sexpr{round(dlbcl.grem[["nu"]], 2)}$.\fxnote{Interpretation of $\nu$?}
+\noindent and a $\hat{\nu} = \Sexpr{round(dlbcl.grem[["nu"]], 2)}$.\fxnote{Interpretation of $\nu$? A good interpretation of $\nu$ would really add some value to the paper.}
 Subsequently, $\hvPsi$ was scaled to the corresponding correlation matrix $\hat{\vec{R}}$.
 Note, that the expected covariance $(\nu - p - 1)^{-1}\hvPsi$ yields the same correlation matrix $\hat{\vec{R}}$.
 Figure \ref{fig:dlbcl_plot_1} shows a histogram of the distibution of correlations.
 
-<<dlbcl_plot_1, echo = FALSE, fig.height=7/3, fig.width=7, fig.pos="htb", fig.scap = "", fig.cap="\\it Distribution of the correlation coefficents given by the entries of $\\vec{\\hat{R}}$.">>=
+<<dlbcl_plot_1, echo = FALSE, fig.height=7/2.5, fig.width=7, fig.pos="htb", fig.scap = "", fig.cap="\\it Distribution of the correlation coefficents given by the entries of $\\vec{\\hat{R}}$.">>=
 @
 
 <<dlbcl_plot_2, echo = FALSE, message=FALSE, results='hide', fig.height=7, fig.width=2*7, fig.pos="htb", fig.scap = "", fig.cap="\\it Left: dendrograms of the hierachical clustering of the TOM-distance measure, the modules based on the clustering, and the correlation matrix. Right: a graphical representation of the correlation matrix as laid out by the Fruchterman-Reingold force-based algorithm using the edge-weights. The nodes are coloured after the identified modules with sizes proportional to their connectivity. The opacity of the edges are drawn as function of the edge weight.">>=
@@ -435,14 +452,17 @@ We have thus estimated a correlation matrix across all studies to which standard
 To identify subgraphs, we used agglomerative hierachical clustering with \Sexpr{dlbcl.clust$method} linkage on the distance measure defined by topological overlap matrix (TOM) \citep{Horvath2011} using the WGCNA-package \citep{Langfelder2008}.
 The tree was pruned at dynamic heights (using the function \texttt{cutreeDynamicTree}) which identified \Sexpr{length(unique(dlbcl.modules))} tightly connected subgraphs or modules coloured and named arbitrarily by colors.
 Figure \ref{fig:dlbcl_plot_2} show these results.
-The sizes of the modules are:
-
-<<>>=
-table(dlbcl.modules)
-@
+Table \ref{tab:dlbcl_mod_tab} show the genes within each module.
 
 Next, the modules were screened for biological relevance using GO (Gene Ontology) enrichment analysis.
+Table \ref{tab:GO_tabs} in Appendix \ref{sec:sig_go_term} show the signifcant GO-terms at signifcance level \Sexpr{dlbcl.par$go.alpha.level} for each module.
+As seen, the GO-terms all appear highly relevant to the pathology of DLBCL.
 
+<<dlbcl_go_analysis, echo=FALSE, results='hide'>>=
+@
+
+<<dlbcl_mod_tab, echo=FALSE, results='asis'>>=
+@
 
 \subsection{Supervised classification}
 <<discriminant_analysis, echo=FALSE, message=FALSE, results='hide'>>=
@@ -450,19 +470,20 @@ Next, the modules were screened for biological relevance using GO (Gene Ontology
 An quite different application of the GREM estimate can be found as a novel discriminant analysis.
 As seen below, the estimates obtained can be utilized in supervised learning as a intermediate case of linear discriminant analysis (LDA) and quadratic discriminant analysis (QDA).x
 
-Suppose $Y$ is a random variable denoting the class $1, ..., k$ and suppose $\vx$ is a random vector of the explanatory variables. Recall that QDA (and LDA) finds the class $y$ maximizing
+Suppose $Y$ is a random variable denoting the class $1, ..., k$ and suppose $\vx$ is a random vector of the explanatory variables.
+Recall that LDA and QDA finds the class $y$ by maximizing
 \begin{align*}
   P(Y = y | \vX = \vx) =
     \frac{\pi_y f(\vx | Y = y)}
          {\sum_{y' = 1}^k \pi_{y'} f(\vx | Y = y')}
 \end{align*}
-where $\vx | Y = y$ is assumed multivariate gaussian, i.e.\
+where $\vx | Y = y$ is assumed to be $p$-dimensional gaussian distributed, i.e.\
 \begin{align*}
   \vx | Y = y \sim \calN_p(\vec{\mu}_y, \vSigma_y).
 \end{align*}
 LDA differs from QDA by the additional assumption that $\vSigma = \vSigma_y$ for all classes $y$.
-An intermediate classifier of LDA and QDA can thus be constructed by assuming the $\vSigma_y$'s inversely Wishart distributed as in \eqref{eq:REM}, i.e., $\vSigma_y \sim \calW^{-1}(\vPsi, \nu)$, and using the estimates of a common $\vSigma$ discussed above.
-This hierarchical discriminant analysis (HDA), for lack of a better name, is thus straight-forward to implement given that
+An intermediate classifier of LDA and QDA can thus be constructed by assuming the $\vSigma_y$'s are inversely Wishart distributed as in \eqref{eq:REM}, i.e., $\vSigma_y \sim \calW^{-1}(\vPsi, \nu)$, and using the estimates of a common $\vSigma$ discussed above.
+This hierarchical discriminant analysis (HDA) is thus straight-forward to implement given that
 \begin{align*}
 f(\vx | Y = y)
   &= \int f(\vx| \vSigma_y, Y = y) f(\vSigma_y | Y = y) d\vSigma_y \\
@@ -470,8 +491,8 @@ f(\vx | Y = y)
           { \pi^{-\frac{n}{2}} |\vPsi + (\vx-\mu_k)(\vx-\mu_k)^\top|^{\frac{\nu + 1}{2}}
             \Gamma_p\!\left(\frac{\nu}{2}\right)},
 \end{align*}
-analogous to the derivation in appendix \ref{sec:marginalization}. The matrix determinant lemma, $|\vec{A} + \vec{u}\vec{v}^\top| = (1 + \vec{v}^\top\vec{A}\vec{u})|\vec{A}|$, can then be applied to simplify the expression and speed up the computations \citep{Ding2007}.
-Note also that HDA thus also generalizes the LDA in some sense to have multivariate $t$-like distribution. Multivariate $t$-distributions has before considered for discriminant analysis, cf.\ \citet{Andrews2011}.
+analogous to the derivation in Appendix \ref{sec:marginalization}. The matrix determinant lemma, $|\vec{A} + \vec{u}\vec{v}^\top| = (1 + \vec{v}^\top\vec{A}\vec{u})|\vec{A}|$, can then be applied to simplify the expression and speed up the computations \citep{Ding2007}.
+Note also that HDA generalizes the LDA in some sense to have a multivariate $t$-like distribution. Multivariate $t$-distributions has before considered for discriminant analysis, cf.\ \citet{Andrews2011}. \fxnote{Elaboration on the multivariate $t$-distribution look and reference!}
 
 
 \subsubsection{Benchmarking of HDA}
@@ -517,10 +538,39 @@ However, we recognize that further and more sophisticated simulation experiments
 
 
 
-\section{Concluding remarks}
-While the improvements are modest, the results above demonstrate an advantage of modelling the inter-study variance as a hierarchical random effects model. However, the virtue of such a model is not from improvement in accuracy alone. Also desirable is the explicit quantification of the inter-study variance. If $\hat{\nu}$ is estimated to be large, the studies exhibit  a largely common covariance structure, and vice-versa when $\hat{\nu}$ is small.
 
-The generalization of the model to $n \gg p$ is extremely interesting though out of scope for this article.
+
+
+\section{Concluding remarks}
+The article provides a basic framework and attempt for modeling a common covariance structure across multiple groups or datasets.
+The straight-forward approaches, of using the mean or pooled covariance matrix, are seen as a moment estimators within the model.
+The estimate using the EM algorithm is shown to be superior to the simple alternatives.
+While the improvements are modest, the article demonstrate an advantage of modelling the inter-study variance as a hierarchical random effects model.
+However, the virtue of such a model is not from improvement in accuracy alone.
+Also desirable is the explicit quantification of the inter-study variance.
+If $\hat{\nu}$ is estimated to be large, the studies exhibit a largely common covariance structure, and vice-versa when $\hat{\nu}$ is small.
+
+As demonstated, combining multiple studies can yield a sufficiently large total sample size that allows for estimation of large covariance matrices without the use of regularization
+While the generalization of the model to $n \gg p$ is extremely interesting though out of scope for this article.
+We believe this work could be furhter enriched by combining the method with regularized estimation.
+
+The recent advances in such regularized techiniques which allows for analysis for very large covariance matrices has unfortunately diminished the focus on collecting larger sample.
+Just because it is technically possible, it does not mean a good estimate is achived.
+For example, while non-zero entries often can be accurately recalled in graphical LASSO, actual estimates of the covariances (or precisions) can still be heavily biased.
+Large sample-sizes are still needed achive unbiased estimates of the covariance.
+Therefore, an increased focus should also be appointed to efficiently aggregating datasets and achiving suffciently large sample sizes to allow for stable and unbiased estimation of covariance matrices.
+
+One might question the added ultiliy of the $\nu$ parameter is an obvious critique of the GREM.
+For example, it is unclear how large a proportion a single extra parameter can explain of the interstudy variance.
+Though more parameters could be introduced, we have attempted to provide some intuitive interpretation of the $\nu$ parameter.
+\fxnote{Do we have any other observations?}
+
+
+
+
+
+
+
 
 
 
@@ -531,6 +581,11 @@ The generalization of the model to $n \gg p$ is extremely interesting though out
 
 \newpage
 \appendix
+
+
+
+
+
 
 \section[Marginalization of Sigma]{Marginalization of $\vSigma$}
 \label{sec:marginalization}
@@ -571,6 +626,10 @@ The integrand here can be recognized as a unnormalized inverse Wishart pdf,  $\c
          {\pi^{-\frac{np}{2}} |\vPsi + \vS|^{\frac{\nu + n}{2}}\Gamma_p\!\left(\frac{\nu}{2}\right)},
 \end{align*}
 which was as wanted.
+
+
+
+
 
 
 
@@ -661,6 +720,10 @@ Hence, the log-likelihood is log-concave in $\nu$.
 <<log_gamma_ratio, echo=-3, fig.height=4.5/2, fig.width=4.5, fig.pos="ht", fig.scap = "", fig.cap="\\it Plots of the mapping given in \\eqref{eq:logGammaRatio} for diffent values of $a$.">>=
 @
 \end{proof}
+
+
+
+
 
 
 \subsection{log-convexity of the multivariate gamma function}
@@ -907,10 +970,19 @@ Let $\vDelta_i = \vSigma_i^{-1}$, $\vTheta = \vPsi^{-1}$, and $\vS_i = \vX_i^\to
 \end{equation*}
 
 
-\section{Session Info}
+\section{Module member genes}
+\label{sec:module_member_genes}
 <<>>=
-sessionInfo()
+print(lapply(dlbcl.module.genes, unname))
 @
+
+\section{Signifcant GO terms}
+\label{sec:sig_go_term}
+Tables of the significant GO terms.
+<<GO_tabs, echo=FALSE, results='asis'>>=
+@
+\clearpage
+
 
 \end{document}
 
