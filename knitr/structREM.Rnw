@@ -445,7 +445,10 @@ Figure \ref{fig:dlbcl_plot_1} shows a histogram of the distibution of correlatio
 <<dlbcl_plot_1, echo = FALSE, fig.height=7/2.5, fig.width=7, fig.pos="htb", fig.scap = "", fig.cap="\\it Distribution of the correlation coefficents given by the entries of $\\vec{\\hat{R}}$.">>=
 @
 
-<<dlbcl_plot_2, echo = FALSE, message=FALSE, results='hide', fig.height=7, fig.width=2*7, fig.pos="htb", fig.scap = "", fig.cap="\\it Left: dendrograms of the hierachical clustering of the TOM-distance measure, the modules based on the clustering, and the correlation matrix. Right: a graphical representation of the correlation matrix as laid out by the Fruchterman-Reingold force-based algorithm using the edge-weights. The nodes are coloured after the identified modules with sizes proportional to their connectivity. The opacity of the edges are drawn as function of the edge weight.">>=
+<<dlbcl_mappings, echo=FALSE, results='hide'>>=
+@
+
+<<dlbcl_plot_2, echo = FALSE, message=FALSE, results='hide', dev='png', fig.ext='png', fig.width=1500, fig.height=2300, dpi=150, fig.pos="htb", fig.scap="", fig.cap="\\it{}Top left: dendrograms of the hierachical clustering of the TOM-distance measure, the modules based on the clustering, and the correlation matrix. Top right: a graphical representation of the correlation matrix as laid out by the Fruchterman-Reingold force-based algorithm using the edge-weights. The nodes are coloured after the identified modules with sizes proportional to their connectivity. The opacity of the edges are drawn as function of the edge weight. Bottom: Hieriachical edge bundeling representation of the correlation network graph. Negative and postive correlation are coloured blue and red, respectively. Again, the strength of the correlation determine the transparency of the edge.">>=
 @
 
 We have thus estimated a correlation matrix across all studies to which standard correlation network analyses can be employed.
@@ -764,7 +767,7 @@ If $\nu$ is fixed and $n_\bullet = \sum_{a=1}^k n_a \geq p$ then the log-likelih
 The hessian of the log-likelihood \eqref{eq:appendloglik} is negative semi-definite in all stationary points for fixed $\nu$.
 \end{lemma}
 
-\begin{proposition}[Unique maximum]
+\begin{proposition}[Existence and uniqueness of maximum]
 \label{prop:uniquemax}
 The log-likelihood \eqref{eq:appendloglik} has a unique maximum in $\vPsi$ for fixed $\nu$.
 \end{proposition}
@@ -778,8 +781,16 @@ The log-likelihood \eqref{eq:appendloglik} has a unique maximum in $\vPsi$ for f
 up to addition of a constant.
 
 \begin{proof}[Proof of Proposition \ref{prop:uniquemax}]
-The proposition follows straight-forwardly from Lemma \ref{lem:elltominusinfty} and
+The proposition follows from Lemma \ref{lem:elltominusinfty} and
 Lemma \ref{lem:negativesemidefinite}.
+First, we prove existenece.
+By Lemma \ref{lem:elltominusinfty}, the set
+\begin{align*}
+  \{ \vPsi | \ell(\Psi) > \ell(\vPsi^*) \}
+\end{align*}
+is compact for any $\vPsi^*\succ 0$ since it is bounded and closed by the virue of the Lemma and continuity of $\ell$, respectively.
+The rest follows from Rolle's theorem.
+
 \end{proof}
 
 \begin{proof}[Proof of Lemma \ref{lem:elltominusinfty}]

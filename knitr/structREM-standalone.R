@@ -409,10 +409,11 @@ studies <- studies[studies$Study != "Celllines", ]
 dlbcl.dims <- sapply(rev(gep)[-1], dim)
 
 dlbcl.par <- list(top.n = 300,
-                  linkage = "average",
+                  linkage = "ward",
                   go.alpha.level = 0.01,
                   ontology = "MF",
-                  minModuleSize = 9)
+                  minModuleSize = 20,
+                  threshold = .3)
 
 if (!exists("dlbcl.grem") | !exists("var.pool") | recompute) {
   vars      <- sapply(gep, function(x) rowSds(exprs(x))*(ncol(x) - 1))
@@ -425,65 +426,23 @@ if (!exists("dlbcl.grem") | !exists("var.pool") | recompute) {
   dimnames(dlbcl.grem$Psi) <- dimnames(dlbcl.S[[1]])
   resave(dlbcl.grem, use.genes, var.pool, file = "saved.RData")
 }
-dlbcl.exp <- with(dlbcl.grem, Psi2Sigma(Psi, nu))  # Expectec covariance matrix
+# Expected covariance matrix
+#s <- sample(1:nrow(dlbcl.grem$Psi), 45)
+dlbcl.exp <- with(dlbcl.grem, Psi2Sigma(Psi, nu))#[s,s]
 
 ## ---- dlbcl_plot_1 ----
 dlbcl.cor <- cov2cor(dlbcl.exp)
 dlbcl.adjMat <- abs(dlbcl.cor)
+
 par(mfrow = c(1,2), mar = c(4,4,0,0) + .2)
 hist(get.lower.tri(dlbcl.cor), col = "grey", breaks = 50, main = "",
      xlab = "correlation",  prob = TRUE)
 hist(-log(get.lower.tri(dlbcl.adjMat)), breaks = 50, col = "grey", main = "",
      xlab = "-log(abs(correlation))",  prob = TRUE)
 
-## ---- dlbcl_plot_2 ----
-dlbcl.tom <- TOMdist(adjMat = dlbcl.adjMat)
-dimnames(dlbcl.tom) <- dimnames(dlbcl.adjMat) # Keep names
-dlbcl.clust  <- flashClust(as.dist(dlbcl.tom), method = dlbcl.par$linkage)
-dlbcl.modules <- labels2colors(
-  cutreeDynamicTree(dlbcl.clust, minModuleSize = dlbcl.par$minModuleSize)
-)
-names(dlbcl.modules) <- dlbcl.clust$labels
-
-# PLOT
-layout(rbind(c(0,0,5,6), c(0,0,2,6), c(4,1,3,6)),
-       widths = c(4, 1, 15, 15), heights = c(4, 1, 15))
-TOMplot(dissim = dlbcl.adjMat, dendro = dlbcl.clust,
-        Colors = dlbcl.modules, setLayout = FALSE)
-
-layout.custom <- function(graph,...) {
-  l <- layout.circle(graph)
-  layout.fruchterman.reingold(graph, niter = 10000,
-                              area = vcount(graph)/2,
-                              maxdelta = 10*vcount(graph),
-                              repulserad = vcount(graph),
-                              weights = 10*E(graph)$weight,
-                              start = l,
-                              ...)
-}
-get.size <- function(x) {
-  s <- rowSums(x)
-  return((s - min(s))/max(s))
-}
-o <- dlbcl.clust$order
-thresholded <- soft(dlbcl.adjMat[o,o], .175)
-gr <- plotModuleGraph(thresholded,
-                      labels = "",
-                      diff.exprs = get.size(thresholded)*3 + 3,
-                      layout = layout.custom,
-                      mark.shape = .5,
-                      ecol = "black",
-                      vcol = dlbcl.modules[o])
-
-scaleToLayout <- function(x) {
-  return(2*apply(x, 2, function(x) (x - min(x))/max(x - min(x))) - 1)
-}
-points(scaleToLayout(gr$layout), pch = 16, cex = 0.7)
-rm(o, gr)
-## ---- end ----
 
 
-## ---- dlbcl_go_analysis ----
+## ---- dlbcl_mappings ----
 all.genes <- gsub("_at$", "", names(sort(var.pool, decreasing = TRUE)))
 if (!exists("gene.info") || recompute) {
   mart <- useMart(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")
@@ -510,7 +469,90 @@ map2hugo <- function(ensg) {
   names(ans) <- ensg
   return(ans)
 }
+## ---- end ----
 
+png("figure/dlbcl_plot_2-1.png", width = 1500, height = 2300, res = 150)
+## ---- dlbcl_plot_2 ----
+#dlbcl.TOMdist <- TOMdist(adjMat = dlbcl.adjMat)
+#dimnames(dlbcl.TOMdist) <- dimnames(dlbcl.adjMat) # Keep names
+#dlbcl.clust <- flashClust(as.dist(dlbcl.TOMdist), method = dlbcl.par$linkage)
+dlbcl.clust <- flashClust(as.dist(1 - dlbcl.adjMat), method = dlbcl.par$linkage)
+
+# Reorder
+# dlbcl.clust <- as.hclust(reorder(as.dendrogram(dlbcl.clust),
+#                                  wts = colSums(dlbcl.adjMat),
+#                                  agglo.FUN = mean))
+
+
+# Cluster
+dlbcl.modules <- labels2colors(cutree(dlbcl.clust, k = 5))
+names(dlbcl.modules) <- dlbcl.clust$labels
+
+# LAYOUT
+layout(rbind(c(0,0,5,6), c(0,0,2,6), c(4,1,3,6),7),
+       widths = c(4, 1, 15, 15), heights = c(4, 1, 10, 20))
+
+# PANEL A
+TOMplot(dissim = abs(dlbcl.cor),
+        dendro = dlbcl.clust,
+        Colors = dlbcl.modules,
+        setLayout = FALSE)
+
+# PANEL B
+layout.custom <- function(graph,...) {
+  l <- layout.circle(graph)
+  layout.fruchterman.reingold(graph, niter = 10000,
+                              area = vcount(graph)/2,
+                              maxdelta = 10*vcount(graph),
+                              repulserad = vcount(graph),
+                              weights = 10*E(graph)$weight,
+                              start = l,
+                              ...)
+}
+get.size <- function(x) {
+  s <- rowSums(x)
+  return((s - min(s))/max(s))
+}
+
+#o <- dlbcl.clust$order
+thresholded <- soft(dlbcl.cor, dlbcl.par$threshold) #.175)
+gr <- plotModuleGraph(abs(thresholded),
+                      labels = "",
+                      diff.exprs = 3*get.size(abs(dlbcl.cor)) + 3,
+                      layout = layout.custom,
+                      mark.shape = .5,
+                      ecol = "black",
+                      vcol = dlbcl.modules)#[o])
+scaleToLayout <- function(x) {
+  return(2*apply(x, 2, function(x) (x - min(x))/max(x - min(x))) - 1)
+}
+points(scaleToLayout(gr$layout), pch = 16, cex = 0.7)
+
+# PANEL C
+dlbcl.g <- graph.adjacency(dlbcl.cor, mode = "undirected",
+                           weighted = TRUE, diag = FALSE)
+w <- E(dlbcl.g)$weight
+E(dlbcl.g)$color <- alp(ifelse(w < 0, "steelblue","tomato"), abs(w))
+V(dlbcl.g)$name <- map2hugo(V(dlbcl.g)$name)
+
+
+#dlbcl.clust2 <- dlbcl.clust
+#dlbcl.clust2$height <- dlbcl.clust2$height - min(dlbcl.clust2$height)
+
+phylo <- as.phylo(dlbcl.clust)
+phylo$tip.label <- map2hugo(phylo$tip.label)
+
+plotHierarchicalEdgeBundles(phylo, dlbcl.g, beta = 0.95,
+                            cex = 0.7, type = "fan",
+                            tip.color = dlbcl.modules,
+                            e.cols = E(dlbcl.g)$color)
+## ---- end ----
+dev.off()
+
+
+
+
+## ---- dlbcl_go_analysis ----
 # GO analysis
 if (!exists("dlbcl.module.genes") || !exists("dlbcl.go.analysis")||recompute) {
   dlbcl.module.genes <- list()
@@ -532,6 +574,9 @@ if (!exists("dlbcl.module.genes") || !exists("dlbcl.go.analysis")||recompute) {
   dlbcl.module.genes <- lapply(dlbcl.module.genes, map2hugo)
   resave(dlbcl.module.genes, dlbcl.go.analysis, file = "saved.RData")
 }
+
+
+
 
 
 ## ---- dlbcl_mod_tab ----
@@ -594,16 +639,6 @@ rownames(go.table) <- NULL
         file = "")
 ## ---- end ----
 
-# dlbcl.g <- graph.adjacency(thresholded, mode = "undirected",
-#                            weighted = TRUE, diag = FALSE)
-#
-# V(dlbcl.g)$name <- convert(V(dlbcl.g)$name)
-# phylo <- as.phylo(dlbcl.clust)
-# phylo$tip.label <- convert(phylo$tip.label)
-#
-# par(mar = c(0,0,0,0))
-# plotHierarchicalEdgeBundles(phylo,
-#                             dlbcl.g,
-#                             beta = 0.4,
-#                             type = "fan",
-#                             args.lines = list(col = "#FF000021", lwd = 2))
+
+
+
