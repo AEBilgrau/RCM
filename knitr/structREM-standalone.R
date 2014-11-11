@@ -8,14 +8,15 @@ library("Bmisc")
 library("correlateR")
 library("GMCM")
 library("MASS")
-#library("MCMCpack")
 library("WGCNA")
 library("affy")
 library("biomaRt")
 library("ape")
 library("dplyr")
 library("topGO")
-load("saved.RData")
+library("igraph")
+library("MCMCpack")
+if (file.exists("saved.RData")) load("saved.RData")
 
 # Multicore support
 library("foreach")
@@ -28,7 +29,7 @@ registerDoMC(detectCores())
 # HDA
 #
 
-# Density of the GREM model
+# Density of the RCM model
 dgrem <- correlateR::dgrem
 
 # Simulate data
@@ -56,10 +57,12 @@ test.grem <- function(k = 4, n = 10, ns = rep(n, k), p = 10,
     res1 <- fit.grem(Psi.init = diag(p), nu.init = p + 1, S, ns, eps = 1e-2)
   })
   t2 <- system.time({
-    res2 <- fit.grem.MLE(nu.init = p + 1, S = S, ns = ns, eps = 1e-2)
+    res2 <- correlateR:::fit.grem.MLE(nu.init = p + 1, S = S,
+                                      ns = ns, eps = 1e-2)
   })
   t3 <- system.time({
-    res3 <- fit.grem.moment(nu.init = p + 1e7, S = S, ns = ns, eps = 1e-2)
+    res3 <- correlateR:::fit.grem.moment(nu.init = p + 1e7, S = S,
+                                         ns = ns, eps = 1e-2)
   })
 
   expected.covariance <- Psi/(nu - p - 1)
@@ -194,8 +197,8 @@ plot(df$n, df$SSE.grem.em, col = "blue", type = "b", axes = FALSE,
 lines(df$n, df$SSE.mean, col = "red", type = "b", pch = 16, lty = 2)
 lines(df$n, df$SSE.grem.mle, col = "orange", type = "b", pch = 17, lty = 3)
 lines(df$n, df$SSE.grem.mom, col = "green", type = "b", pch = 18, lty = 4)
-legend("topright", legend = c("GREM (EM)", "pool",
-                              "GREM (MLE)", "GREM (Moment)"),
+legend("topright", legend = c("RCM (EM)", "pool",
+                              "RCM (MLE)", "RCM (Moment)"),
        lty = 1:4, pch = c(15, 16, 17, 18), lwd = 2,
        col = c("blue", "red", "orange", "green"))
 axis(1)
@@ -413,7 +416,7 @@ dlbcl.par <- list(top.n = 300,
                   go.alpha.level = 0.01,
                   ontology = "MF",
                   minModuleSize = 20,
-                  threshold = .3)
+                  threshold = 0.3)
 
 if (!exists("dlbcl.grem") | !exists("var.pool") | recompute) {
   vars      <- sapply(gep, function(x) rowSds(exprs(x))*(ncol(x) - 1))
@@ -469,24 +472,32 @@ map2hugo <- function(ensg) {
   names(ans) <- ensg
   return(ans)
 }
-## ---- end ----
 
-png("figure/dlbcl_plot_2-1.png", width = 1500, height = 2300, res = 150)
-## ---- dlbcl_plot_2 ----
-#dlbcl.TOMdist <- TOMdist(adjMat = dlbcl.adjMat)
-#dimnames(dlbcl.TOMdist) <- dimnames(dlbcl.adjMat) # Keep names
-#dlbcl.clust <- flashClust(as.dist(dlbcl.TOMdist), method = dlbcl.par$linkage)
+
+## ---- dlbcl_clustering ----
 dlbcl.clust <- flashClust(as.dist(1 - dlbcl.adjMat), method = dlbcl.par$linkage)
-
-# Reorder
-# dlbcl.clust <- as.hclust(reorder(as.dendrogram(dlbcl.clust),
-#                                  wts = colSums(dlbcl.adjMat),
-#                                  agglo.FUN = mean))
-
-
 # Cluster
+
 dlbcl.modules <- labels2colors(cutree(dlbcl.clust, k = 5))
 names(dlbcl.modules) <- dlbcl.clust$labels
+
+dlbcl.g <- graph.adjacency(dlbcl.cor, mode = "undirected",
+                           weighted = TRUE, diag = FALSE)
+w <- E(dlbcl.g)$weight
+E(dlbcl.g)$color <- alp(ifelse(w < 0, "steelblue","tomato"), abs(w))
+V(dlbcl.g)$name <- map2hugo(V(dlbcl.g)$name)
+
+# Phylo
+phylo <- as.phylo(dlbcl.clust)
+phylo$tip.label <- map2hugo(phylo$tip.label)
+
+## ---- end ----
+
+
+## ---- dlbcl_plot_2 ----
+dlbcl_plot_2 <- "figure/dlbcl_plot_2-1.png"
+png(dlbcl_plot_2, width = 1500, height = 2200, res = 150)
+if (!file.exists("figure/dlbcl_plot_2-1.png") || recompute) {
 
 # LAYOUT
 layout(rbind(c(0,0,5,6), c(0,0,2,6), c(4,1,3,6),7),
@@ -503,9 +514,9 @@ layout.custom <- function(graph,...) {
   l <- layout.circle(graph)
   layout.fruchterman.reingold(graph, niter = 10000,
                               area = vcount(graph)/2,
-                              maxdelta = 10*vcount(graph),
+                              maxdelta = vcount(graph),
                               repulserad = vcount(graph),
-                              weights = 10*E(graph)$weight,
+                              weights = E(graph)$weight,
                               start = l,
                               ...)
 }
@@ -515,46 +526,42 @@ get.size <- function(x) {
 }
 
 #o <- dlbcl.clust$order
-thresholded <- soft(dlbcl.cor, dlbcl.par$threshold) #.175)
+topn <- function(x, n = 6) {
+  nms <- names(x)
+  top <- names(tail(sort(x), n = n))
+  ifelse(nms %in% top, nms, "")
+}
+
+thresholded <- soft(dlbcl.cor, dlbcl.par$threshold)
 gr <- plotModuleGraph(abs(thresholded),
-                      labels = "",
+                      labels = "", #map2hugo(topn(rowSums(abs(dlbcl.cor)))),
                       diff.exprs = 3*get.size(abs(dlbcl.cor)) + 3,
                       layout = layout.custom,
                       mark.shape = .5,
                       ecol = "black",
-                      vcol = dlbcl.modules)#[o])
+                      vcol = dlbcl.modules)
 scaleToLayout <- function(x) {
   return(2*apply(x, 2, function(x) (x - min(x))/max(x - min(x))) - 1)
 }
 points(scaleToLayout(gr$layout), pch = 16, cex = 0.7)
 
 # PANEL C
-dlbcl.g <- graph.adjacency(dlbcl.cor, mode = "undirected",
-                           weighted = TRUE, diag = FALSE)
-w <- E(dlbcl.g)$weight
-E(dlbcl.g)$color <- alp(ifelse(w < 0, "steelblue","tomato"), abs(w))
-V(dlbcl.g)$name <- map2hugo(V(dlbcl.g)$name)
-
-
-#dlbcl.clust2 <- dlbcl.clust
-#dlbcl.clust2$height <- dlbcl.clust2$height - min(dlbcl.clust2$height)
-
-phylo <- as.phylo(dlbcl.clust)
-phylo$tip.label <- map2hugo(phylo$tip.label)
-
 plotHierarchicalEdgeBundles(phylo, dlbcl.g, beta = 0.95,
                             cex = 0.7, type = "fan",
                             tip.color = dlbcl.modules,
-                            e.cols = E(dlbcl.g)$color)
-## ---- end ----
+                            e.cols = alp(E(dlbcl.g)$color, 0.6))
+}
 dev.off()
+## ---- end ----
+
 
 
 
 
 ## ---- dlbcl_go_analysis ----
 # GO analysis
-if (!exists("dlbcl.module.genes") || !exists("dlbcl.go.analysis")||recompute) {
+if (!exists("dlbcl.module.genes") || !exists("dlbcl.go.analysis") ||
+      recompute) {
   dlbcl.module.genes <- list()
   dlbcl.go.analysis <- list()
 
@@ -563,7 +570,8 @@ if (!exists("dlbcl.module.genes") || !exists("dlbcl.go.analysis")||recompute) {
       gsub("_at$", "", names(dlbcl.modules[dlbcl.modules == col]))
     geneList <- factor(as.integer(all.genes %in% mod.genes))
     names(geneList) <- all.genes
-    GOdata <- new("topGOdata", ontology = ontology, allGenes = geneList,
+    GOdata <- new("topGOdata", ontology = dlbcl.par$ontology,
+                  allGenes = geneList,
                   annot = annFUN.gene2GO, gene2GO = gid2go)
     result.fisher <-
       runTest(GOdata, algorithm = "classic", statistic = "fisher")
@@ -639,6 +647,67 @@ rownames(go.table) <- NULL
         file = "")
 ## ---- end ----
 
+## ---- survival_analysis ----
 
+plot.cis <- function(coxph,...) {
+  x95 <- summary(cph.fit, conf.int = c(0.95))
+  x99 <- summary(cph.fit, conf.int = c(0.99))
+  ci95 <- x95$conf.int
+  ci99 <- x99$conf.int
+  rng <- range(ci99)
+
+  plot(1, type = "n", xlim = rng, ylim = c(0, nrow(ci99)+1),
+       xlab = "", ylab = "", axes = FALSE, log = "x", ...)
+  h <- 0.2
+  col <- gsub("^ME", "", rownames(ci95))
+  for (ci in  list(ci95, ci99)) {
+    rect(ci[,3], 1:nrow(ci) - h, ci[,4], 1:nrow(ci) + h,
+         col = alp(col, 0.5), border = NA)
+
+    segments(x0 = ci[,1], y0 = 1:nrow(ci) - 1.5*h, y1 = 1:nrow(ci) + 1.5*h,
+             lwd = 2)
+  }
+  rect(ci99[,3], 1:nrow(ci99) - h, ci99[,4], 1:nrow(ci99) + h)
+  rect(ci95[,3], 1:nrow(ci95) - h, ci95[,4], 1:nrow(ci95) + h)
+  abline(v = 1, lty = 2, col = "darkgrey")
+  axis(3, at = axTicks(3), label = formatC(axTicks(3)))
+  axis(2, at = 1:nrow(ci), label = col,
+       las = 2, tick = FALSE, pos = axTicks(3)[1])
+}
+
+load("metadata.RData")
+library("WGCNA")
+library("survival")
+library("rms")
+
+par(mar = c(.1,5,5,0.1), oma = c(2,0,0,0), mfcol = c(3, 2))
+
+for (j in 1:2) {
+  meta <- switch(j, metadataLLMPPCHOP, metadataLLMPPRCHOP)
+  rownames(meta) <- as.character(meta$GEO.ID)
+  expr <- switch(j,
+                 gep$GEPLLMPPCHOP.ensg[names(dlbcl.modules), ],
+                 gep$GEPLLMPPRCHOP.ensg[names(dlbcl.modules), ])
+  meta <- meta[colnames(expr), ] # Reorder
+
+  # Check order
+  stopifnot(rownames(meta) == colnames(expr))
+
+  res <- moduleEigengenes(t(expr), dlbcl.modules)
+  eg <- res$eigengenes
+  col <- gsub("^ME", "", colnames(eg))
+
+  cph.fit <- coxph(meta$OS ~ ., data = eg, x = TRUE, y = TRUE)
+
+  plot.cis(cph.fit, main = switch(j, "LLMPP CHOP", "LLMPP R-CHOP"))
+
+  eg.hl <- data.frame(eg >= apply(eg, 2, median))
+  for (i in seq_len(ncol(eg.hl))) {
+    if (col[i] %in% c("turquoise", "yellow"))
+      plot(survfit(meta$OS ~ factor(eg.hl[,i])), main = col[i],
+           col = c(col[i], "black"))
+  }
+}
+## ----
 
 

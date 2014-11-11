@@ -65,7 +65,7 @@ Meta-analysis comes principally in two different flavors, fixed and random, corr
 Random-effects models (REM) for meta-analysis model the effects as random variables realized for each study.
 In a vein similar to the regular meta-analysis by \citet{Choi2003}, we think of the the different studies as related but perturbed experiments.
 In graphical modeling, the true covariance matrix is the effect of interest to be estimated.
-Hence, a graphical analog to \citet{Choi2003} is the following relatively simple graphical random effects model (GREM) of the observations.
+Hence, a graphical analog to \citet{Choi2003} is the following relatively simple random covariance model (RCM) of the observations.
 Let $p$ be the number of features and $k$ the number of studies.
 We model each sample of the $i$th study as a $p$-dimensional zero-mean multivariate gaussian vector with covariance matrix realized from an inverse Wishart distribution, i.e.\ the hierarchical model
 \begin{align}
@@ -151,7 +151,7 @@ Hence we have existence and uniqueness of a global maximum in $\vPsi$.
 
 \subsection{Moment estimate}
 In the following, estimation of $\vPsi$ for fixed $\nu$ is considered.
-With the GREM framework, we show that, properly scaled, the pooled covariance and mean covariance matrices can be viewed as different moment estimators.
+With the RCM framework, we show that, properly scaled, the pooled covariance and mean covariance matrices can be viewed as different moment estimators.
 These straight-forward estimators are thus movtivated by the model.
 Simple estimates of $\vPsi$ are readily available by the hierachical construction.
 
@@ -316,11 +316,11 @@ for $\vTheta$. The connection to the likelihood equation \eqref{eq:firstordderiv
 We propose an alternating procedure between estimating $\nu$ and $\vPsi$ while keeping the other fixed.
 Given parameters $\hat{\nu}_{(t)}$ and $\hvPsi_{(t)}$ at iteration $t$, we estimate $\hvPsi_{(t+1)}$ using the fixed $\hat{\nu}_{(t)}$. Subsequently, we find $\hat{\nu}_{(t+1)}$ by a standard one-dimensional numerical optimization procedure using the fixed $\hvPsi_{(t+1)}$.
 This coordinate ascent-like\fxnote{Or what type of algorithm is it?} approach is repeated until convergence.
-More precisely, in pseudo-code, we propose the algorithm seen in Algorithm \ref{alg:grem}.
+More precisely, in pseudo-code, we propose the algorithm seen in Algorithm \ref{alg:RCM}.
 \begin{algorithm}
-\caption{Pseudo-code for the GREM estimation procedure}\label{alg:grem}
+\caption{Pseudo-code for the RCM estimation procedure}\label{alg:RCM}
 \begin{algorithmic}[1]
-\Procedure{GREM coordinate ascent}{}
+\Procedure{RCM coordinate ascent}{}
 \State \algorithmicrequire{
 \State \emph{Sufficient data:} $(\vS_1, n_1), ..., (\vS_k, n_k)$
 \State \emph{Initial parameters:} $\hvPsi_{(0)}, \hat{\nu}_{(0)}$
@@ -408,7 +408,7 @@ The GCB cases exhibit a clinically favorable overall survial prognosis compared 
 \subsubsection{Data and preprocessing}
 A large amount of DLBCL datasets are now available online at the NCBI (National Center for Biotechnology Information) Gene Expression Omnibus (GEO) website.
 We downloaded 10 DLBCL large-scale gene expression studies and preprocessed these using the custom brainarray chip definition files (CDF) and RMA-normalization [7, 3].
-The corresponding GEO-accession numbers are \Sexpr{paste(grep("XXX", unique(studies$GSE), invert = TRUE, value = TRUE), collapse = ", ")} of various microarray platforms.
+The corresponding GEO-accession numbers are \Sexpr{paste(grep("XXX", base::unique(studies[,"GSE"]), invert = TRUE, value = TRUE), collapse = ", ")} of various microarray platforms.
 The downloaded data together with our own yields a total of \Sexpr{rowSums(dlbcl.dims)["Samples"]} samples with studies sizes in the range \Sexpr{paste(range(dlbcl.dims["Samples",]), collapse = "-")}.
 The summarization using brainarray CDFs facilitates cross-platform integration.
 
@@ -421,7 +421,7 @@ We wanted to perform coexpression network (i.e.\ weighted correlation network) a
 For each dataset the scatter matrix $\vS_i$ of the top \Sexpr{dlbcl.par$top.n} most variable genes (as measured by the pooled variance across studies) was computed as the suffcient statistics along with the number of samples.
 Hence, we investigate \Sexpr{(dlbcl.par$top.n*(dlbcl.par$top.n + 1)/2)} pairwise interactions.
 
-The parameters of the GREM model was estimated using the EM algorithm and yielded
+The parameters of the RCM model was estimated using the EM algorithm and yielded
 
 <<Psi, echo=FALSE, fig.height=7/2, fig.width = 7>>=
 r <- order(rowSums(abs(dlbcl.grem$Psi)))
@@ -442,19 +442,21 @@ Subsequently, $\hvPsi$ was scaled to the corresponding correlation matrix $\hat{
 Note, that the expected covariance $(\nu - p - 1)^{-1}\hvPsi$ yields the same correlation matrix $\hat{\vec{R}}$.
 Figure \ref{fig:dlbcl_plot_1} shows a histogram of the distibution of correlations.
 
-<<dlbcl_plot_1, echo = FALSE, fig.height=7/2.5, fig.width=7, fig.pos="htb", fig.scap = "", fig.cap="\\it Distribution of the correlation coefficents given by the entries of $\\vec{\\hat{R}}$.">>=
+<<dlbcl_plot_1, echo = FALSE, fig.height=7/2.5, fig.width=7, fig.pos="tb", fig.scap = "", fig.cap="\\it Distribution of the correlation coefficents given by the entries of $\\vec{\\hat{R}}$.">>=
 @
-
 <<dlbcl_mappings, echo=FALSE, results='hide'>>=
 @
-
-<<dlbcl_plot_2, echo = FALSE, message=FALSE, results='hide', dev='png', fig.ext='png', fig.width=1500, fig.height=2300, dpi=150, fig.pos="htb", fig.scap="", fig.cap="\\it{}Top left: dendrograms of the hierachical clustering of the TOM-distance measure, the modules based on the clustering, and the correlation matrix. Top right: a graphical representation of the correlation matrix as laid out by the Fruchterman-Reingold force-based algorithm using the edge-weights. The nodes are coloured after the identified modules with sizes proportional to their connectivity. The opacity of the edges are drawn as function of the edge weight. Bottom: Hieriachical edge bundeling representation of the correlation network graph. Negative and postive correlation are coloured blue and red, respectively. Again, the strength of the correlation determine the transparency of the edge.">>=
+<<dlbcl_clustering, echo=FALSE, results='hide'>>=
 @
+<<dlbcl_plot_2, echo = FALSE, message=FALSE, results='hide'>>=
+@
+\fig{\Sexpr{dlbcl_plot_2}}{0.8\textwidth}{\it{}Top left: dendrograms of the hierachical clustering, the identified modules, and the correlation matrix. Top right: the correlation network as laid out by the Fruchterman-Reingold algorithm using the edge-weights. The nodes are coloured after the identified modules with sizes proportional to their connectivity. The opacity of the edges are drawn as function of the edge weight. Bottom: A Hieriachical edge bundeling representation of the network. Negative and positive correlations are coloured blue and red, resp.
+}
 
 We have thus estimated a correlation matrix across all studies to which standard correlation network analyses can be employed.
-To identify subgraphs, we used agglomerative hierachical clustering with \Sexpr{dlbcl.clust$method} linkage on the distance measure defined by topological overlap matrix (TOM) \citep{Horvath2011} using the WGCNA-package \citep{Langfelder2008}.
-The tree was pruned at dynamic heights (using the function \texttt{cutreeDynamicTree}) which identified \Sexpr{length(unique(dlbcl.modules))} tightly connected subgraphs or modules coloured and named arbitrarily by colors.
-Figure \ref{fig:dlbcl_plot_2} show these results.
+To identify subgraphs, we used agglomerative hierachical clustering with \Sexpr{dlbcl.clust$method} linkage on the distance measure defined by 1 minus the absolute value of the correlation.
+The tree was arbitrarily pruned at a height which yielded \Sexpr{length(unique(dlbcl.modules))} subgraphs (or, modules) coloured and named by colors.
+Figure \ref{\Sexpr{dlbcl_plot_2}} show these results.
 Table \ref{tab:dlbcl_mod_tab} show the genes within each module.
 
 Next, the modules were screened for biological relevance using GO (Gene Ontology) enrichment analysis.
@@ -463,14 +465,24 @@ As seen, the GO-terms all appear highly relevant to the pathology of DLBCL.
 
 <<dlbcl_go_analysis, echo=FALSE, results='hide'>>=
 @
-
 <<dlbcl_mod_tab, echo=FALSE, results='asis'>>=
 @
+
+Lastly, we checked if the identified modules were predictive of overall survival (OS) in the CHOP and R-CHOP-treated cohorts of the LLMPP dataset (GSE10846).
+To do this, the eigengene for each module was computed and a multiple Cox proportional hazards model for OS was fitted with the module eigengenes as covariates.
+For the most interesting modules, the Kaplan-Meier estimates were computed for groups arising when dichotomizing the values of corresponding eigengene as above or below the median value.
+The results are seen in Figure \ref{fig:survival_analysis}.
+This further corroborates that the identified modules are biologically meaningfull and that RCM provide a reasonable estimate of the covariance.
+
+<<survival_analysis, echo=FALSE, results='hide', fig.height=3*7*0.75, fig.width=2*7*0.75, fig.pos="tb", fig.scap = "", fig.cap="\\it Results for the survival analysis. The top row show $95\\%$ and $99\\%$ confidence intervals for the multiple Cox model. The bottom two rows show Kaplan-Meier estimates of the dichotomizing eigengenes.">>=
+@
+
+\clearpage
 
 \subsection{Supervised classification}
 <<discriminant_analysis, echo=FALSE, message=FALSE, results='hide'>>=
 @
-An quite different application of the GREM estimate can be found as a novel discriminant analysis.
+An quite different application of the RCM estimate can be found as a novel discriminant analysis.
 As seen below, the estimates obtained can be utilized in supervised learning as a intermediate case of linear discriminant analysis (LDA) and quadratic discriminant analysis (QDA).x
 
 Suppose $Y$ is a random variable denoting the class $1, ..., k$ and suppose $\vx$ is a random vector of the explanatory variables.
@@ -563,7 +575,7 @@ For example, while non-zero entries often can be accurately recalled in graphica
 Large sample-sizes are still needed achive unbiased estimates of the covariance.
 Therefore, an increased focus should also be appointed to efficiently aggregating datasets and achiving suffciently large sample sizes to allow for stable and unbiased estimation of covariance matrices.
 
-One might question the added ultiliy of the $\nu$ parameter is an obvious critique of the GREM.
+One might question the added ultiliy of the $\nu$ parameter is an obvious critique of the RCM.
 For example, it is unclear how large a proportion a single extra parameter can explain of the interstudy variance.
 Though more parameters could be introduced, we have attempted to provide some intuitive interpretation of the $\nu$ parameter.
 \fxnote{Do we have any other observations?}
@@ -682,7 +694,7 @@ which is not clearly convex. We see, that
   \lim_{\psi \to \infty} \ell'(\psi) = 0
 \end{align*}
 We draw the likelihood and its derivative with $k = 1$ and other appropriately chosen parameters as seen in Figure \ref{fig:one_dimensional_loglik} generated by
-<<one_dimensional_loglik, echo=-3, fig.height=3, fig.width=6, fig.pos="htb", ig.scap = "", fig.cap = "\\it One-dimensional log-likelihood and its the derivative.">>=
+<<one_dimensional_loglik, echo=-3, fig.height=3, fig.width=6, fig.pos="tb", ig.scap = "", fig.cap = "\\it One-dimensional log-likelihood and its the derivative.">>=
 @
 Clearly, the log-likelihood $\ell$ is not log-concave since a differentiable function of one variable is concave if and only if its derivative is monotonically non-increasing.
 A unique root, however, is seen.
