@@ -1,4 +1,4 @@
-setwd("~/Documents/PhD/paper-structREM/knitr/")
+setwd("~/Documents/PhD/paper-RCM/knitr/")
 
 ## ---- initialize_script ----
 rm(list = ls())
