@@ -30,11 +30,11 @@ registerDoMC(detectCores())
 #
 
 # Density of the RCM model
-dgrem <- correlateR::dgrem
+drcm <- correlateR::drcm
 
 # Simulate data
-test.grem <- function(k = 4, n = 10, ns = rep(n, k), p = 10,
-                      nu = 15, Psi) {
+test.rcm <- function(k = 4, n = 10, ns = rep(n, k), p = 10,
+                     nu = 15, Psi) {
   stopifnot(nu > p + 1)
   rwishart <- function(n, Sigma) {
     X <- rmvnormal(n = n, mu = rep(0, nrow(Sigma)), sigma = Sigma)
@@ -54,28 +54,28 @@ test.grem <- function(k = 4, n = 10, ns = rep(n, k), p = 10,
 
   # Fit model
   t1 <- system.time({
-    res1 <- fit.grem(Psi.init = diag(p), nu.init = p + 1, S, ns, eps = 1e-2)
+    res1 <- fit.rcm(Psi.init = diag(p), nu.init = p + 1, S, ns, eps = 1e-2)
   })
   t2 <- system.time({
-    res2 <- correlateR:::fit.grem.MLE(nu.init = p + 1, S = S,
-                                      ns = ns, eps = 1e-2)
+    res2 <- correlateR:::fit.rcm.MLE(nu.init = p + 1, S = S,
+                                     ns = ns, eps = 1e-2)
   })
   t3 <- system.time({
-    res3 <- correlateR:::fit.grem.moment(nu.init = p + 1e7, S = S,
-                                         ns = ns, eps = 1e-2)
+    res3 <- correlateR:::fit.rcm.moment(nu.init = p + 1e7, S = S,
+                                        ns = ns, eps = 1e-2)
   })
 
   expected.covariance <- Psi/(nu - p - 1)
   mean.covariance     <- Reduce("+", SS)/length(ns)
-  grem.em.covariance  <- res1$Psi/(res1$nu - p - 1)
-  grem.mle.covariance <- res2$Psi/(res2$nu - p - 1)
-  grem.mom.covariance <- res3$Psi/(res3$nu - p - 1)
+  rcm.em.covariance  <- res1$Psi/(res1$nu - p - 1)
+  rcm.mle.covariance <- res2$Psi/(res2$nu - p - 1)
+  rcm.mom.covariance <- res3$Psi/(res3$nu - p - 1)
 
   return(list(expected = expected.covariance,
               mean = mean.covariance,
-              grem.em  = grem.em.covariance,
-              grem.mle = grem.mle.covariance,
-              grem.mom = grem.mom.covariance,
+              rcm.em  = rcm.em.covariance,
+              rcm.mle = rcm.mle.covariance,
+              rcm.mom = rcm.mom.covariance,
               res.em = res1,
               res.mle = res2,
               res.mom = res3,
@@ -95,20 +95,20 @@ SSEs <- function(x) {
     return(sum(diag(diff)) + sum(get.lower.tri(diff)))
   }
   n <- x$ns[1]
-  sse.grem.em  <- get.SSE(x$grem.em,  x$expected, n = n)
-  sse.grem.mle <- get.SSE(x$grem.mle, x$expected, n = n)
-  sse.grem.mom <- get.SSE(x$grem.mom, x$expected, n = n)
-  sse.mean     <- get.SSE(x$mean,     x$expected, n = n)
+  sse.rcm.em  <- get.SSE(x$rcm.em,  x$expected, n = n)
+  sse.rcm.mle <- get.SSE(x$rcm.mle, x$expected, n = n)
+  sse.rcm.mom <- get.SSE(x$rcm.mom, x$expected, n = n)
+  sse.mean    <- get.SSE(x$mean,    x$expected, n = n)
 
   stopifnot(all(x$ns == x$ns[1]))
   return(c(n  = x$ns[1],
            k  = x$k,
            nu = x$nu,
            p  = nrow(x$Psi),
-           SSE.grem.em  = sse.grem.em,
-           SSE.grem.mle = sse.grem.mle,
-           SSE.grem.mom = sse.grem.mom,
-           SSE.mean     = sse.mean))
+           SSE.rcm.em  = sse.rcm.em,
+           SSE.rcm.mle = sse.rcm.mle,
+           SSE.rcm.mom = sse.rcm.mom,
+           SSE.mean    = sse.mean))
 }
 
 to.df <- function(sim) {
@@ -139,7 +139,7 @@ hda.fit <- function(classes, vars, ...) {
   Psi.init <- Reduce("+", S)/(nrow(vars) - length(S))
 
   # Find "common" covariance
-  res <- fit.grem(Psi.init = Psi.init, nu.init = p, S = S, ns = counts, ...)
+  res <- fit.rcm(Psi.init = Psi.init, nu.init = p, S = S, ns = counts, ...)
   sigma <- res$Psi/(res$nu - p - 1)
 
   return(list(counts = counts, means = means, sigma = sigma,
@@ -151,8 +151,8 @@ hda.predict <- function(hda.fit, newdata) {
   probs <- as.numeric(hda.fit$counts/sum(hda.fit$counts))
 
   f <- function(k) {
-    probs[k] * dgrem(x = newdata, mu = hda.fit$means[k, ],
-                     Psi = hda.fit$Psi, nu = hda.fit$nu)
+    probs[k] * drcm(x = newdata, mu = hda.fit$means[k, ],
+                    Psi = hda.fit$Psi, nu = hda.fit$nu)
   }
   scaled_dens <- sapply(seq_len(K), f)
   post <- scaled_dens/rowSums(scaled_dens)
@@ -175,7 +175,7 @@ if (!exists("res") | recompute) {
   res <- list()
   for (i in seq_along(par.ne$n.obs)) {
     tmp <- foreach(j = seq_len(par.ne$n.sims)) %dopar% {
-      test.grem(k = par.ne$k, n = par.ne$n.obs[i], p = par.ne$p, nu = par.ne$nu)
+      test.rcm(k = par.ne$k, n = par.ne$n.obs[i], p = par.ne$p, nu = par.ne$nu)
     }
     res <- c(res, tmp)
     cat("loop =", i, "of", length(par.ne$n.obs), "done after",
@@ -187,16 +187,16 @@ if (!exists("res") | recompute) {
 
 ## ---- numerical_experiment_plot ----
 df <- as.data.frame(t(sapply(res, SSEs)))
-df <- aggregate(cbind(SSE.grem.em, SSE.grem.mle, SSE.grem.mom, SSE.mean) ~
+df <- aggregate(cbind(SSE.rcm.em, SSE.rcm.mle, SSE.rcm.mom, SSE.mean) ~
                   n + nu + k + p, mean, data = df)
-plot(df$n, df$SSE.grem.em, col = "blue", type = "b", axes = FALSE,
+plot(df$n, df$SSE.rcm.em, col = "blue", type = "b", axes = FALSE,
      xlab = expression(n = n[i]),
      ylim = range(df[,-(1:4)]),
      ylab = "average SSE", pch = 15, lty = 1,
      main = paste0("k = ", df$k, ", nu = ", df$nu, ", p = ", df$p)[1])
 lines(df$n, df$SSE.mean, col = "red", type = "b", pch = 16, lty = 2)
-lines(df$n, df$SSE.grem.mle, col = "orange", type = "b", pch = 17, lty = 3)
-lines(df$n, df$SSE.grem.mom, col = "green", type = "b", pch = 18, lty = 4)
+lines(df$n, df$SSE.rcm.mle, col = "orange", type = "b", pch = 17, lty = 3)
+lines(df$n, df$SSE.rcm.mom, col = "green", type = "b", pch = 18, lty = 4)
 legend("topright", legend = c("RCM (EM)", "pool",
                               "RCM (MLE)", "RCM (Moment)"),
        lty = 1:4, pch = c(15, 16, 17, 18), lwd = 2,
@@ -268,37 +268,37 @@ if (!exists("misclassification.risks") | recompute) {
       misclassification.risks[[p.index]][[s]]  <-
         tmp <- foreach(i = seq_len(par.xda$n.runs), .combine = rbind,
                        .packages = c("dplyr", "correlateR")) %dopar% {
-          cat("i =", i, "\n"); flush.console()
+                         cat("i =", i, "\n"); flush.console()
 
-          repeat {
-            train <- to.df(SimulateGMMData(par.xda$n.obs,       theta = theta))
-            valid <- to.df(SimulateGMMData(par.xda$n.obs.valid, theta = theta))
-            # Make sure that we have a least two observations in each group
-            if (all(table(train$classes) > 2) && all(table(valid$classes) > 2)){
-              break
-            }
-          }
+                         repeat {
+                           train <- to.df(SimulateGMMData(par.xda$n.obs,       theta = theta))
+                           valid <- to.df(SimulateGMMData(par.xda$n.obs.valid, theta = theta))
+                           # Make sure that we have a least two observations in each group
+                           if (all(table(train$classes) > 2) && all(table(valid$classes) > 2)){
+                             break
+                           }
+                         }
 
-          qda.train <- qda.fit(train$classes, dplyr::select(train, -classes))
-          lda.train <- qda2lda(qda.train)
-          hda.train <-
-            hda.fit(train$classes, dplyr::select(train, -classes), eps=1e-2)
+                         qda.train <- qda.fit(train$classes, dplyr::select(train, -classes))
+                         lda.train <- qda2lda(qda.train)
+                         hda.train <-
+                           hda.fit(train$classes, dplyr::select(train, -classes), eps=1e-2)
 
-          lda.pred <-
-            lda.predict(lda.train, newdata = dplyr::select(valid, -classes))
-          qda.pred <-
-            qda.predict(qda.train, newdata = dplyr::select(valid, -classes))
-          hda.pred <-
-            hda.predict(hda.train, newdata = dplyr::select(valid, -classes))
+                         lda.pred <-
+                           lda.predict(lda.train, newdata = dplyr::select(valid, -classes))
+                         qda.pred <-
+                           qda.predict(qda.train, newdata = dplyr::select(valid, -classes))
+                         hda.pred <-
+                           hda.predict(hda.train, newdata = dplyr::select(valid, -classes))
 
-          conf.lda <- table(True = valid$classes, Pred = lda.pred$class)
-          conf.qda <- table(True = valid$classes, Pred = qda.pred$class)
-          conf.hda <- table(True = valid$classes, Pred = hda.pred$class)
+                         conf.lda <- table(True = valid$classes, Pred = lda.pred$class)
+                         conf.qda <- table(True = valid$classes, Pred = qda.pred$class)
+                         conf.hda <- table(True = valid$classes, Pred = hda.pred$class)
 
-          return(c(misclassificationRisk(conf.lda),
-                   misclassificationRisk(conf.qda),
-                   misclassificationRisk(conf.hda)))
-        }
+                         return(c(misclassificationRisk(conf.lda),
+                                  misclassificationRisk(conf.qda),
+                                  misclassificationRisk(conf.hda)))
+                       }
       colnames(misclassification.risks[[p.index]][[s]]) <- c("LDA","QDA","HDA")
 
     }
@@ -418,20 +418,21 @@ dlbcl.par <- list(top.n = 300,
                   minModuleSize = 20,
                   threshold = 0.3)
 
-if (!exists("dlbcl.grem") | !exists("var.pool") | recompute) {
-  vars      <- sapply(gep, function(x) rowSds(exprs(x))*(ncol(x) - 1))
-  var.pool  <- rowSums(vars)/(sum(sapply(gep, ncol)) - length(gep))
-  use.genes <- names(sort(var.pool, decreasing = TRUE)[seq_len(dlbcl.par$top.n)])
-  gep <- lapply(gep, function(x) exprs(x)[use.genes, ])
+vars      <- sapply(gep, function(x) rowSds(exprs(x))*(ncol(x) - 1))
+var.pool  <- rowSums(vars)/(sum(sapply(gep, ncol)) - length(gep))
+use.genes <- names(sort(var.pool, decreasing = TRUE)[seq_len(dlbcl.par$top.n)])
+gep <- lapply(gep, function(x) exprs(x)[use.genes, ])
+
+if (!exists("dlbcl.rcm") | !exists("var.pool") | recompute) {
   dlbcl.ns  <- sapply(gep, ncol)
   dlbcl.S   <- lapply(gep, function(x) correlateR::scatter(t(x)))
-  dlbcl.grem <- fit.grem(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE)
-  dimnames(dlbcl.grem$Psi) <- dimnames(dlbcl.S[[1]])
-  resave(dlbcl.grem, use.genes, var.pool, file = "saved.RData")
+  dlbcl.rcm <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE)
+  dimnames(dlbcl.rcm$Psi) <- dimnames(dlbcl.S[[1]])
+  resave(dlbcl.rcm, file = "saved.RData")
 }
 # Expected covariance matrix
-#s <- sample(1:nrow(dlbcl.grem$Psi), 45)
-dlbcl.exp <- with(dlbcl.grem, Psi2Sigma(Psi, nu))#[s,s]
+#s <- sample(1:nrow(dlbcl.rcm$Psi), 45)
+dlbcl.exp <- with(dlbcl.rcm, Psi2Sigma(Psi, nu))#[s,s]
 
 ## ---- dlbcl_plot_1 ----
 dlbcl.cor <- cov2cor(dlbcl.exp)
@@ -499,57 +500,57 @@ dlbcl_plot_2 <- "figure/dlbcl_plot_2-1.png"
 png(dlbcl_plot_2, width = 1500, height = 2200, res = 150)
 if (!file.exists("figure/dlbcl_plot_2-1.png") || recompute) {
 
-# LAYOUT
-layout(rbind(c(0,0,5,6), c(0,0,2,6), c(4,1,3,6),7),
-       widths = c(4, 1, 15, 15), heights = c(4, 1, 10, 20))
+  # LAYOUT
+  layout(rbind(c(0,0,5,6), c(0,0,2,6), c(4,1,3,6),7),
+         widths = c(4, 1, 15, 15), heights = c(4, 1, 10, 20))
 
-# PANEL A
-TOMplot(dissim = abs(dlbcl.cor),
-        dendro = dlbcl.clust,
-        Colors = dlbcl.modules,
-        setLayout = FALSE)
+  # PANEL A
+  TOMplot(dissim = abs(dlbcl.cor),
+          dendro = dlbcl.clust,
+          Colors = dlbcl.modules,
+          setLayout = FALSE)
 
-# PANEL B
-layout.custom <- function(graph,...) {
-  l <- layout.circle(graph)
-  layout.fruchterman.reingold(graph, niter = 10000,
-                              area = vcount(graph)/2,
-                              maxdelta = vcount(graph),
-                              repulserad = vcount(graph),
-                              weights = E(graph)$weight,
-                              start = l,
-                              ...)
-}
-get.size <- function(x) {
-  s <- rowSums(x)
-  return((s - min(s))/max(s))
-}
+  # PANEL B
+  layout.custom <- function(graph,...) {
+    l <- layout.circle(graph)
+    layout.fruchterman.reingold(graph, niter = 10000,
+                                area = vcount(graph)/2,
+                                maxdelta = vcount(graph),
+                                repulserad = vcount(graph),
+                                weights = E(graph)$weight,
+                                start = l,
+                                ...)
+  }
+  get.size <- function(x) {
+    s <- rowSums(x)
+    return((s - min(s))/max(s))
+  }
 
-#o <- dlbcl.clust$order
-topn <- function(x, n = 6) {
-  nms <- names(x)
-  top <- names(tail(sort(x), n = n))
-  ifelse(nms %in% top, nms, "")
-}
+  #o <- dlbcl.clust$order
+  topn <- function(x, n = 6) {
+    nms <- names(x)
+    top <- names(tail(sort(x), n = n))
+    ifelse(nms %in% top, nms, "")
+  }
 
-thresholded <- soft(dlbcl.cor, dlbcl.par$threshold)
-gr <- plotModuleGraph(abs(thresholded),
-                      labels = "", #map2hugo(topn(rowSums(abs(dlbcl.cor)))),
-                      diff.exprs = 3*get.size(abs(dlbcl.cor)) + 3,
-                      layout = layout.custom,
-                      mark.shape = .5,
-                      ecol = "black",
-                      vcol = dlbcl.modules)
-scaleToLayout <- function(x) {
-  return(2*apply(x, 2, function(x) (x - min(x))/max(x - min(x))) - 1)
-}
-points(scaleToLayout(gr$layout), pch = 16, cex = 0.7)
+  thresholded <- soft(dlbcl.cor, dlbcl.par$threshold)
+  gr <- plotModuleGraph(abs(thresholded),
+                        labels = "", #map2hugo(topn(rowSums(abs(dlbcl.cor)))),
+                        diff.exprs = 3*get.size(abs(dlbcl.cor)) + 3,
+                        layout = layout.custom,
+                        mark.shape = .5,
+                        ecol = "black",
+                        vcol = dlbcl.modules)
+  scaleToLayout <- function(x) {
+    return(2*apply(x, 2, function(x) (x - min(x))/max(x - min(x))) - 1)
+  }
+  points(scaleToLayout(gr$layout), pch = 16, cex = 0.7)
 
-# PANEL C
-plotHierarchicalEdgeBundles(phylo, dlbcl.g, beta = 0.95,
-                            cex = 0.7, type = "fan",
-                            tip.color = dlbcl.modules,
-                            e.cols = alp(E(dlbcl.g)$color, 0.6))
+  # PANEL C
+  plotHierarchicalEdgeBundles(phylo, dlbcl.g, beta = 0.95,
+                              cex = 0.7, type = "fan",
+                              tip.color = dlbcl.modules,
+                              e.cols = alp(E(dlbcl.g)$color, 0.6))
 }
 dev.off()
 ## ---- end ----
@@ -632,19 +633,19 @@ go.col <- gsub("(^|[[:space:]])([[:alpha:]])",
                perl = TRUE)
 colnames(go.table)[3:6] <- c("$N$", "$O$", "$E$", "$P$-val")
 rownames(go.table) <- NULL
-  latex(go.table[, -c(1, 3)],
-        rowname = go.table[, 1],
-        rgroup = unique(go.col),
-        n.rgroup = table(go.col)[unique(go.col)],
-        title = "GO ID",
-        size = "tiny",
-        caption = paste0("The significant GO terms in the modules at ",
-                        "$\\alpha$-level ", dlbcl.par$go.alpha.level, "."),
-        #caption.loc = "bottom",
-        label = paste0("tab:GO_tabs"),
-        longtable = TRUE,
-        lines.page = 80,
-        file = "")
+latex(go.table[, -c(1, 3)],
+      rowname = go.table[, 1],
+      rgroup = unique(go.col),
+      n.rgroup = table(go.col)[unique(go.col)],
+      title = "GO ID",
+      size = "tiny",
+      caption = paste0("The significant GO terms in the modules at ",
+                       "$\\alpha$-level ", dlbcl.par$go.alpha.level, "."),
+      #caption.loc = "bottom",
+      label = paste0("tab:GO_tabs"),
+      longtable = TRUE,
+      lines.page = 80,
+      file = "")
 ## ---- end ----
 
 ## ---- survival_analysis ----
@@ -680,14 +681,15 @@ library("WGCNA")
 library("survival")
 library("rms")
 
-par(mar = c(.1,5,5,0.1), oma = c(2,0,0,0), mfcol = c(3, 2))
+par(mar = c(.1,5,5,0.1), oma = c(2,0,0,0))
+layout(cbind(1:3,4:6), heights = c(1,2,2))
 
 for (j in 1:2) {
   meta <- switch(j, metadataLLMPPCHOP, metadataLLMPPRCHOP)
   rownames(meta) <- as.character(meta$GEO.ID)
   expr <- switch(j,
-                 gep$GEPLLMPPCHOP.ensg[names(dlbcl.modules), ],
-                 gep$GEPLLMPPRCHOP.ensg[names(dlbcl.modules), ])
+                 (gep$GEPLLMPPCHOP.ensg)[names(dlbcl.modules), ],
+                 (gep$GEPLLMPPRCHOP.ensg)[names(dlbcl.modules), ])
   meta <- meta[colnames(expr), ] # Reorder
 
   # Check order
@@ -704,8 +706,8 @@ for (j in 1:2) {
   eg.hl <- data.frame(eg >= apply(eg, 2, median))
   for (i in seq_len(ncol(eg.hl))) {
     if (col[i] %in% c("turquoise", "yellow"))
-      plot(survfit(meta$OS ~ factor(eg.hl[,i])), main = col[i],
-           col = c(col[i], "black"))
+      plot(survfit(meta$OS ~ factor(eg.hl[,i])), conf.int = TRUE, main = col[i],
+           col = c(col[i], "black"), lwd = 2)
   }
 }
 ## ----

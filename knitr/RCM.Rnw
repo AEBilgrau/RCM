@@ -84,7 +84,7 @@ where $\calW^{-1}(\vPsi, \nu)$ denotes an inverse Wishart distribution with prob
 \end{align*}
 $\vPsi$ and $\vSigma_i$ are positive definite, $\nu > p - 1$, and $\calN_p(\vec{0}_p, \vSigma_i)$ denotes a multivariate gaussian distribution with pdf
 \begin{align*}
-f(\vec{x} | \vSigma_i) =
+  f(\vec{x} | \vSigma_i) =
   (2\pi)^{-\frac{p}{2}} \det(\vSigma_i)^{-\frac{1}{2}}
   e^{ -\frac{1}{2}\vx^\top \vSigma_i^{-1}\vx }.
 \end{align*}
@@ -424,8 +424,8 @@ Hence, we investigate \Sexpr{(dlbcl.par$top.n*(dlbcl.par$top.n + 1)/2)} pairwise
 The parameters of the RCM model was estimated using the EM algorithm and yielded
 
 <<Psi, echo=FALSE, fig.height=7/2, fig.width = 7>>=
-r <- order(rowSums(abs(dlbcl.grem$Psi)))
-img <- dlbcl.grem$Psi[r,r]
+r <- order(rowSums(abs(dlbcl.rcm$Psi)))
+img <- dlbcl.rcm$Psi[r,r]
 img <- img[ncol(img):1,]
 par(mar = c(0,0,0,0))
 n.cols <- 255
@@ -437,7 +437,7 @@ graphics::image(img, axes = FALSE, asp = 1, breaks = brks,
 text(-0.05, 0.5, expression(hat(bold(Psi)) == phantom(a)))
 @
 
-\noindent and a $\hat{\nu} = \Sexpr{round(dlbcl.grem[["nu"]], 2)}$.\fxnote{Interpretation of $\nu$? A good interpretation of $\nu$ would really add some value to the paper.}
+\noindent and a $\hat{\nu} = \Sexpr{round(dlbcl.rcm[["nu"]], 2)}$.\fxnote{Interpretation of $\nu$? A good interpretation of $\nu$ would really add some value to the paper.}
 Subsequently, $\hvPsi$ was scaled to the corresponding correlation matrix $\hat{\vec{R}}$.
 Note, that the expected covariance $(\nu - p - 1)^{-1}\hvPsi$ yields the same correlation matrix $\hat{\vec{R}}$.
 Figure \ref{fig:dlbcl_plot_1} shows a histogram of the distibution of correlations.
@@ -471,10 +471,10 @@ As seen, the GO-terms all appear highly relevant to the pathology of DLBCL.
 Lastly, we checked if the identified modules were predictive of overall survival (OS) in the CHOP and R-CHOP-treated cohorts of the LLMPP dataset (GSE10846).
 To do this, the eigengene for each module was computed and a multiple Cox proportional hazards model for OS was fitted with the module eigengenes as covariates.
 For the most interesting modules, the Kaplan-Meier estimates were computed for groups arising when dichotomizing the values of corresponding eigengene as above or below the median value.
-The results are seen in Figure \ref{fig:survival_analysis}.
-This further corroborates that the identified modules are biologically meaningfull and that RCM provide a reasonable estimate of the covariance.
+These results are seen in Figure \ref{fig:survival_analysis}.
+The results further corroborates that the identified modules are biologically meaningfull and that RCM provide a reasonable estimate of the covariance.
 
-<<survival_analysis, echo=FALSE, results='hide', fig.height=3*7*0.75, fig.width=2*7*0.75, fig.pos="tb", fig.scap = "", fig.cap="\\it Results for the survival analysis. The top row show $95\\%$ and $99\\%$ confidence intervals for the multiple Cox model. The bottom two rows show Kaplan-Meier estimates of the dichotomizing eigengenes.">>=
+<<survival_analysis, echo=FALSE, results='hide', fig.height=2.5*7*0.7, fig.width=2*7*0.7, fig.pos="tb", fig.scap = "", fig.cap="\\it The top row show $95\\%$ and $99\\%$ confidence intervals for the estimate of the Hazard ratio in the multiple Cox model. The bottom two rows show Kaplan-Meier estimates of the dichotomizing eigengenes.">>=
 @
 
 \clearpage
