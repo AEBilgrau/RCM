@@ -34,8 +34,8 @@ The model is also shown to be applicable as an intermediate between linear discr
 \noindent \textbf{Keywords:} \textit{meta-analysis, covariance estimation, integrative analysis, network integration, structural meta-analysis, gaussian graphical modeling, linear discriminant analysis, quadratic discriminant analysis}
 \end{abstract}
 
-\newpage
-\tableofcontents
+%\newpage
+%\tableofcontents
 
 \newpage
 \section{Introduction}
@@ -209,7 +209,7 @@ To find the maximizing parameters we differentiate \eqref{eq:loglik} w.r.t.\ $\v
       \left(\vec{I} + \vPsi^{-1}\vec{S}_i\right)^{-1}\vPsi^{-1}.
       \notag
 \end{align}
-While assuming $\vPsi$ unstructured is not strictly correct it (in this case) leads to a valid equation. The proper 1.\ order derivative can in alternative notation be seen in equation \eqref{eq:dloglik} and can easily be seen to be equivalent to the above.
+While assuming $\vPsi$ unstructured is not strictly correct it (in this case) leads to a valid equation. The proper 1.\ order derivative can be seen in equation \eqref{eq:dloglik} and can easily be seen to be equivalent to the above.
 Equation \eqref{eq:firstordderivloglik} is equivalent to
 \begin{align*}
     k\nu \vec{I}
@@ -914,16 +914,16 @@ We substitute \eqref{eq:loglikequation} into \eqref{eq:negativedefinte} to get
 \end{align*}
 We note that $\vS_a = \vX_a\vX_a^\top$ and
 \begin{align*}
-  (\vI + \vS_a)^{-1} - \vI = -\vX_a(\vI + \vX_a^\top\vX_a)^{-1}\vX_a^\top,
+  (\vI + \vS_a)^{-1} - \vI = -\vX_a\big(\vI + \vX_a^\top\vX_a\big)^{-1}\vX_a^\top,
 \end{align*}
-whereby we need to show that
+by the matrix inversion lemma (or, Woodbury matrix identity) whereby we need to show that
 \begin{align*}
   \sum_a (n_a + \nu) \tr\!\Big(
     \vY(\vI + \vX_a\vX_a^\top)\vY\vX_a\big(\vI + \vX_a^\top\vX_a\big)^{-1}\vX_a^\top
   \Big)
   > 0.
 \end{align*}
-Since $n_a + \nu \geq 1$ and $\vI + \vX_a\vX_a^\top \geq \vI$, it is enough to shown
+Since $n_a + \nu \geq 1$ and $\vI + \vX_a\vX_a^\top \succeq \vI$, it is enough to shown
 \begin{align*}
   \sum_a \tr\!\Big(
     \vY\vY\vX_a\big(\vI + \vX_a^\top\vX_a\big)^{-1}\vX_a^\top
@@ -931,21 +931,22 @@ Since $n_a + \nu \geq 1$ and $\vI + \vX_a\vX_a^\top \geq \vI$, it is enough to s
   > 0.
 \end{align*}
 Let $\lambda_a$ be the maximum eigenvalue of
-$\vS_a = \vX_a\vX_a^\top$
+$\vX_a^\top\vX_a$
 and let
 $\lambda_M = \max_a \lambda_a$.
 Then
-$\big(\vI + \vX_a\vX_a^\top\big)^{-1} \geq (1 + \lambda_M)^{-1}\vI$
+$\big(\vI + \vX_a\vX_a^\top\big)^{-1} \succeq (1 + \lambda_M)^{-1}\vI$
 and we need to show
-\begin{align*}
-  (1 + \lambda_M)^{-1} \sum_a \tr\!\big( \vY\vY\vX_a\vX_a^\top \big)
+\begin{align}
+  \label{eq:lasteq}
+  (1 + \lambda_M)^{-1} \sum_a \tr\!\Big( \vY\vY\vX_a\vX_a^\top \Big)
   \geq
   \tr\!\left( \vY\vY \sum_a \vX_a\vX_a^\top \right)
   > 0
-\end{align*}
+\end{align}
 However, as we assume that
-$\sum_a \vX_a\vX_a^\top > 0$,
-we are finished.
+$\sum_a \vX_a\vX_a^\top \succ 0$,
+then \eqref{eq:lasteq} holds and the proof is complete.
 
 % Since $\vS_a$ is positive semi-definite, it can be diagonalized $\vS_a = \vU_a \vD_a \vU_a^\top$ by the spectral theorem where the diagonal matrix $\vD_a \succeq 0$ (all non-zero entries are positive) and $\vU_a$ is orthonormal (i.e.\ $\vU_a\vU_a^\top = \vU_a^\top\vU_a = \vI$). Using the diagonalization,
 % \begin{align}
