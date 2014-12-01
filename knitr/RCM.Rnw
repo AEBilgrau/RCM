@@ -5,7 +5,7 @@
 \author{
   Anders Ellern Bilgrau \\ \texttt{abilgrau@math.aau.dk} \and
   Poul Svante Eriksen \\ \texttt{svante@math.aau.dk} \and
-  Martin B\o{}gsted \\ \texttt{m\textunderscore{}boegsted@dcm.aau.dk}
+  Martin B\o{}gsted \\ \texttt{mboegsted@dcm.aau.dk}
 }
 
 \begin{document}
@@ -20,8 +20,6 @@ read_chunk("RCM.R")
 @
 <<auxiliary_functions, echo=FALSE>>=
 @
-
-\listoffixmes
 
 \maketitle
 \begin{abstract}
@@ -41,9 +39,9 @@ The model is also shown to be applicable as an intermediate between linear discr
 
 \newpage
 \section{Introduction}
-The fundamental problem in statistics of accurately and precisely estimating the covariance matrix (or its inverse) is notoriously difficult though computationally easy.
+The fundamental problem in statistics of accurately and precisely estimating the covariance matrix (or its inverse) is notoriously difficult.
 The usual bias-corrected maximum likelihood estimator (MLE), the sample covariance matrix, has long been known to perform poorly in general due to high variability \citep{Dempster1972}.
-The sample covariance become increasingly ill-conditioned as number of variables $p$ approaches the sample size $n$ and singular $p$ exceeds $n$.
+The sample covariance become increasingly ill-conditioned as number of variables $p$ approaches the sample size $n$ and singular when $p$ exceeds $n$.
 Because of its central statistical role the list of statistical methods and applications utilizing the estimated covariance matrix is long.
 Beside the many standard statistical methods such as principal component analysis (PCA), linear discriminant analysis (LDA), and quadratic discriminant analysis (QDA), more direct applications include [examples in medicine, biology, genetics, finance, forensics, physics, engineering, signal processing].
 Among this expanding list of applications is also an increasing number of high-dimensional applications and datasets publicly available at online repositories.
@@ -54,20 +52,20 @@ In cases where $p \approx n$ the covariance estimate become ill-conditioned and 
 Instead of attempting to derive still more sophisticated estimators with diminishing improvements we attempt to alleviate the problem from a different angle by using more available data and thus effectively increasing $n$.
 While the extension to $p > n$ is very important it is out of scope and we restrict ourselves to $p < n$ for the purposes of this paper.
 
-This work was motivated by gene-gene interaction networks in diffuse large B-cell lymphoma (DLBCL) where the covariance matrix contain all information about the conditional dependencies of the genes. However, the methods are general and not limited to such genomic data.
+Although this work was motivated by gene-gene interaction networks in diffuse large B-cell lymphoma (DLBCL) where the covariance matrix contain all information about the conditional dependencies of the genes, the methods are general and not limited to such genomic data.
 As with many other cancers, a large number of DLBCL studies are now available online and hence we wish to use these studies in combination with our own data to arrive at a good estimate of the covariance matrix and the inter-study variation.
 
 
 
 
 \section{A graphical random effects model}
-Meta-analysis comes principally in two different flavors, fixed and random, corresponding to the assumption on the nature of the treatment effect.
+Meta-analysis comes principally in various flavors corresponding to the assumption on the nature of the inter-study treatment effect.
 Random-effects models (REM) for meta-analysis model the effects as random variables realized for each study.
-In a vein similar to the regular meta-analysis by \citet{Choi2003}, we think of the the different studies as related but perturbed experiments.
-In graphical modeling, the true covariance matrix is the effect of interest to be estimated.
+In a vein similar to the regular meta-analysis by \citet{Choi2003}, we think of the different studies as related but perturbed experiments.
+The true covariance matrix is the effect of interest to be estimated in this paper.
 Hence, a graphical analog to \citet{Choi2003} is the following relatively simple random covariance model (RCM) of the observations.
 Let $p$ be the number of features and $k$ the number of studies.
-We model each sample of the $i$th study as a $p$-dimensional zero-mean multivariate gaussian vector with covariance matrix realized from an inverse Wishart distribution, i.e.\ the hierarchical model
+We model each sample $\vx$ of the $i$th study as a $p$-dimensional zero-mean multivariate gaussian vector with covariance matrix realized from an inverse Wishart distribution, i.e.\ $\vx$ follows the hierarchical model
 \begin{align}
 \begin{split} \label{eq:REM}
   \vSigma_i | \vPsi, \nu  &\sim \calW^{-1}(\vPsi, \nu), \\
@@ -89,7 +87,7 @@ $\vPsi$ and $\vSigma_i$ are positive definite, $\nu > p - 1$, and $\calN_p(\vec{
   e^{ -\frac{1}{2}\vx^\top \vSigma_i^{-1}\vx }.
 \end{align*}
 Throughout this paper, we use the generic notation $f(\cdot | \cdot)$ and $f(\cdot)$ for the conditional and unconditional pdf of random variables, respectively.
-In the model, $\nu$ controls the inter-study variation where the $(\nu - p - 1)\vSigma_i$ concentrate around $\vPsi$ for $\nu\to\infty$. I.e.\ the inter-study variation goes to zero for larger $\nu$. We wish to infer the parameters $\vPsi$ and $\nu$ from the observed data so the common expected covariance matrix
+In the model, $\nu$ controls the inter-study variation and $(\nu - p - 1)\vSigma_i$ concentrates around $\vPsi$ for $\nu\to\infty$. I.e.\ the inter-study variation goes towards zero for larger $\nu$. We wish to infer the parameters $\vPsi$ and $\nu$ from the observed data so the common expected covariance matrix
 \begin{align}
   \label{eq:expcovar}
   \vSigma = \bbE[\vSigma_i] = \frac{1}{\nu - p - 1} \vPsi
@@ -100,9 +98,9 @@ can be assessed.
 
 
 \subsection{The likelihood function}
-Suppose we have $n_i$ i.i.d.\ observations, $\vx_{i1}, \dots,\vx_{in_i}$, from the $i = 1,...,k$ independent studies from the model given in \eqref{eq:REM}.
-Let $\vX_i = (\vx_{i1}, \dots,\vx_{in_i})^\top$ be the $n_i \times p$ of the $i$'th study where rows correspond to samples and columns to variables.
-For the archetypal example in genomics, $\vX_i$ is transposed gene expression matrix with genes in the columns and samples in the rows.
+Suppose we have $n_i$ i.i.d.\ observations, $\vx_{i1}, \dots,\vx_{in_i}$, from each of the $i = 1,...,k$ independent studies from the model given in \eqref{eq:REM}.
+Let $\vX_i = (\vx_{i1}, \dots,\vx_{in_i})^\top$ be the $n_i \times p$ matrix of observations for the $i$'th study where rows correspond to samples and columns to variables.
+%For the archetypal example in genomics, $\vX_i$ is transposed gene expression matrix with genes in the columns and samples in the rows.
 By the independence assumptions, the log-likelihood for $\vPsi$ and $\nu$ is given by
 \begin{align*}
   &\ell\!\left(\vPsi, \nu \big|\vX_1, ..., \vX_k  \right)
@@ -139,21 +137,21 @@ Since the inverse Wishart distribution is conjugate to the multivariate gaussian
     \label{eq:loglik}
 \end{align}
 \normalsize
-where the constant terms are abbreviated by $c$ and $\Gamma_p$ is the multivariate generalization of the gamma function $\Gamma$ seen in Appendix \ref{sec:multigamma}.
+where constant terms are abbreviated by $c$ and $\Gamma_p$ is the multivariate generalization of the gamma function $\Gamma$ seen in Appendix \ref{sec:multigamma}.
 As should be expected, the scatter matrix $\vec{S}_i =\vX_i^\top\vX_i$ and study sample size $n_i$ are sufficient statistics for each study.
-Note also that $\vS_i$ is Wishart distributed $\vS_i|\vSigma_i ~ \calW(\vPsi, n_i)$ by construction.
+Note that $\vS_i$ is conditionally Wishart distributed, $\vS_i|\vSigma_i \sim \calW(\vPsi, n_i)$, by construction.
 
 In general, the likelihood is not log-concave, cf.\ Proposition \ref{prop:nonconcavityinpsi} in Appendix \ref{sec:concaveloglik}.
 We show that it is log-concave in $\nu$ for fixed $\vPsi$, cf.\ Proposition \ref{prop:concavityinnu} in Appendix \ref{sec:concaveloglik}, and hence there exists a unique maxima for the marginal $\ell(\nu)$.
-Reversely, for fixed $\nu$ we show that the Hessian in any stationary point (i.e.\ where $\frac{\partial\ell}{\partial\vPsi} = 0$) is negative semi-definite, cf.\ Lemma \ref{lem:negativesemidefinite} in Appendix \ref{sec:negativedefinite}, and hence a local maxima.
-This combined with the observation that $\ell(\vPsi) \to -\infty$ whenever an eigenvalue $\lambda_i \to 0$ or $\lambda_i \to \infty$, cf.\ Lemma \ref{lem:elltominusinfty} in Appendix \ref{sec:negativedefinite}, we prove that any stationary point indeed is a global maximum, cf.\ Proposition \ref{prop:uniquemax} in Appendix \ref{sec:negativedefinite}.
+Reversely, for fixed $\nu$ we show that the Hessian in any stationary point (i.e.\ where $\frac{\partial\ell}{\partial\vPsi} = \vec{0}$) is negative definite, cf.\ Lemma \ref{lem:negativesdefinite} in Appendix \ref{sec:negativedefinite}, and hence every stationary point is a local maxima.
+With this combined with the observation that $\ell(\vPsi) \to -\infty$ whenever an eigenvalue $\lambda_i \to 0$ or $\lambda_i \to \infty$, cf.\ Lemma \ref{lem:elltominusinfty} in Appendix \ref{sec:negativedefinite}, we prove that any stationary point indeed is a global maximum, cf.\ Proposition \ref{prop:uniquemax} in Appendix \ref{sec:negativedefinite}.
 Hence we have existence and uniqueness of a global maximum in $\vPsi$.
 
 \subsection{Moment estimate}
-In the following, estimation of $\vPsi$ for fixed $\nu$ is considered.
-With the RCM framework, we show that, properly scaled, the pooled covariance and mean covariance matrices can be viewed as different moment estimators.
-These straight-forward estimators are thus movtivated by the model.
-Simple estimates of $\vPsi$ are readily available by the hierachical construction.
+%In the following, estimation of $\vPsi$ for fixed $\nu$ is considered.
+With the RCM framework, we show that, properly scaled, the pooled empirical covariance matrix and the mean empirical covariance matrix can be viewed as different moment estimators of $\vPsi$.
+%These straight-forward estimators are thus movtivated by the model.
+%Simple estimates of $\vPsi$ are readily available by the hierachical construction.
 
 By the assumptions the first and second moment of the $j$th observation in the $i$th study, $\vx_{ij}$, is given by
 \begin{align*}
@@ -169,7 +167,7 @@ for all $j = 1, ..., n_i$ and $i = 1, ..., k$. This yield the estimator
   \hvPsi_\text{pool}
   = (\nu - p - 1)\frac{\sum_{i = 1}^k \vS_i}{\sum_{i = 1}^k n_i},
 \end{align}
-which is a scaled version of the pooled covariance matrix.
+which is a scaled version of the pooled empirical covariance matrix.
 
 Alternatively and in the same manner, the expectation of a single scatter matrix is
 \begin{align*}
@@ -180,7 +178,7 @@ Alternatively and in the same manner, the expectation of a single scatter matrix
     = n_i\bbE[\vSigma_i]
     = n_i\frac{\vPsi}{\nu - p - 1},
 \end{align*}
-which gives the estimator
+which suggests the estimator
 \begin{align}
   \label{eq:meanestimate}
   \hat{\vPsi}_\text{mean}
@@ -354,7 +352,7 @@ However the obvious disadvantage is that the identified maxima might be a saddle
 \section{Assessment of estimation procedure}
 <<numerical_experiment, echo=FALSE, results='hide'>>=
 @
-To assess the precision and stability of the estimation procedure we generated data from \eqref{eq:REM} for $p = \Sexpr{par.ne[["p"]]}$ variables in $k = \Sexpr{par.ne[["k"]]}$ studies each with an equal number of observations, $n = n_1 = n_2 = n_3$. We chose the parameters $\nu = \Sexpr{par.ne[["nu"]]}$ and
+To assess the precision and stability of the estimation procedure we generated data from the hierarchical model \eqref{eq:REM} for $p = \Sexpr{par.ne[["p"]]}$ variables and $k = \Sexpr{par.ne[["k"]]}$ studies each with an equal number of observations, $n = n_1 = n_2 = n_3$. We chose the parameters $\nu = \Sexpr{par.ne[["nu"]]}$ and
 \begin{align*}
 \vPsi =
   \begin{bmatrix}
@@ -366,13 +364,13 @@ To assess the precision and stability of the estimation procedure we generated d
 \end{align*}
 The number of observations is each study $n$ was varied range in the range $\Sexpr{paste0("[", min(par.ne$n.obs), ",", max(par.ne$n.obs), "]")}$.
 
-We measure the precision of the estimates values against the expected covariance matrix given by \eqref{eq:expcovar}.
+We measure the precision of the estimated values against the expected covariance matrix given by \eqref{eq:expcovar}.
 Let $\hvPsi$ and $\hat{\nu}$ be the estimates obtained using the moment, EM, or approximate MLE as described.  We then use the plug-in estimate of the expected covariance matrix $\vSigma$ by plugging the estimates into \eqref{eq:expcovar},
 \begin{align}
   \label{eq:sigma_plugin}
   \hat{\vSigma} = \frac{1}{\hat{\nu} - p - 1}\hvPsi
 \end{align}
-of $\vSigma$. We benchmark the proposed estimators. The benchmarking measure used is the following sum of squared errors,
+of $\vSigma$. We benchmark the proposed estimators. The benchmarking measure used is the following weighted sum of squared errors,
 \begin{align*}
   \text{SSE}(\hvSigma) = \sum_{i \leq j} \frac{(\hat{\Sigma}_{ij}- \Sigma_{ij})^2}{\var(\Sigma_{ij})}
 \end{align*}
@@ -381,8 +379,8 @@ where
  \var(\Sigma_{ij}) = n(\Psi_{ij}^2 + \Psi_{ii}\Psi_{jj}).
 \end{align*}
 
-For each $n$ from $\Sexpr{min(par.ne$n.obs)}$ to $\Sexpr{max(par.ne$n.obs)}$, the squared sum of errors for each estimator, $\text{SSE}(\hvSigma)$, where computed for $\Sexpr{par.ne[["n.sims"]]}$ datasets and the average of these values seen in Figure \ref{fig:numerical_experiment_plot} as function of the number of samples in each dataset $n_i$.
-<<numerical_experiment_plot, echo=FALSE, results='markup', fig.pos="tb", fig.height=7, fig.width=7*2, out.width = ".8\\linewidth", fig.scap = "", fig.cap=paste0("\\it The average sum of squared errors (SSE), of ", par.ne$n.sims, " simulations, as a function of the number of samples $n_i$ in each study.")>>=
+For each $n$ from $\Sexpr{min(par.ne$n.obs)}$ to $\Sexpr{max(par.ne$n.obs)}$, the squared sum of errors for each estimator, $\text{SSE}(\hvSigma)$, where computed for $\Sexpr{par.ne[["n.sims"]]}$ datasets and the average of these values are seen in Figure \ref{fig:numerical_experiment_plot} as function of the number of samples in each dataset $n_i$.
+<<numerical_experiment_plot, echo=FALSE, results='markup', fig.pos="tb", fig.height=7/2, fig.width=7, out.width = ".8\\linewidth", fig.scap = "", fig.cap=paste0("\\it The average sum of squared errors (SSE), of ", par.ne$n.sims, " simulations, as a function of the number of samples $n_i$ in each study.")>>=
 @
 Unsurprisingly, the proper EM estimation outperform the simple alternative estimates.
 We see that the EM estimation is the superior to that of the approximate MLE and moment.
@@ -392,7 +390,7 @@ Also seen is that the moment estimate yield the exact same results as using the 
 \subsection{Implementation and availability}
 The algorithm along with the different estimators is implemented in the statistical programming language R \cite{R} with workhorse functions in C++ using packages Rcpp and RcppArmadillo \citep{Eddelbuettel2011, RcppArmadillo}.
 They are incorporated in the open-source R-package \texttt{correlateR} freely available for forking and editing at \url{http://github.com/AEBilgrau/correlateR}.
-See the documentiation here for further details.
+See the documentation here for further details.
 
 
 
@@ -401,9 +399,9 @@ See the documentiation here for further details.
 \subsection{Graphical meta-analysis in DLBCL}
 <<dlbcl_analysis, echo=FALSE, results='hide', message=FALSE>>=
 @
-Diffuse large B-cell lymphoma (DLBCL) is an aggresive cancer subtype of accounting for approximately $31 \%$ \citep{Project1997} of non-Hodgkin's lymphoma (NHL) which itself consititue about $90 \%$ of all lymphomas.
-A further molecular subclassfication of DLBCL into germinal centre B-cell-like (GCB) DBLCL and activated B-cell-like (ABC) DLCBL exist with very large differences at gene expression and molecular level.
-The GCB cases exhibit a clinically favorable overall survial prognosis compared to that of ABCs.
+Diffuse large B-cell lymphoma (DLBCL) is an aggressive cancer subtype of accounting for approximately $31 \%$ of all non-Hodgkin's lymphoma (NHL) \citep{Project1997} which itself constitute about $90 \%$ of all lymphomas.
+A further molecular sub-classification of DLBCL into germinal center B-cell-like (GCB) DBLCL and activated B-cell-like (ABC) DLCBL exists with very large differences at the molecular level.
+The GCB cases exhibit a clinically favorable overall survival prognosis compared to that of ABCs.
 
 \subsubsection{Data and preprocessing}
 A large amount of DLBCL datasets are now available online at the NCBI (National Center for Biotechnology Information) Gene Expression Omnibus (GEO) website.
@@ -417,30 +415,14 @@ After the RMA normalization and summarization, the data was brought to a common 
 Lastly, the datasets were reduced to the total of \Sexpr{dim(gep[[1]])["Features"]} common features represented in all studies and array platforms.
 
 \subsubsection{Graphical meta-analysis}
-We wanted to perform coexpression network (i.e.\ weighted correlation network) analysis across all datasets.
-For each dataset the scatter matrix $\vS_i$ of the top \Sexpr{dlbcl.par$top.n} most variable genes (as measured by the pooled variance across studies) was computed as the suffcient statistics along with the number of samples.
-Hence, we investigate \Sexpr{(dlbcl.par$top.n*(dlbcl.par$top.n + 1)/2)} pairwise interactions.
+We wanted to perform a co-expression network (i.e.\ weighted correlation network) analysis across all datasets.
+For each dataset the scatter matrix $\vS_i$ of the top \Sexpr{dlbcl.par$top.n} most variable genes (as measured by the pooled variance across studies) was computed as the sufficient statistics along with the number of samples.
+Hence, we investigate \Sexpr{format(dlbcl.par$top.n*(dlbcl.par$top.n + 1)/2, big.mark = ",")} pairwise interactions.
 
-The parameters of the RCM model was estimated using the EM algorithm and yielded
-
-<<Psi, echo=FALSE, fig.height=7/2, fig.width = 7>>=
-r <- order(rowSums(abs(dlbcl.rcm$Psi)))
-img <- dlbcl.rcm$Psi[r,r]
-img <- img[ncol(img):1,]
-par(mar = c(0,0,0,0))
-n.cols <- 255
-brks <- c(min(img),
-          seq(quantile(img, 0.001), quantile(img, 1-0.01), l = n.cols - 1),
-          max(img))
-graphics::image(img, axes = FALSE, asp = 1, breaks = brks,
-                col = colorRampPalette(c("red", "black", "blue"))(n.cols))
-text(-0.05, 0.5, expression(hat(bold(Psi)) == phantom(a)))
-@
-
-\noindent and a $\hat{\nu} = \Sexpr{round(dlbcl.rcm[["nu"]], 2)}$.\fxnote{Interpretation of $\nu$? A good interpretation of $\nu$ would really add some value to the paper.}
+The parameters of the RCM model was estimated using the EM algorithm and yielded the $\Sexpr{dlbcl.par$top.n} \times \Sexpr{dlbcl.par$top.n}$ matrix $\vPsi$ and $\hat{\nu} = \Sexpr{round(dlbcl.rcm[["nu"]], 2)}$.
 Subsequently, $\hvPsi$ was scaled to the corresponding correlation matrix $\hat{\vec{R}}$.
 Note, that the expected covariance $(\nu - p - 1)^{-1}\hvPsi$ yields the same correlation matrix $\hat{\vec{R}}$.
-Figure \ref{fig:dlbcl_plot_1} shows a histogram of the distibution of correlations.
+Figure \ref{fig:dlbcl_plot_1} shows a histogram of the distribution of correlations.
 
 <<dlbcl_plot_1, echo = FALSE, fig.height=7/2.5, fig.width=7, fig.pos="tb", fig.scap = "", fig.cap="\\it Distribution of the correlation coefficents given by the entries of $\\vec{\\hat{R}}$.">>=
 @
@@ -450,17 +432,17 @@ Figure \ref{fig:dlbcl_plot_1} shows a histogram of the distibution of correlatio
 @
 <<dlbcl_plot_2, echo = FALSE, message=FALSE, results='hide'>>=
 @
-\fig{\Sexpr{dlbcl_plot_2}}{0.8\textwidth}{\it{}Top left: dendrograms of the hierachical clustering, the identified modules, and the correlation matrix. Top right: the correlation network as laid out by the Fruchterman-Reingold algorithm using the edge-weights. The nodes are coloured after the identified modules with sizes proportional to their connectivity. The opacity of the edges are drawn as function of the edge weight. Bottom: A Hieriachical edge bundeling representation of the network. Negative and positive correlations are coloured blue and red, resp.
+\fig{\Sexpr{dlbcl_plot_2}}{0.8\textwidth}{\it{}Top left: dendrograms of the hierarchical clustering, the identified modules, and the correlation matrix. Top right: the correlation network as laid out by the Fruchterman-Reingold algorithm using the edge-weights. The nodes are colored after the identified modules with sizes proportional to their connectivity. The opacity of the edges are drawn as function of the edge weight. Bottom: A Hierarchical edge bundling representation of the network. Negative and positive correlations are colored blue and red, resp.
 }
 
 We have thus estimated a correlation matrix across all studies to which standard correlation network analyses can be employed.
-To identify subgraphs, we used agglomerative hierachical clustering with \Sexpr{dlbcl.clust$method} linkage on the distance measure defined by 1 minus the absolute value of the correlation.
-The tree was arbitrarily pruned at a height which yielded \Sexpr{length(unique(dlbcl.modules))} subgraphs (or, modules) coloured and named by colors.
+To identify sub-graphs, we used agglomerative hierarchical clustering with \Sexpr{capitalize(dlbcl.clust$method)} linkage on the distance measure defined by 1 minus the absolute value of the correlation.
+The tree was arbitrarily pruned at a height which yielded \Sexpr{length(unique(dlbcl.modules))} sub-graphs (or, modules) colored and named by colors.
 Figure \ref{\Sexpr{dlbcl_plot_2}} show these results.
 Table \ref{tab:dlbcl_mod_tab} show the genes within each module.
 
 Next, the modules were screened for biological relevance using GO (Gene Ontology) enrichment analysis.
-Table \ref{tab:GO_tabs} in Appendix \ref{sec:sig_go_term} show the signifcant GO-terms at signifcance level \Sexpr{dlbcl.par$go.alpha.level} for each module.
+Table \ref{tab:GO_tabs} in Appendix \ref{sec:sig_go_term} show the significant GO-terms at significance level \Sexpr{dlbcl.par$go.alpha.level} for each module.
 As seen, the GO-terms all appear highly relevant to the pathology of DLBCL.
 
 <<dlbcl_go_analysis, echo=FALSE, results='hide'>>=
@@ -469,10 +451,10 @@ As seen, the GO-terms all appear highly relevant to the pathology of DLBCL.
 @
 
 Lastly, we checked if the identified modules were predictive of overall survival (OS) in the CHOP and R-CHOP-treated cohorts of the LLMPP dataset (GSE10846).
-To do this, the eigengene for each module was computed and a multiple Cox proportional hazards model for OS was fitted with the module eigengenes as covariates.
+To do this, the eigengene \cite{Horvath2011} for each module was computed and a multiple Cox proportional hazards model for OS was fitted with the module eigengenes as covariates.
 For the most interesting modules, the Kaplan-Meier estimates were computed for groups arising when dichotomizing the values of corresponding eigengene as above or below the median value.
 These results are seen in Figure \ref{fig:survival_analysis}.
-The results further corroborates that the identified modules are biologically meaningfull and that RCM provide a reasonable estimate of the covariance.
+The results further corroborates that the identified modules are biologically meaningful and that RCM provide a reasonable estimate of the covariance.
 
 <<survival_analysis, echo=FALSE, results='hide', fig.height=2.5*7*0.7, fig.width=2*7*0.7, fig.pos="tb", fig.scap = "", fig.cap="\\it The top row show $95\\%$ and $99\\%$ confidence intervals for the estimate of the Hazard ratio in the multiple Cox model. The bottom two rows show Kaplan-Meier estimates of the dichotomizing eigengenes.">>=
 @
@@ -482,10 +464,10 @@ The results further corroborates that the identified modules are biologically me
 \subsection{Supervised classification}
 <<discriminant_analysis, echo=FALSE, message=FALSE, results='hide'>>=
 @
-An quite different application of the RCM estimate can be found as a novel discriminant analysis.
-As seen below, the estimates obtained can be utilized in supervised learning as a intermediate case of linear discriminant analysis (LDA) and quadratic discriminant analysis (QDA).x
+Another application of the RCM is discriminant analysis.
+As seen below, the estimates obtained can be utilized in supervised learning as a intermediate case between linear discriminant analysis (LDA) and quadratic discriminant analysis (QDA).
 
-Suppose $Y$ is a random variable denoting the class $1, ..., k$ and suppose $\vx$ is a random vector of the explanatory variables.
+Suppose $Y$ is a random variable denoting the classes $1, ..., k$ and suppose $\vx$ is a random vector of the explanatory variables.
 Recall that LDA and QDA finds the class $y$ by maximizing
 \begin{align*}
   P(Y = y | \vX = \vx) =
@@ -507,26 +489,26 @@ f(\vx | Y = y)
             \Gamma_p\!\left(\frac{\nu}{2}\right)},
 \end{align*}
 analogous to the derivation in Appendix \ref{sec:marginalization}. The matrix determinant lemma, $|\vec{A} + \vec{u}\vec{v}^\top| = (1 + \vec{v}^\top\vec{A}\vec{u})|\vec{A}|$, can then be applied to simplify the expression and speed up the computations \citep{Ding2007}.
-Note also that HDA generalizes the LDA in some sense to have a multivariate $t$-like distribution. Multivariate $t$-distributions has before considered for discriminant analysis, cf.\ \citet{Andrews2011}. \fxnote{Elaboration on the multivariate $t$-distribution look and reference!}
+Note also that HDA generalizes the LDA in some sense to have a multivariate $t$-like distribution. Multivariate $t$-distributions has before been considered for discriminant analysis, cf.\ \citet{Andrews2011}. \fxnote{Elaboration on the multivariate $t$-distribution look and reference!}
 
 
 \subsubsection{Benchmarking of HDA}
 We designed four different scenarios to test and identify where HDA can be expected perform similar, better, or worse compared to LDA and QDA as gauged by the misclassification risk. The simulation experiment was inspired by the one seen in \citet{Friedman1989}.
 
-In all four scanarios, we generated a training dataset of a total of $n = \Sexpr{par.xda[["n.obs"]]}$ observations belonging to $k = \Sexpr{par.xda[["K"]]}$ classes.
+In all four scenarios, we generated a training dataset of a total of $n = \Sexpr{par.xda[["n.obs"]]}$ observations belonging to $k = \Sexpr{par.xda[["K"]]}$ classes.
 First, class labels was generated from a multinomial distribution with equal probabilities for each class, $\pi_1 = \pi_2 = \pi_3 = 1/3$.
 Hence, in each simulation round $\Sexpr{round(par.xda[["n.obs"]]/par.xda[["K"]], 2)}$ observations was expected in each group.
 Conditional on the class the observations where drawn i.i.d.\ from a multivariate gaussian distribution, i.e.\ $x_{i}|K = k \sim \calN_p(\vmu_k, \vSigma_k)$.
 The four scenarios of consisted of different choices, described later, of covariance matrices $\vSigma_k$ and mean values $\vmu_k$ for each class.
 
-The \Sexpr{par.xda[["K"]]} covariance matrices were chosen to either be (a) equal and spherical, (b) unqual and spherical, (c) equal and highly elliptical, and (d) unequal and highly elliptical.
+The \Sexpr{par.xda[["K"]]} covariance matrices were chosen to either be (a) equal and spherical, (b) unequal and spherical, (c) equal and highly elliptical, and (d) unequal and highly elliptical.
 In scenario (a), $\vSigma_1 = \vSigma_2 = \vSigma_3 = \vI$.
 In scenario (b), $\vSigma_k = k \vI$.
 In scenario (c), the covariance matrices equal, $\vSigma_1 = \vSigma_2 = \vSigma_3$, and chosen such that the squareroot of the $d$ eigenvalues are equidistant on the interval 10 to 1 and a randomly (uniformly) oriented orthonormal basis is used for all components \citep{Friedman1989}.
 In scenario (d), the eigenvalues are chosen as in scenario (c) for all $\vSigma_k$ but the orientation of the orthonormal basis of eigenvectors differs.
 
 In all scenarios expect (c) the mean values were chosen to $\vec{\mu}_1 = \vec{0}, \vec{\mu}_2 = 3\vec{e}_1, \vec{\mu}_3 = 4\vec{e}_2$ where $\vec{e}_j$ denotes the $j$th basis-vector.
-In scenario (c), $\vec{\mu}_1 = \vec{0}$ and the remaning means values are chosen such that the differences project mainly onto the low-variance subspace
+In scenario (c), $\vec{\mu}_1 = \vec{0}$ and the remaining means values are chosen such that the differences project mainly onto the low-variance subspace
 
 Each of the four scenarios were examined with varying dimensionality $p = \Sexpr{paste(par.xda[["p.dims"]], collapse = ", ")}$.
 Using the described parameters a training and validation set each of $\Sexpr{par.xda[["n.obs"]]}$ and $\Sexpr{par.xda[["n.obs.valid"]]}$ observations, respectively, observations was generated.
@@ -542,13 +524,13 @@ In cases where the sample covariance matrix is not invertible, a small constant 
 
 In the equal and spherical case (a), HDA yields almost identical results to LDA which both unsurprisingly outperform QDA.
 Also perhaps expected, the difference between LDA and QDA is less prominent for low dimensional spaces.
-The same holds true for the unqual and spherical case (b) and (c). Here HDA and LDA perform somewhat equally well, while HDA is
+The same holds true for the unequal and spherical case (b) and (c). Here HDA and LDA perform somewhat equally well, while HDA is
 
 Most interestingly, HDA is seen to practically always perform at least as good as LDA in all scenarios.
 HDA is also consistently superior for the large dimensional tests.
 The largest gain from HDA to LDA was seen in the high-dimensional scenario (c).
 
-This demonstrate that HDA as potentially useful addition to the descriminant analysis toolbox.
+This demonstrate that HDA as potentially useful addition to the discriminant analysis toolbox.
 However, we recognize that further and more sophisticated simulation experiments are needed  to explore the scenarios where HDA should be considered a serious alternative.
 
 
@@ -565,18 +547,18 @@ However, the virtue of such a model is not from improvement in accuracy alone.
 Also desirable is the explicit quantification of the inter-study variance.
 If $\hat{\nu}$ is estimated to be large, the studies exhibit a largely common covariance structure, and vice-versa when $\hat{\nu}$ is small.
 
-As demonstated, combining multiple studies can yield a sufficiently large total sample size that allows for estimation of large covariance matrices without the use of regularization
+As demonstrated, combining multiple studies can yield a sufficiently large total sample size that allows for estimation of large covariance matrices without the use of regularization
 While the generalization of the model to $n \gg p$ is extremely interesting though out of scope for this article.
-We believe this work could be furhter enriched by combining the method with regularized estimation.
+We believe this work could be further enriched by combining the method with regularized estimation.
 
-The recent advances in such regularized techiniques which allows for analysis for very large covariance matrices has unfortunately diminished the focus on collecting larger sample.
-Just because it is technically possible, it does not mean a good estimate is achived.
+The recent advances in such regularized techniques which allows for analysis for very large covariance matrices has unfortunately diminished the focus on collecting larger sample.
+Just because it is technically possible, it does not mean a good estimate is achieved.
 For example, while non-zero entries often can be accurately recalled in graphical LASSO, actual estimates of the covariances (or precisions) can still be heavily biased.
-Large sample-sizes are still needed achive unbiased estimates of the covariance.
-Therefore, an increased focus should also be appointed to efficiently aggregating datasets and achiving suffciently large sample sizes to allow for stable and unbiased estimation of covariance matrices.
+Large sample-sizes are still needed achieve unbiased estimates of the covariance.
+Therefore, an increased focus should also be appointed to efficiently aggregating datasets and achieving sufficiently large sample sizes to allow for stable and unbiased estimation of covariance matrices.
 
-One might question the added ultiliy of the $\nu$ parameter is an obvious critique of the RCM.
-For example, it is unclear how large a proportion a single extra parameter can explain of the interstudy variance.
+One might question the added utility of the $\nu$ parameter is an obvious critique of the RCM.
+For example, it is unclear how large a proportion a single extra parameter can explain of the inter-study variance.
 Though more parameters could be introduced, we have attempted to provide some intuitive interpretation of the $\nu$ parameter.
 \fxnote{Do we have any other observations?}
 
@@ -765,9 +747,9 @@ Hence $\Gamma_p$ is log-convex.
 
 
 
-\section{Uniqueness of log-likelihood maxima}
+\section{Existence and uniqueness of likelihood maxima}
 \label{sec:negativedefinite}
-This section proves the following lemmas which imply the following proposition.
+This section proves the following lemmas which imply the proposition in the headline.
 
 \begin{lemma}
 \label{lem:elltominusinfty}
@@ -775,8 +757,8 @@ If $\nu$ is fixed and $n_\bullet = \sum_{a=1}^k n_a \geq p$ then the log-likelih
 \end{lemma}
 
 \begin{lemma}
-\label{lem:negativesemidefinite}
-The hessian of the log-likelihood \eqref{eq:appendloglik} is negative semi-definite in all stationary points for fixed $\nu$.
+\label{lem:negativesdefinite}virtue
+The hessian of the log-likelihood \eqref{eq:appendloglik} is negative definite in all stationary points for fixed $\nu$.
 \end{lemma}
 
 \begin{proposition}[Existence and uniqueness of maximum]
@@ -794,15 +776,17 @@ up to addition of a constant.
 
 \begin{proof}[Proof of Proposition \ref{prop:uniquemax}]
 The proposition follows from Lemma \ref{lem:elltominusinfty} and
-Lemma \ref{lem:negativesemidefinite}.
-First, we prove existenece.
+Lemma \ref{lem:negativesdefinite}.
+We first prove existence of the maximum.
 By Lemma \ref{lem:elltominusinfty}, the set
 \begin{align*}
-  \{ \vPsi | \ell(\Psi) > \ell(\vPsi^*) \}
+  \Big\{ \; \vPsi \;\Big|\; \ell(\vPsi) \geq \ell(\vPsi^*) \; \Big\}
 \end{align*}
-is compact for any $\vPsi^*\succ 0$ since it is bounded and closed by the virue of the Lemma and continuity of $\ell$, respectively.
+is compact for any $\vPsi^*\succ 0$ since it is bounded and closed by the virtue of the Lemma and continuity of $\ell$, respectively.
 The rest follows from Rolle's theorem.
 
+Next, we prove the uniqueness of the maximum.
+[...]
 \end{proof}
 
 \begin{proof}[Proof of Lemma \ref{lem:elltominusinfty}]
@@ -840,7 +824,7 @@ Hence, if $\lambda_i \to 0$ then
 which completes the proof.
 \end{proof}
 
-\begin{proof}[Proof of Lemma \ref{lem:negativesemidefinite}]
+\begin{proof}[Proof of Lemma \ref{lem:negativesdefinite}]
 The matrix cookbook by \citet{Petersen2008} has been a useful reference here. See equations (41, p.\ 8) and (59, p.\ 9) and pages 14 and 52-53 in \citep{Petersen2008}. We first compute expression for the 1.\ and 2.\ order derivatives.
 
 \subsubsection*{1.\ order derivatives}
@@ -875,19 +859,21 @@ We proceed with the second order derivative $\nabla^2_\vPsi 2\ell(\vPsi)$ with e
 obtained by differentiation of \eqref{eq:dloglik} combined with
 $\frac{\partial}{\partial \Psi_{ij}} \vPsi^{-1} = - \vPsi^{-1}\vE^{ij}\vPsi^{-1}$ \citep[eq.\ (40)]{Petersen2008} and the linearity of the trace operator.
 
-The second order derivative is a $\binom{p+1}{2} \times \binom{p+1}{2}$-dimensional matrix indexed by $(i,j)$ and $(k,l)$, $i \leq j$, $k \leq l$.
+The second order derivative is can be thought of as a $\binom{p+1}{2} \times \binom{p+1}{2}$-dimensional matrix indexed by $(i,j)$ and $(k,l)$, $i \leq j$, $k \leq l$.
 
 
 
 
-\subsubsection*{Negative semi-definiteness in stationary points}
-With the above expressions we now show that the hessian is negative semi-definite in all stationary points (or, extrema).
-Let $\vY = \sum_{(i,j)} y_{ij}E_{ij}$ be a symmetric matrix in the vector space where $\vY \neq \vec{0}$. The analog to $\vec{y}^\top \vec{A}\vec{y} = y_i \sum_{ij} A_{ij} y_j \leq 0$ in our vector space then becomes
+\subsubsection*{Negative definiteness in stationary points}
+With the above expressions we now show that the hessian is negative definite in all stationary points (or, extrema).
+Let $\vY = \sum_{(i,j)} y_{ij}E_{ij}$ be a symmetric matrix in the vector space where $\vY \neq \vec{0}$.
+The analog to $\vec{y}^\top \vec{A}\vec{y} = y_i \sum_{ij} A_{ij} y_j < 0$ in our vector space then becomes
 \begin{align*}
   \sum_{i\leq j, k\leq j}
     Y_{ij}
     \left(\nabla^2_\vPsi 2\ell(\vPsi)\right)_{(i,j),(k,l)}
-    Y_{kl} \leq 0
+    Y_{kl}
+    < 0
 \end{align*}
 which amounts to showing that
 \small
@@ -897,45 +883,83 @@ which amounts to showing that
     \tr\!\left(
       \vY\left(\vPsi + \vS_a\right)^{-1}
       \vY\left(\vPsi + \vS_a\right)^{-1}
-    \right) \leq 0.
+    \right)
+    < 0.
   \label{eq:negativedefinte}
 \end{align}
 \normalsize
-Now, the positive-definiteness of $\vPsi$, let
+Now, by the positive-definiteness of $\vPsi$, let
 \begin{align*}
   \vY &:= \vPsi^{-\frac{1}{2}} \vY \vPsi^{-\frac{1}{2}} \text{ and } \\
-  \vS_a &:= \vPsi^{-\frac{1}{2}} \vS_a  \vPsi^{-\frac{1}{2}}.
+  \vS_a &:= \vPsi^{-\frac{1}{2}} \vS_a  \vPsi^{-\frac{1}{2}},
 \end{align*}
-we can assume that $\vPsi = \vI$. Hence, the likelihood equation \eqref{eq:loglik2} equated to zero, becomes
+and we can without loss of generality assume that $\vPsi = \vI$. Hence, the likelihood equation \eqref{eq:loglik2} equated to zero, becomes
 \begin{align*}
   k\nu\vI = \sum_a(n_a + \nu)(\vI + \vS_a)
 \end{align*}
-which implies (by multiplication by $\vY^2$)
+which implies (by multiplication by $\vY$ on each side)
 \begin{align}
   k\nu\tr(\vY^2)
-  &= \sum_a (n_a + \nu)\tr\!\left(\vY^2(\vI + \vS_a)\right) \notag\\
-  &= \sum_a (n_a + \nu)\tr\!\left(\vY(\vI + \vS_a)\vY\right).
+  %&= \sum_a (n_a + \nu)\tr\!\left(\vY^2(\vI + \vS_a)\right) \notag\\
+  &= \sum_a (n_a + \nu)\tr\!\Big(\vY(\vI + \vS_a)\vY\Big).
   \label{eq:loglikequation}
 \end{align}
 We substitute \eqref{eq:loglikequation} into \eqref{eq:negativedefinte} to get
 \begin{align*}
-  &\sum_a (n_a + \nu)\tr\left(\vY (\vI + \vS_a) \vY (\vI + \vS_a) - \vY (\vI + \vS_a) \vY \right) \\
-  &=  \sum_a (n_a + \nu)\tr\!\Big( \vY (\vI + \vS_a) \vY \big[ (\vI + \vS_a)  - \vI \big]\Big)
-  \leq 0
+  &\sum_a (n_a + \nu)
+  \tr\!\Big(\vY (\vI + \vS_a) \vY (\vI + \vS_a) - \vY (\vI + \vS_a) \vY \Big) \\
+  &=  \sum_a (n_a + \nu)
+  \tr\!\Big( \vY (\vI + \vS_a) \vY \big[ (\vI + \vS_a)  - \vI \big]\Big)
+  < 0
 \end{align*}
-Since $\vS_a$ is positive semi-definite, it can be diagonalized $\vS_a = \vU_a \vD_a \vU_a^\top$ by the spectral theorem where the diagonal matrix $\vD_a \succeq 0$ (all non-zero entries are positive) and $\vU_a$ is orthonormal (i.e.\ $\vU_a\vU_a^\top = \vU_a^\top\vU_a = \vI$). Using the diagonalization,
-\begin{align}
-  \sum_a (n_a + \nu)\tr\!\Big(
-    \underbrace{\vU^\top \vY (\vI + \vS_a)^{-1} \vY \vU}
-    \big[ (\vI + \vD_a)^{-1}  - \vI \big]
+We note that $\vS_a = \vX_a\vX_a^\top$ and
+\begin{align*}
+  (\vI + \vS_a)^{-1} - \vI = -\vX_a(\vI + \vX_a^\top\vX_a)^{-1}\vX_a^\top,
+\end{align*}
+whereby we need to show that
+\begin{align*}
+  \sum_a (n_a + \nu) \tr\!\Big(
+    \vY(\vI + \vX_a\vX_a^\top)\vY\vX_a\big(\vI + \vX_a^\top\vX_a\big)^{-1}\vX_a^\top
   \Big)
-  \leq 0
-  \label{eq:loglikequation2}
-\end{align}
-where the underbraced matrix is positive semi-definite and hence have non-negative diagonal elements.
-Furthermore, since $\vD_a$ is diagonal also with non-negative elements, the diagonal matrix $(\vI + \vD_a)^{-1}  - \vI$ clearly have non-positive entries and is thus negative semi-definite.
+  > 0.
+\end{align*}
+Since $n_a + \nu \geq 1$ and $\vI + \vX_a\vX_a^\top \geq \vI$, it is enough to shown
+\begin{align*}
+  \sum_a \tr\!\Big(
+    \vY\vY\vX_a\big(\vI + \vX_a^\top\vX_a\big)^{-1}\vX_a^\top
+  \Big)
+  > 0.
+\end{align*}
+Let $\lambda_a$ be the maximum eigenvalue of
+$\vS_a = \vX_a\vX_a^\top$
+and let
+$\lambda_M = \max_a \lambda_a$.
+Then
+$\big(\vI + \vX_a\vX_a^\top\big)^{-1} \geq (1 + \lambda_M)^{-1}\vI$
+and we need to show
+\begin{align*}
+  (1 + \lambda_M)^{-1} \sum_a \tr\!\big( \vY\vY\vX_a\vX_a^\top \big)
+  \geq
+  \tr\!\left( \vY\vY \sum_a \vX_a\vX_a^\top \right)
+  > 0
+\end{align*}
+However, as we assume that
+$\sum_a \vX_a\vX_a^\top > 0$,
+we are finished.
 
-Since the trace of a matrix product is the sum of the element-wise products, the trace (and thus the sum) will always be non-positive and hence \eqref{eq:loglikequation2} will always hold.
+% Since $\vS_a$ is positive semi-definite, it can be diagonalized $\vS_a = \vU_a \vD_a \vU_a^\top$ by the spectral theorem where the diagonal matrix $\vD_a \succeq 0$ (all non-zero entries are positive) and $\vU_a$ is orthonormal (i.e.\ $\vU_a\vU_a^\top = \vU_a^\top\vU_a = \vI$). Using the diagonalization,
+% \begin{align}
+%   \sum_a (n_a + \nu)\tr\!\Big(
+%     \underbrace{\vU^\top \vY (\vI + \vS_a)^{-1} \vY \vU}_{\succeq 0}
+%     \big[ (\vI + \vD_a)^{-1}  - \vI \big]
+%   \Big)
+%   \leq 0
+%   \label{eq:loglikequation2}
+% \end{align}
+% where the underbraced matrix is positive semi-definite and hence have non-negative diagonal elements.
+% Furthermore, since $\vD_a$ is diagonal also with non-negative elements, the diagonal matrix $(\vI + \vD_a)^{-1}  - \vI$ clearly have non-positive entries and is thus negative semi-definite.
+%
+% Since the trace of a matrix product is the sum of the element-wise products, the trace (and thus the sum) will always be non-positive and hence \eqref{eq:loglikequation2} will always hold.
 \end{proof}
 
 
@@ -999,7 +1023,7 @@ Let $\vDelta_i = \vSigma_i^{-1}$, $\vTheta = \vPsi^{-1}$, and $\vS_i = \vX_i^\to
 print(lapply(dlbcl.module.genes, unname))
 @
 
-\section{Signifcant GO terms}
+\section{Significant GO terms}
 \label{sec:sig_go_term}
 Tables of the significant GO terms.
 <<GO_tabs, echo=FALSE, results='asis'>>=
