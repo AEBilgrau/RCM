@@ -23,6 +23,8 @@ read_chunk("RCM.R")
 @
 
 \maketitle
+\phantomsection
+\addcontentsline{toc}{section}{Abstract}
 \begin{abstract}
 We propose a hierarchical graphical model and estimators for a common covariance matrix in cases where multiple groups or datasets are present.
 It is applicable where the groups or datasets are believed to share a common covariance of interest obscured by noise.
@@ -44,12 +46,11 @@ The fundamental problem in statistics of accurately and precisely estimating the
 The usual bias-corrected maximum likelihood estimator (MLE), the sample covariance matrix, has long been known to perform poorly in general due to high variability \citep{Dempster1972}.
 The sample covariance become increasingly ill-conditioned as number of variables $p$ approaches the sample size $n$ and singular when $p$ exceeds $n$.
 Because of its central statistical role the list of statistical methods and applications utilizing the estimated covariance matrix is exceedingly long.
-Beside the many standard statistical methods such as principal component analysis (PCA), linear discriminant analysis (LDA), and quadratic discriminant analysis (QDA), examples of direct applications include gene and protein network analysis \cite{Butte2000}, spectroscopic imaging \citep{Lin2007}, fMRI, financial forecasting, and many more.
+Beside the many standard statistical methods such as principal component analysis (PCA), linear discriminant analysis (LDA), and quadratic discriminant analysis (QDA), examples of direct applications include gene and protein network analysis \citep{Butte2000}, spectroscopic imaging \citep{Lin2007}, fMRI, financial forecasting, and many more.
 Among this expanding list of applications is also an increasing number of high-dimensional applications and datasets publicly available at online repositories.
 
 In high-dimensional datasets the number of features $p$ often far exceed the number of samples $n$.
 Since the number of parameters increase quadratically in $p$ and the sample covariance become singular when $p > n$ a plethora of shrinkage and regularization estimators have been proposed to combat the accompanying problems by effectively increasing the degrees of freedom.
-In cases where $p \approx n$ the covariance estimate become ill-conditioned and its inversion numerically unstable.
 Instead of attempting to derive still more sophisticated estimators with diminishing improvements we attempt to alleviate the problem from a different angle by using more available data and thus effectively increasing $n$.
 While the extension to $p > n$ is very important it is out of scope and we restrict ourselves to $p < n$ for the purposes of this paper.
 
@@ -64,7 +65,7 @@ Meta-analysis comes principally in various flavors corresponding to the assumpti
 Random-effects models (REM) for meta-analysis model the effects as random variables realized for each study.
 In a vein similar to the regular meta-analysis by \citet{Choi2003}, we think of the different studies as related but perturbed experiments.
 The true covariance matrix is the effect of interest to be estimated in this paper.
-Hence, a graphical analog to \citet{Choi2003} is the following relatively simple random covariance model (RCM) of the observations.
+Hence, following the train of thought of \citet{Choi2003} we propose the following simple random covariance model (RCM) of the observations.
 Let $p$ be the number of features and $k$ the number of studies.
 We model each sample $\vx$ of the $i$th study as a $p$-dimensional zero-mean multivariate gaussian vector with covariance matrix realized from an inverse Wishart distribution, i.e.\ $\vx$ follows the hierarchical model
 \begin{align}
@@ -366,7 +367,7 @@ Diffuse large B-cell lymphoma (DLBCL) is an aggressive cancer subtype of account
 A further molecular sub-classification of DLBCL into germinal center B-cell-like (GCB) DBLCL and activated B-cell-like (ABC) DLCBL exists with very large differences at the molecular level.
 The GCB cases exhibit a clinically favorable overall survival prognosis compared to that of ABCs.
 
-\subsubsection{Data and preprocessing}
+\subsubsection*{Data and preprocessing}
 A large amount of DLBCL datasets are now available online at the NCBI (National Center for Biotechnology Information) Gene Expression Omnibus (GEO) website.
 We downloaded 10 DLBCL large-scale gene expression studies and preprocessed these using the custom brainarray chip definition files (CDF) and RMA-normalization [7, 3].
 The corresponding GEO-accession numbers are \Sexpr{paste(grep("XXX", base::unique(studies[,"GSE"]), invert = TRUE, value = TRUE), collapse = ", ")} of various microarray platforms.
@@ -377,7 +378,7 @@ After the RMA normalization and summarization, the data was brought to a common 
 
 Lastly, the datasets were reduced to the total of \Sexpr{dim(gep[[1]])["Features"]} common features represented in all studies and array platforms.
 
-\subsubsection{Graphical meta-analysis}
+\subsubsection*{Graphical meta-analysis}
 We wanted to perform a co-expression network (i.e.\ weighted correlation network) analysis across all datasets.
 For each dataset the scatter matrix $\vS_i$ of the top \Sexpr{dlbcl.par$top.n} most variable genes (as measured by the pooled variance across studies) was computed as the sufficient statistics along with the number of samples.
 Hence, we investigate \Sexpr{format(dlbcl.par$top.n*(dlbcl.par$top.n + 1)/2, big.mark = ",")} pairwise interactions.
@@ -457,7 +458,7 @@ The above become a multivariate $t$-distribution when the sample sizes of each g
 Multivariate $t$-distributions has before been considered for discriminant analysis, cf.\ \citet{Andrews2011}.
 
 
-\subsubsection{Benchmarking of HDA}
+\subsubsection*{Benchmarking of HDA}
 We designed four different scenarios to test and identify where HDA can be expected perform similar, better, or worse compared to LDA and QDA as gauged by the misclassification risk. The simulation experiment was inspired by the one seen in \citet{Friedman1989}.
 
 In all four scenarios, we generated a training dataset of a total of $n = \Sexpr{par.xda[["n.obs"]]}$ observations belonging to $k = \Sexpr{par.xda[["K"]]}$ classes.
@@ -532,13 +533,12 @@ Though more parameters could be introduced, we have attempted to provide some in
 
 
 
-
-
-
-
 \newpage
+\phantomsection
+\addcontentsline{toc}{section}{References}
 \bibliographystyle{plainnat}
-\bibliography{references_mendelay,references_manual}
+\bibliography{references_manual,references_mendelay}
+
 
 
 \newpage
@@ -1065,7 +1065,7 @@ print(lapply(dlbcl.module.genes, unname))
 Tables of the significant GO terms.
 <<GO_tabs, echo=FALSE, results='asis'>>=
 @
-\clearpage
+
 
 
 \end{document}
