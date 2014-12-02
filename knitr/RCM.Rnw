@@ -2,6 +2,7 @@
 \input{preamble.tex}
 
 \title{Graphical meta-analysis: Estimation of covariance matrices from multiple studies}
+%\title{A hierachical model for estimation of common covariance matrices from multiple studies}
 \author{
   Anders Ellern Bilgrau \\ \texttt{abilgrau@math.aau.dk} \and
   Poul Svante Eriksen \\ \texttt{svante@math.aau.dk} \and
@@ -27,8 +28,9 @@ We propose a hierarchical graphical model and estimators for a common covariance
 It is applicable where the groups or datasets are believed to share a common covariance of interest obscured by noise.
 As such, it provides a basis for meta-analysis of gaussian graphical models where the groups are formed by datasets.
 Our approach is inspired by traditional meta-analysis using random effects models.
-We derive the basic properties and estimators of the model and compare our estimators to the straight-forward approaches of simple averages (which can also be derived from the model) or ``mega analysis'' were the datasets are combined, reprocessed, and plugged into the usual estimators.
-Though only a modest improvement, explicitly accounting for the inter-study variance is superior to the alternative.
+We derive the basic properties and estimators suggested by the model and compare their properties.
+Though only a modest improvement, explicitly accounting for the inter-study variance seems superior to the alternative.
+Simple inference on the introduced parameter measuring the intergroup homogeneity is also suggested.
 The model is also shown to be applicable as an intermediate between linear discriminant analysis (LDA) and quadratic discriminant analysis (QDA). \medskip
 
 \noindent \textbf{Keywords:} \textit{meta-analysis, covariance estimation, integrative analysis, network integration, structural meta-analysis, gaussian graphical modeling, linear discriminant analysis, quadratic discriminant analysis}
@@ -37,13 +39,12 @@ The model is also shown to be applicable as an intermediate between linear discr
 %\newpage
 %\tableofcontents
 
-\newpage
 \section{Introduction}
 The fundamental problem in statistics of accurately and precisely estimating the covariance matrix (or its inverse) is notoriously difficult.
 The usual bias-corrected maximum likelihood estimator (MLE), the sample covariance matrix, has long been known to perform poorly in general due to high variability \citep{Dempster1972}.
 The sample covariance become increasingly ill-conditioned as number of variables $p$ approaches the sample size $n$ and singular when $p$ exceeds $n$.
-Because of its central statistical role the list of statistical methods and applications utilizing the estimated covariance matrix is long.
-Beside the many standard statistical methods such as principal component analysis (PCA), linear discriminant analysis (LDA), and quadratic discriminant analysis (QDA), more direct applications include [examples in medicine, biology, genetics, finance, forensics, physics, engineering, signal processing].
+Because of its central statistical role the list of statistical methods and applications utilizing the estimated covariance matrix is exceedingly long.
+Beside the many standard statistical methods such as principal component analysis (PCA), linear discriminant analysis (LDA), and quadratic discriminant analysis (QDA), examples of direct applications include gene and protein network analysis \cite{Butte2000}, spectroscopic imaging \citep{Lin2007}, fMRI, financial forecasting, and many more.
 Among this expanding list of applications is also an increasing number of high-dimensional applications and datasets publicly available at online repositories.
 
 In high-dimensional datasets the number of features $p$ often far exceed the number of samples $n$.
@@ -147,7 +148,10 @@ Reversely, for fixed $\nu$ we show that the Hessian in any stationary point (i.e
 With this combined with the observation that $\ell(\vPsi) \to -\infty$ whenever an eigenvalue $\lambda_i \to 0$ or $\lambda_i \to \infty$, cf.\ Lemma \ref{lem:elltominusinfty} in Appendix \ref{sec:negativedefinite}, we prove that any stationary point indeed is a global maximum, cf.\ Proposition \ref{prop:uniquemax} in Appendix \ref{sec:negativedefinite}.
 Hence we have existence and uniqueness of a global maximum in $\vPsi$.
 
-\subsection{Moment estimate}
+We first attempted to derive MLE estimators using a first order approximation. However, as simulation experiments later shows, this estimator performed quite poorly and has therefore been deferred to Appendix \ref{sec:amle}.
+
+
+\subsection{Moment estimator}
 %In the following, estimation of $\vPsi$ for fixed $\nu$ is considered.
 With the RCM framework, we show that, properly scaled, the pooled empirical covariance matrix and the mean empirical covariance matrix can be viewed as different moment estimators of $\vPsi$.
 %These straight-forward estimators are thus movtivated by the model.
@@ -190,68 +194,6 @@ Both estimates of $\vPsi$ are seen to be unbiased.
 Note that if the common or expected covariance matrix is of interest, then the pooled and mean covariance are obtained as estimators by plugging \eqref{eq:pooledest} and \eqref{eq:meanestimate} into \eqref{eq:expcovar}, respectively, which cancels out the scaling factor.
 
 
-
-\subsection{Maximization of the likelihood}
-To find the maximizing parameters we differentiate \eqref{eq:loglik} w.r.t.\ $\vPsi$ and equate to zero while assuming $\nu$ known and constant. Assuming $\vPsi$ unstructured, then $\nabla_{\vec{Z}} \log|\vec{Z}| = \vec{Z}^{-1}$ and
-\begin{align}
-  \vec{0}
-%   =\nabla_\vPsi \ell(\vPsi)
-  &= \frac{k\nu}{2} \vPsi^{-1}
-    - \sum_{i=1}^k \frac{\nu + n_i}{2}
-      (\vPsi + \vec{S}_i)^{-1}
-  \label{eq:firstordderivloglik} \\
-%   &= \frac{k\nu}{2} \vPsi^{-1}
-%     - \sum_{i=1}^k \frac{\nu + n_i}{2}
-%       (\vPsi(\vec{I} + \vPsi^{-1}\vec{S}_i))^{-1}
-%   \notag \\
-  &= \frac{k\nu}{2} \vPsi^{-1}
-    - \sum_{i=1}^k \frac{\nu + n_i}{2}
-      \left(\vec{I} + \vPsi^{-1}\vec{S}_i\right)^{-1}\vPsi^{-1}.
-      \notag
-\end{align}
-While assuming $\vPsi$ unstructured is not strictly correct it (in this case) leads to the correct equation. The proper 1.\ order derivative can be seen in equation \eqref{eq:dloglik} and can easily be seen to be equivalent to the above.
-Equation \eqref{eq:firstordderivloglik} is equivalent to
-\begin{align*}
-    k\nu \vec{I}
-    - \sum_{i=1}^k (\nu + n_i)
-      \left(\vec{I} - (-\vPsi^{-1}\vec{S}_i)\right)^{-1}
-   = \vec{0}.
-\end{align*}
-which can be rewritten as
-\begin{align*}
-    k\nu \vec{I}
-    - \sum_{i=1}^k      (\nu + n_i)
-      \sum_{l=0}^\infty \left(-\vPsi^{-1}\vec{S}_i\right)^{l}
-   = \vec{0}.
-\end{align*}
-by the Neumann series $\left((\vI + \vec{A})^{-1} = \sum_{l = 0}^\infty \vec{A}^l\right)$ if $\lim_{l \to \infty} (I - \vPsi^{-1}\vec{S}_i)^l = \vec{0}$ for all $i$, i.e.\ the eigenvalues of $\vPsi^{-1}\vec{S}_i$ should be less than $1$.
-
-Thus, we can approximate the solution by using the first order expansion $(l = 1)$ and solve for $\vPsi$
-\begin{align*}
-  \vec{0}
-  &= k\nu\vec{I} - \sum_{i=1}^k (\nu + n_i)(\vec{I} - \vPsi^{-1}\vec{S}_i) \\
-  &= k\nu\vec{I}
-   - k\nu\vec{I}
-   - n_\bullet\vec{I}
-   + \vPsi^{-1}\sum_{i=1}^k \nu\vec{S}_i
-   + \vPsi^{-1}\sum_{i=1}^k n_i\vec{S}_i \\
-  &= - n_\bullet\vec{I}
-     + \vPsi^{-1}\sum_{i=1}^k (\nu + n_i) \vec{S}_i
-\end{align*}
-where $n_\bullet = \sum_{i=1}^k n_i$ is the total number of observations. This implies
-\begin{align*}
-   \vPsi^{-1}\sum_{i=1}^k (\nu + n_i) \vec{S}_i
-    = n_\bullet \vec{I}
-\end{align*}
-which is equivalent to
-\begin{align}
-  \hat{\vPsi}_\text{MLE}
-  %=  \sum_{i=1}^k \frac{\nu + n_i}{ n_i} \vec{S}_i
-  = \frac{\sum_{i=1}^k (\nu + n_i) \vec{S}_i}{n_\bullet}
-  = \frac{\sum_{i=1}^k (\nu + n_i)\vX_i^\top\vX_i}{\sum_{i=1}^k n_i},
-  \label{eq:mle}
-\end{align}
-corresponding to a weighted sum of the scatter matrices.
 
 
 
@@ -1015,30 +957,101 @@ The last expression is to be maximized with respect to $\vTheta$ and can be reco
 is the MLE in this model.
 
 
-\section{Model and notation overview}
-Let $\vDelta_i = \vSigma_i^{-1}$, $\vTheta = \vPsi^{-1}$, and $\vS_i = \vX_i^\top \vX_i$. Then the following equivalences hold.
-\begin{equation*}
-\begin{aligned}
-  \vSigma_i &\sim \calW^{-1}_p(\vPsi, \nu) \\
-  \vX_i | \vSigma_i &\sim \calN_p(\vec{0}_p, \vSigma_i) \\
-  &\Updownarrow \\
-  \vSigma_i | X_i  &\sim \calW^{-1}_p(\vPsi + \vS_i, \nu + n_i)
-\end{aligned}
-\begin{aligned}
-\quad
-&\Longleftrightarrow \\
-&\Longleftrightarrow \\
-\\
-&\Longleftrightarrow
-\quad
-\end{aligned}
-\begin{aligned}
-  \vDelta_i &\sim \calW_p(\Theta, \nu) \\
-  \vX_i | \vDelta_i &\sim \calN_p(\vec{0}_p, \vDelta_i^{-1}) \\
-  &\Updownarrow \\
-  \vDelta_i | X_i  &\sim \calW_p((\vTheta^{-1} + \vS_i)^{-1}, \nu + n_i)
-\end{aligned}
-\end{equation*}
+
+
+\subsection{Appoximate maximum likelihood estimator}
+\label{sec:amle}
+To find the maximizing parameters we differentiate \eqref{eq:loglik} w.r.t.\ $\vPsi$ and equate to zero while assuming $\nu$ known and constant. Assuming $\vPsi$ unstructured, then $\nabla_{\vec{Z}} \log|\vec{Z}| = \vec{Z}^{-1}$ and
+\begin{align}
+  \vec{0}
+%   =\nabla_\vPsi \ell(\vPsi)
+  &= \frac{k\nu}{2} \vPsi^{-1}
+    - \sum_{i=1}^k \frac{\nu + n_i}{2}
+      (\vPsi + \vec{S}_i)^{-1}
+  \label{eq:firstordderivloglik} \\
+%   &= \frac{k\nu}{2} \vPsi^{-1}
+%     - \sum_{i=1}^k \frac{\nu + n_i}{2}
+%       (\vPsi(\vec{I} + \vPsi^{-1}\vec{S}_i))^{-1}
+%   \notag \\
+  &= \frac{k\nu}{2} \vPsi^{-1}
+    - \sum_{i=1}^k \frac{\nu + n_i}{2}
+      \left(\vec{I} + \vPsi^{-1}\vec{S}_i\right)^{-1}\vPsi^{-1}.
+      \notag
+\end{align}
+While assuming $\vPsi$ unstructured is not strictly correct it (in this case) leads to the correct equation. The proper 1.\ order derivative can be seen in equation \eqref{eq:dloglik} and can easily be seen to be equivalent to the above.
+Equation \eqref{eq:firstordderivloglik} is equivalent to
+\begin{align*}
+    k\nu \vec{I}
+    - \sum_{i=1}^k (\nu + n_i)
+      \left(\vec{I} - (-\vPsi^{-1}\vec{S}_i)\right)^{-1}
+   = \vec{0}.
+\end{align*}
+which can be rewritten as
+\begin{align*}
+    k\nu \vec{I}
+    - \sum_{i=1}^k      (\nu + n_i)
+      \sum_{l=0}^\infty \left(-\vPsi^{-1}\vec{S}_i\right)^{l}
+   = \vec{0}.
+\end{align*}
+by the Neumann series $\left((\vI + \vec{A})^{-1} = \sum_{l = 0}^\infty \vec{A}^l\right)$ if $\lim_{l \to \infty} (I - \vPsi^{-1}\vec{S}_i)^l = \vec{0}$ for all $i$, i.e.\ the eigenvalues of $\vPsi^{-1}\vec{S}_i$ should be less than $1$.
+
+Thus, we can approximate the solution by using the first order expansion $(l = 1)$ and solve for $\vPsi$
+\begin{align*}
+  \vec{0}
+  &= k\nu\vec{I} - \sum_{i=1}^k (\nu + n_i)(\vec{I} - \vPsi^{-1}\vec{S}_i) \\
+  &= k\nu\vec{I}
+   - k\nu\vec{I}
+   - n_\bullet\vec{I}
+   + \vPsi^{-1}\sum_{i=1}^k \nu\vec{S}_i
+   + \vPsi^{-1}\sum_{i=1}^k n_i\vec{S}_i \\
+  &= - n_\bullet\vec{I}
+     + \vPsi^{-1}\sum_{i=1}^k (\nu + n_i) \vec{S}_i
+\end{align*}
+where $n_\bullet = \sum_{i=1}^k n_i$ is the total number of observations. This implies
+\begin{align*}
+   \vPsi^{-1}\sum_{i=1}^k (\nu + n_i) \vec{S}_i
+    = n_\bullet \vec{I}
+\end{align*}
+which is equivalent to
+\begin{align}
+  \hat{\vPsi}_\text{MLE}
+  %=  \sum_{i=1}^k \frac{\nu + n_i}{ n_i} \vec{S}_i
+  = \frac{\sum_{i=1}^k (\nu + n_i) \vec{S}_i}{n_\bullet}
+  = \frac{\sum_{i=1}^k (\nu + n_i)\vX_i^\top\vX_i}{\sum_{i=1}^k n_i},
+  \label{eq:mle}
+\end{align}
+corresponding to a weighted sum of the scatter matrices.
+
+
+
+
+
+% \section{Model and notation overview}
+% Let $\vDelta_i = \vSigma_i^{-1}$, $\vTheta = \vPsi^{-1}$, and $\vS_i = \vX_i^\top \vX_i$. Then the following equivalences hold.
+% \begin{equation*}
+% \begin{aligned}
+%   \vSigma_i &\sim \calW^{-1}_p(\vPsi, \nu) \\
+%   \vX_i | \vSigma_i &\sim \calN_p(\vec{0}_p, \vSigma_i) \\
+%   &\Updownarrow \\
+%   \vSigma_i | X_i  &\sim \calW^{-1}_p(\vPsi + \vS_i, \nu + n_i)
+% \end{aligned}
+% \begin{aligned}
+% \quad
+% &\Longleftrightarrow \\
+% &\Longleftrightarrow \\
+% \\
+% &\Longleftrightarrow
+% \quad
+% \end{aligned}
+% \begin{aligned}
+%   \vDelta_i &\sim \calW_p(\Theta, \nu) \\
+%   \vX_i | \vDelta_i &\sim \calN_p(\vec{0}_p, \vDelta_i^{-1}) \\
+%   &\Updownarrow \\
+%   \vDelta_i | X_i  &\sim \calW_p((\vTheta^{-1} + \vS_i)^{-1}, \nu + n_i)
+% \end{aligned}
+% \end{equation*}
+
+
 
 
 \section{Module member genes}

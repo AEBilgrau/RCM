@@ -194,12 +194,12 @@ plot(df$n, df$SSE.rcm.em, col = "blue", type = "b", axes = FALSE,
      ylim = range(df[,-(1:4)]),
      ylab = "average SSE", pch = 15, lty = 1,
      main = paste0("k = ", df$k, ", nu = ", df$nu, ", p = ", df$p)[1])
-lines(df$n, df$SSE.mean, col = "red", type = "b", pch = 16, lty = 2)
-lines(df$n, df$SSE.rcm.mle, col = "orange", type = "b", pch = 17, lty = 3)
-lines(df$n, df$SSE.rcm.mom, col = "green", type = "b", pch = 18, lty = 4)
+lines(df$n, df$SSE.mean, col = "red", type = "b", pch = 16, lty = 2, lwd = 2)
+lines(df$n, df$SSE.rcm.mle, col = "orange", type = "b", pch = 17, lty = 3,lwd=2)
+lines(df$n, df$SSE.rcm.mom, col = "green", type = "b", pch = 18, lty = 4, lwd=2)
 legend("topright", legend = c("RCM (EM)", "pool",
                               "RCM (MLE)", "RCM (Moment)"),
-       lty = 1:4, pch = c(15, 16, 17, 18), lwd = 2,
+       lty = 1:4, pch = c(15, 16, 17, 18), lwd = 2, bty = "n",
        col = c("blue", "red", "orange", "green"))
 axis(1)
 axis(2)
