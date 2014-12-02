@@ -186,7 +186,7 @@ which suggests the estimator
   = (\nu - p - 1) \frac{1}{k} \sum_{i = 1}^k \frac{1}{n_i}\vS_i.
 \end{align}
 This estimate is a scaled average of the sample covariance matrices.
-Both estimates of $\vPsi$ are seen to be unbiased.\fxnote{Can we say anything about efficiency and consistency?}
+Both estimates of $\vPsi$ are seen to be unbiased.
 Note that if the common or expected covariance matrix is of interest, then the pooled and mean covariance are obtained as estimators by plugging \eqref{eq:pooledest} and \eqref{eq:meanestimate} into \eqref{eq:expcovar}, respectively, which cancels out the scaling factor.
 
 
@@ -209,7 +209,7 @@ To find the maximizing parameters we differentiate \eqref{eq:loglik} w.r.t.\ $\v
       \left(\vec{I} + \vPsi^{-1}\vec{S}_i\right)^{-1}\vPsi^{-1}.
       \notag
 \end{align}
-While assuming $\vPsi$ unstructured is not strictly correct it (in this case) leads to a valid equation. The proper 1.\ order derivative can be seen in equation \eqref{eq:dloglik} and can easily be seen to be equivalent to the above.
+While assuming $\vPsi$ unstructured is not strictly correct it (in this case) leads to the correct equation. The proper 1.\ order derivative can be seen in equation \eqref{eq:dloglik} and can easily be seen to be equivalent to the above.
 Equation \eqref{eq:firstordderivloglik} is equivalent to
 \begin{align*}
     k\nu \vec{I}
@@ -313,7 +313,7 @@ for $\vTheta$. The connection to the likelihood equation \eqref{eq:firstordderiv
 \subsection{Estimation procedure}
 We propose an alternating procedure between estimating $\nu$ and $\vPsi$ while keeping the other fixed.
 Given parameters $\hat{\nu}_{(t)}$ and $\hvPsi_{(t)}$ at iteration $t$, we estimate $\hvPsi_{(t+1)}$ using the fixed $\hat{\nu}_{(t)}$. Subsequently, we find $\hat{\nu}_{(t+1)}$ by a standard one-dimensional numerical optimization procedure using the fixed $\hvPsi_{(t+1)}$.
-This coordinate ascent-like\fxnote{Or what type of algorithm is it?} approach is repeated until convergence.
+This coordinate ascent approach is repeated until convergence.
 More precisely, in pseudo-code, we propose the algorithm seen in Algorithm \ref{alg:RCM}.
 \begin{algorithm}
 \caption{Pseudo-code for the RCM estimation procedure}\label{alg:RCM}
@@ -347,6 +347,24 @@ This algorithm utilize the results about the log-likelihood and thus provide us 
 However the obvious disadvantage is that the identified maxima might be a saddle-point when considering the log-likelihood jointly in $(\vPsi, \nu)$.
 
 
+
+\subsection[Inference on nu]{Inference on $\nu$}
+This section describes basic inference on the parameter $\nu$ also of interest.
+By the model construction, $\nu$ parameterize the inter-study variance where the size of $\nu$ corresponds the homogeneity between the studies or groups.
+Large $\nu$ yield high study homogeneity and small $\nu$ to low homogeneity.
+Thus it could be of interest to test if the estimated homogeneity $\hat{\nu}$ is extreme under the null-hypothesis of no heterogeneity (i.e.\ infinite homogeneity). We wish to test the hypothesis $H_0: \nu = \infty$ which is equivalent to
+\begin{align*}
+  H_0: \vSigma_1 = ... = \vSigma_k.
+\end{align*}
+The two are equivalent since the sampling of the covariance matrix from the inverse Wishart distribution become deterministic when $\nu = \infty$. Testing this hypothesis can also be interpreted as testing if the data is adequately explained when leaving out the hierarchical structure.
+
+In practice, under $H_0$ or when $\nu$ is very large the estimated $\hat{\nu}_\text{obs}$ will be relatively small since the intra-study variance dominate the total variance.
+The distribution of $\hat{\nu}$ under $H_0$ is not easily characterized.
+However, the distribution of $\hat{\nu}$ can easily be approximated by simulation.
+To do this, the model is simply fitted on datasets generated under $H_0$ a large number of times $N$ to get $\hat{\nu}_0^{(1)}, ..., \hat{\nu}_0^{(N)}$. An approximation of the $p$-value can then be obtained by \begin{align*}
+  \frac{1}{N+1} \left( 1 + \sum_{j=1}^N \bbOne\!\big[\hat{\nu}_0^{(j)} < \hat{\nu}_\text{obs}\big] \right)
+\end{align*}
+where $\bbOne$ is the indicator function. Hence, this is approximately the fraction of $\hat{\nu}_0$'s smaller than $\hat{\nu}_\text{obs}$.
 
 
 \section{Assessment of estimation procedure}
@@ -384,7 +402,10 @@ For each $n$ from $\Sexpr{min(par.ne$n.obs)}$ to $\Sexpr{max(par.ne$n.obs)}$, th
 @
 Unsurprisingly, the proper EM estimation outperform the simple alternative estimates.
 We see that the EM estimation is the superior to that of the approximate MLE and moment.
-Also seen is that the moment estimate yield the exact same results as using the mean, which could be expected by looking at \eqref{eq:meanestimate}, \eqref{eq:sigma_plugin}, and \eqref{eq:pooledest}.\fxnote{Is this result surprising/trivial? I cannot really tell.}
+Also seen is that the moment estimate yield the exact same results as using the mean, which could be expected by looking at \eqref{eq:meanestimate}, \eqref{eq:sigma_plugin}, and \eqref{eq:pooledest}.
+
+
+
 
 
 \subsection{Implementation and availability}
@@ -489,7 +510,9 @@ f(\vx | Y = y)
             \Gamma_p\!\left(\frac{\nu}{2}\right)},
 \end{align*}
 analogous to the derivation in Appendix \ref{sec:marginalization}. The matrix determinant lemma, $|\vec{A} + \vec{u}\vec{v}^\top| = (1 + \vec{v}^\top\vec{A}\vec{u})|\vec{A}|$, can then be applied to simplify the expression and speed up the computations \citep{Ding2007}.
-Note also that HDA generalizes the LDA in some sense to have a multivariate $t$-like distribution. Multivariate $t$-distributions has before been considered for discriminant analysis, cf.\ \citet{Andrews2011}. \fxnote{Elaboration on the multivariate $t$-distribution look and reference!}
+We note also that HDA generalizes the LDA in some sense to have a multivariate $t$-like distribution.
+The above become a multivariate $t$-distribution when the sample sizes of each group is $1$.
+Multivariate $t$-distributions has before been considered for discriminant analysis, cf.\ \citet{Andrews2011}.
 
 
 \subsubsection{Benchmarking of HDA}
@@ -560,7 +583,7 @@ Therefore, an increased focus should also be appointed to efficiently aggregatin
 One might question the added utility of the $\nu$ parameter is an obvious critique of the RCM.
 For example, it is unclear how large a proportion a single extra parameter can explain of the inter-study variance.
 Though more parameters could be introduced, we have attempted to provide some intuitive interpretation of the $\nu$ parameter.
-\fxnote{Do we have any other observations?}
+
 
 
 
