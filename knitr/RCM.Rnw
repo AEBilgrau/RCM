@@ -959,7 +959,7 @@ is the MLE in this model.
 
 
 
-\subsection{Appoximate maximum likelihood estimator}
+\subsection{Approximate maximum likelihood estimator}
 \label{sec:amle}
 To find the maximizing parameters we differentiate \eqref{eq:loglik} w.r.t.\ $\vPsi$ and equate to zero while assuming $\nu$ known and constant. Assuming $\vPsi$ unstructured, then $\nabla_{\vec{Z}} \log|\vec{Z}| = \vec{Z}^{-1}$ and
 \begin{align}

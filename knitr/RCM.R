@@ -401,6 +401,12 @@ plot(xs, logGammaRatio(xs, a = 1e-3), type = "l", xlab = "", ylab = "",
 ## ---- end ----
 dev.off()
 
+
+
+
+
+
+
 #
 # DLBCL analysis
 #
@@ -421,11 +427,11 @@ dlbcl.par <- list(top.n = 300,
 vars      <- sapply(gep, function(x) rowSds(exprs(x))*(ncol(x) - 1))
 var.pool  <- rowSums(vars)/(sum(sapply(gep, ncol)) - length(gep))
 use.genes <- names(sort(var.pool, decreasing = TRUE)[seq_len(dlbcl.par$top.n)])
-gep <- lapply(gep, function(x) exprs(x)[use.genes, ])
+gep.sub <- lapply(gep, function(x) exprs(x)[use.genes, ])
 
 if (!exists("dlbcl.rcm") | !exists("var.pool") | recompute) {
-  dlbcl.ns  <- sapply(gep, ncol)
-  dlbcl.S   <- lapply(gep, function(x) correlateR::scatter(t(x)))
+  dlbcl.ns  <- sapply(gep.sub, ncol)
+  dlbcl.S   <- lapply(gep.sub, function(x) correlateR::scatter(t(x)))
   dlbcl.rcm <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE)
   dimnames(dlbcl.rcm$Psi) <- dimnames(dlbcl.S[[1]])
   resave(dlbcl.rcm, file = "saved.RData")
@@ -475,6 +481,8 @@ map2hugo <- function(ensg) {
 }
 
 
+
+
 ## ---- dlbcl_clustering ----
 dlbcl.clust <- flashClust(as.dist(1 - dlbcl.adjMat), method = dlbcl.par$linkage)
 # Cluster
@@ -491,8 +499,9 @@ V(dlbcl.g)$name <- map2hugo(V(dlbcl.g)$name)
 # Phylo
 phylo <- as.phylo(dlbcl.clust)
 phylo$tip.label <- map2hugo(phylo$tip.label)
-
 ## ---- end ----
+
+
 
 
 ## ---- dlbcl_plot_2 ----
@@ -648,8 +657,8 @@ latex(go.table[, -c(1, 3)],
       file = "")
 ## ---- end ----
 
-## ---- survival_analysis ----
 
+## ---- survival_analysis ----
 plot.cis <- function(coxph,...) {
   x95 <- summary(cph.fit, conf.int = c(0.95))
   x99 <- summary(cph.fit, conf.int = c(0.99))
@@ -679,7 +688,7 @@ plot.cis <- function(coxph,...) {
 load("metadata.RData")
 library("WGCNA")
 library("survival")
-library("rms")
+#library("rms")
 
 par(mar = c(.1,5,5,0.1), oma = c(2,0,0,0))
 layout(cbind(1:3,4:6), heights = c(1,2,2))
@@ -688,8 +697,8 @@ for (j in 1:2) {
   meta <- switch(j, metadataLLMPPCHOP, metadataLLMPPRCHOP)
   rownames(meta) <- as.character(meta$GEO.ID)
   expr <- switch(j,
-                 (gep$GEPLLMPPCHOP.ensg)[names(dlbcl.modules), ],
-                 (gep$GEPLLMPPRCHOP.ensg)[names(dlbcl.modules), ])
+                 (gep.sub$GEPLLMPPCHOP.ensg)[names(dlbcl.modules), ],
+                 (gep.sub$GEPLLMPPRCHOP.ensg)[names(dlbcl.modules), ])
   meta <- meta[colnames(expr), ] # Reorder
 
   # Check order
