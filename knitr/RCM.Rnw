@@ -369,10 +369,7 @@ Hence, we investigate \Sexpr{format(dlbcl.par$top.n*(dlbcl.par$top.n + 1)/2, big
 The parameters of the RCM model was estimated using the EM algorithm and yielded the $\Sexpr{dlbcl.par$top.n} \times \Sexpr{dlbcl.par$top.n}$ matrix $\vPsi$ and $\hat{\nu} = \Sexpr{round(dlbcl.rcm[["nu"]], 2)}$.
 Subsequently, $\hvPsi$ was scaled to the corresponding correlation matrix $\hat{\vec{R}}$.
 Note, that the expected covariance $(\nu - p - 1)^{-1}\hvPsi$ yields the same correlation matrix $\hat{\vec{R}}$.
-Figure \ref{fig:dlbcl_plot_1} shows a histogram of the distribution of correlations.
 
-<<dlbcl_plot_1, echo = FALSE, fig.height=7/2.5, fig.width=7, fig.pos="tb", fig.scap = "", fig.cap="\\it Distribution of the correlation coefficents given by the entries of $\\vec{\\hat{R}}$.">>=
-@
 <<dlbcl_mappings, echo=FALSE, results='hide'>>=
 @
 <<dlbcl_clustering, echo=FALSE, results='hide'>>=

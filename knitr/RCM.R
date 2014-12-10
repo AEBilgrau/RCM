@@ -431,17 +431,8 @@ if (!exists("dlbcl.rcm") | !exists("var.pool") | recompute) {
 # Expected covariance matrix
 #s <- sample(1:nrow(dlbcl.rcm$Psi), 45)
 dlbcl.exp <- with(dlbcl.rcm, Psi2Sigma(Psi, nu))#[s,s]
-
-## ---- dlbcl_plot_1 ----
 dlbcl.cor <- cov2cor(dlbcl.exp)
 dlbcl.adjMat <- abs(dlbcl.cor)
-
-par(mfrow = c(1,2), mar = c(4,4,0,0) + .2)
-hist(get.lower.tri(dlbcl.cor), col = "grey", breaks = 50, main = "",
-     xlab = "correlation",  prob = TRUE)
-hist(-log(get.lower.tri(dlbcl.adjMat)), breaks = 50, col = "grey", main = "",
-     xlab = "-log(abs(correlation))",  prob = TRUE)
-
 
 
 ## ---- dlbcl_mappings ----
