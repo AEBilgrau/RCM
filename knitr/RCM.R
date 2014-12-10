@@ -33,10 +33,9 @@ registerDoMC(detectCores())
 drcm <- correlateR::drcm
 
 # Simulate data
-test.rcm <- function(k = 4, n = 10, ns = rep(n, k), p = 10,
-                     nu = 15, Psi) {
-  stopifnot(nu > p + 1)
-  rwishart <- function(n, Sigma) {
+test.rcm <- function(k = 4, n = 10, ns = rep(n, k), p = 10, nu = 15, Psi, ...) {
+  stopifnot(nu > p - 1)
+  rwishart.tmp <- function(n, Sigma) {
     X <- rmvnormal(n = n, mu = rep(0, nrow(Sigma)), sigma = Sigma)
     return(crossprod(X))
   }
@@ -48,40 +47,27 @@ test.rcm <- function(k = 4, n = 10, ns = rep(n, k), p = 10,
   }
 
   # Simulate data
-  Sigmas <- replicate(length(ns), riwish(nu, Psi), simplify = FALSE)
-  S  <- lapply(seq_along(ns), function(i) rwishart(ns[i], Sigmas[[i]]))
-  SS <- lapply(seq_along(S), function(i) S[[i]]/ns[i])
+  sigmas <- rinvwishart(n = k, psi = Psi, nu = nu)
+  S <- lapply(seq_len(k), function(i) rwishart.tmp(ns[i], sigmas[,,i]))
 
   # Fit model
-  t1 <- system.time({
-    res1 <- fit.rcm(Psi.init = diag(p), nu.init = p + 1, S, ns, eps = 1e-2)
-  })
-  t2 <- system.time({
-    res2 <- correlateR:::fit.rcm.MLE(nu.init = p + 1, S = S,
-                                     ns = ns, eps = 1e-2)
-  })
-  t3 <- system.time({
-    res3 <- correlateR:::fit.rcm.moment(nu.init = p + 1e7, S = S,
-                                        ns = ns, eps = 1e-2)
-  })
+  e <- 1e-2
+  t_em   <-
+    system.time(res.em   <- fit.rcm(S, ns, method = "EM", eps=e, ...))
+  t_pool <-
+    system.time(res.pool <- fit.rcm(S, ns, method = "pool", eps=e, ...))
+  t_mean <-
+    system.time(res.mean <- fit.rcm(S, ns, method = "mean", eps=e, ...))
+  t_mle  <-
+    system.time(res.mle  <- fit.rcm(S, ns, method = "approxMLE", eps=e, ...))
+  time <- c(em = t_em[3], pool = t_pool[3], mean = t_mean[3], mle = t_mle[3])
 
-  expected.covariance <- Psi/(nu - p - 1)
-  mean.covariance     <- Reduce("+", SS)/length(ns)
-  rcm.em.covariance  <- res1$Psi/(res1$nu - p - 1)
-  rcm.mle.covariance <- res2$Psi/(res2$nu - p - 1)
-  rcm.mom.covariance <- res3$Psi/(res3$nu - p - 1)
-
-  return(list(expected = expected.covariance,
-              mean = mean.covariance,
-              rcm.em  = rcm.em.covariance,
-              rcm.mle = rcm.mle.covariance,
-              rcm.mom = rcm.mom.covariance,
-              res.em = res1,
-              res.mle = res2,
-              res.mom = res3,
-              t1 = t1, t2 = t2, t3 = t3,
-              Sigmas = Sigmas, S = S, k = k,
-              ns = ns, nu = nu, Psi = Psi))
+  return(list(S = S, ns = ns, nu = nu, Psi = Psi,
+              rcm.em = res.em,
+              rcm.pool = res.pool,
+              rcm.mean = res.mean,
+              rcm.mle = res.mle,
+              time = time))
 }
 
 
@@ -89,26 +75,30 @@ SSEs <- function(x) {
   Svar <- function(Sigma, n) {
     n*(Sigma^2 + tcrossprod(diag(Sigma)))
   }
-  get.SSE <- function(O, E, n) {
+  getSSE <- function(O, E, n) {
     denom <- Svar(E, n)
     diff <- (E - O)^2/denom
     return(sum(diag(diff)) + sum(get.lower.tri(diff)))
   }
+  getSigma <- function(x) {
+    with(x, Psi2Sigma(Psi, nu))
+  }
   n <- x$ns[1]
-  sse.rcm.em  <- get.SSE(x$rcm.em,  x$expected, n = n)
-  sse.rcm.mle <- get.SSE(x$rcm.mle, x$expected, n = n)
-  sse.rcm.mom <- get.SSE(x$rcm.mom, x$expected, n = n)
-  sse.mean    <- get.SSE(x$mean,    x$expected, n = n)
+  expected  <- Psi2Sigma(Psi = x$Psi, nu = x$nu)
+  sse.rcm.em   <- getSSE(getSigma(x$rcm.em),   expected, n = n)
+  sse.rcm.mle  <- getSSE(getSigma(x$rcm.mle),  expected, n = n)
+  sse.rcm.mean <- getSSE(getSigma(x$rcm.mean), expected, n = n)
+  sse.rcm.pool <- getSSE(getSigma(x$rcm.pool), expected, n = n)
 
   stopifnot(all(x$ns == x$ns[1]))
   return(c(n  = x$ns[1],
-           k  = x$k,
+           k  = length(x$ns),
            nu = x$nu,
            p  = nrow(x$Psi),
-           SSE.rcm.em  = sse.rcm.em,
-           SSE.rcm.mle = sse.rcm.mle,
-           SSE.rcm.mom = sse.rcm.mom,
-           SSE.mean    = sse.mean))
+           SSE.rcm.em   = sse.rcm.em,
+           SSE.rcm.mle  = sse.rcm.mle,
+           SSE.rcm.pool = sse.rcm.pool,
+           SSE.rcm.mean = sse.rcm.mean))
 }
 
 to.df <- function(sim) {
@@ -140,7 +130,7 @@ hda.fit <- function(classes, vars, ...) {
 
   # Find "common" covariance
   res <- fit.rcm(Psi.init = Psi.init, nu.init = p, S = S, ns = counts, ...)
-  sigma <- res$Psi/(res$nu - p - 1)
+  sigma <- with(res, Psi2Sigma(Psi, nu))
 
   return(list(counts = counts, means = means, sigma = sigma,
               Psi = res$Psi, nu = res$nu))
@@ -167,7 +157,7 @@ hda.predict <- function(hda.fit, newdata) {
 par.ne <- list(k = 3,
                nu = 15,
                p = 10,
-               n.sims = 1000,
+               n.sims = 10,#1000,
                n.obs = seq(4, 10, by = 1))
 if (!exists("res") | recompute) {
   set.seed(64403101)
@@ -175,7 +165,7 @@ if (!exists("res") | recompute) {
   res <- list()
   for (i in seq_along(par.ne$n.obs)) {
     tmp <- foreach(j = seq_len(par.ne$n.sims)) %dopar% {
-      test.rcm(k = par.ne$k, n = par.ne$n.obs[i], p = par.ne$p, nu = par.ne$nu)
+      with(par.ne, test.rcm(k = k, n = n.obs[i], p = p, nu = nu))
     }
     res <- c(res, tmp)
     cat("loop =", i, "of", length(par.ne$n.obs), "done after",
@@ -187,23 +177,22 @@ if (!exists("res") | recompute) {
 
 ## ---- numerical_experiment_plot ----
 df <- as.data.frame(t(sapply(res, SSEs)))
-df <- aggregate(cbind(SSE.rcm.em, SSE.rcm.mle, SSE.rcm.mom, SSE.mean) ~
+df <- aggregate(cbind(SSE.rcm.em, SSE.rcm.mle, SSE.rcm.pool, SSE.rcm.mean) ~
                   n + nu + k + p, mean, data = df)
 plot(df$n, df$SSE.rcm.em, col = "blue", type = "b", axes = FALSE,
      xlab = expression(n = n[i]),
-     ylim = range(df[,-(1:4)]),
+     ylim = range(df[,5]),
      ylab = "average SSE", pch = 15, lty = 1,
      main = paste0("k = ", df$k, ", nu = ", df$nu, ", p = ", df$p)[1])
-lines(df$n, df$SSE.mean, col = "red", type = "b", pch = 16, lty = 2, lwd = 2)
-lines(df$n, df$SSE.rcm.mle, col = "orange", type = "b", pch = 17, lty = 3,lwd=2)
-lines(df$n, df$SSE.rcm.mom, col = "green", type = "b", pch = 18, lty = 4, lwd=2)
-legend("topright", legend = c("RCM (EM)", "pool",
-                              "RCM (MLE)", "RCM (Moment)"),
-       lty = 1:4, pch = c(15, 16, 17, 18), lwd = 2, bty = "n",
-       col = c("blue", "red", "orange", "green"))
 axis(1)
 axis(2)
 grid()
+lines(df$n, df$SSE.rcm.pool, col = "red", type = "b", pch = 16, lty = 2, lwd = 2)
+lines(df$n, df$SSE.rcm.mle, col = "orange", type = "b", pch = 17, lty = 3,lwd=2)
+lines(df$n, df$SSE.rcm.mean, col = "green", type = "b", pch = 18, lty = 4, lwd=2)
+legend("topright", legend = c("EM", "pool", "Approx. MLE", "mean"),
+       lty = 1:4, pch = c(15, 16, 17, 18), lwd = 2, bty = "n",
+       col = c("blue", "red", "orange", "green"))
 ## ---- end ----
 
 
@@ -221,7 +210,7 @@ e <- function(i, p) { # ith standard basis vector of length p
 par.xda <- list(K = 3,
                 n.obs = 40,
                 n.obs.valid = 100,
-                n.runs = 2500,
+                n.runs = 100, #2500,
                 p.dims = c(5, 10, 20, 35))
 if (!exists("misclassification.risks") | recompute) {
 
@@ -270,35 +259,35 @@ if (!exists("misclassification.risks") | recompute) {
                        .packages = c("dplyr", "correlateR")) %dopar% {
                          cat("i =", i, "\n"); flush.console()
 
-                         repeat {
-                           train <- to.df(SimulateGMMData(par.xda$n.obs,       theta = theta))
-                           valid <- to.df(SimulateGMMData(par.xda$n.obs.valid, theta = theta))
-                           # Make sure that we have a least two observations in each group
-                           if (all(table(train$classes) > 2) && all(table(valid$classes) > 2)){
-                             break
-                           }
-                         }
+          repeat {
+            train <- to.df(SimulateGMMData(par.xda$n.obs,       theta = theta))
+            valid <- to.df(SimulateGMMData(par.xda$n.obs.valid, theta = theta))
+            # Make sure that we have a least two observations in each group
+            if (all(table(train$classes) > 2) && all(table(valid$classes) > 2)){
+              break
+            }
+          }
 
-                         qda.train <- qda.fit(train$classes, dplyr::select(train, -classes))
-                         lda.train <- qda2lda(qda.train)
-                         hda.train <-
-                           hda.fit(train$classes, dplyr::select(train, -classes), eps=1e-2)
+          qda.train <- qda.fit(train$classes, dplyr::select(train, -classes))
+          lda.train <- qda2lda(qda.train)
+          hda.train <-
+            hda.fit(train$classes, dplyr::select(train, -classes), eps=1e-2)
 
-                         lda.pred <-
-                           lda.predict(lda.train, newdata = dplyr::select(valid, -classes))
-                         qda.pred <-
-                           qda.predict(qda.train, newdata = dplyr::select(valid, -classes))
-                         hda.pred <-
-                           hda.predict(hda.train, newdata = dplyr::select(valid, -classes))
+          lda.pred <-
+            lda.predict(lda.train, newdata = dplyr::select(valid, -classes))
+          qda.pred <-
+            qda.predict(qda.train, newdata = dplyr::select(valid, -classes))
+          hda.pred <-
+            hda.predict(hda.train, newdata = dplyr::select(valid, -classes))
 
-                         conf.lda <- table(True = valid$classes, Pred = lda.pred$class)
-                         conf.qda <- table(True = valid$classes, Pred = qda.pred$class)
-                         conf.hda <- table(True = valid$classes, Pred = hda.pred$class)
+          conf.lda <- table(True = valid$classes, Pred = lda.pred$class)
+          conf.qda <- table(True = valid$classes, Pred = qda.pred$class)
+          conf.hda <- table(True = valid$classes, Pred = hda.pred$class)
 
-                         return(c(misclassificationRisk(conf.lda),
-                                  misclassificationRisk(conf.qda),
-                                  misclassificationRisk(conf.hda)))
-                       }
+          return(c(misclassificationRisk(conf.lda),
+                   misclassificationRisk(conf.qda),
+                   misclassificationRisk(conf.hda)))
+      }
       colnames(misclassification.risks[[p.index]][[s]]) <- c("LDA","QDA","HDA")
 
     }
@@ -366,8 +355,8 @@ latex(tmp, file = "",
       label = "HDA_tab",
       caption.loc = "bottom",
       caption = paste("The results for the different scenarios. The minimum",
-                      "and maximum risk are highlighted in green and red,",
-                      "respectively."))
+                      "and maximum misclassification risks are highlighted in",
+                      "green and red, respectively."))
 rm(cm, csd, tmp, df.rownames)
 ## ---- end ----
 
@@ -417,7 +406,7 @@ load("gep.ensg.RData")
 studies <- studies[studies$Study != "Celllines", ]
 dlbcl.dims <- sapply(rev(gep)[-1], dim)
 
-dlbcl.par <- list(top.n = 300,
+dlbcl.par <- list(top.n = 100, #300,
                   linkage = "ward",
                   go.alpha.level = 0.01,
                   ontology = "MF",
@@ -432,7 +421,10 @@ gep.sub <- lapply(gep, function(x) exprs(x)[use.genes, ])
 if (!exists("dlbcl.rcm") | !exists("var.pool") | recompute) {
   dlbcl.ns  <- sapply(gep.sub, ncol)
   dlbcl.S   <- lapply(gep.sub, function(x) correlateR::scatter(t(x)))
-  dlbcl.rcm <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE)
+  nu <- sum(dlbcl.ns) + ncol(dlbcl.S[[1]]) + 1
+  psi <- c(nu - ncol(dlbcl.S[[1]]) - 1)*correlateR:::pool(dlbcl.S, dlbcl.ns)
+  dlbcl.rcm <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE,
+                       Psi.init = psi, nu.init = nu, eps = 0.01)
   dimnames(dlbcl.rcm$Psi) <- dimnames(dlbcl.S[[1]])
   resave(dlbcl.rcm, file = "saved.RData")
 }
