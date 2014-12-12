@@ -362,18 +362,22 @@ rm(cm, csd, tmp, df.rownames)
 
 
 ## ---- one_dimensional_loglik ----
-l <- function(psi, k = 1, nu = 1, ni = 1, xi = 1) {
-  k*nu/2*log(psi) - (nu + ni)/2*log(psi + xi^2)
+l <- function(psi, k = 1, nu = 10, ni = 1, xi = 1) {
+  k*nu/2*log((nu - 2)*psi) - (nu + ni)/2*log((nu - 2)*psi + xi^2)
 }
-dl <- function(psi, k = 1, nu = 1, ni = 1, xi = 1)  {
-  k*nu/2*1/psi - (nu + ni)/2 * 1/(psi + xi^2)
+dl <- function(psi, k = 1, nu = 10, ni = 1, xi = 1)  {
+  k*nu/(2*psi) - (nu + ni)/2 * (nu - 2)/((nu - 2)*psi + xi^2)
 }
-par(mfrow = 1:2, mar = c(2, 2, 2, 0) + 0.2)
-psi <- seq(0.5, 10, by = 0.01)
-plot(psi, l(psi), type = "l", col = "red", lwd = 2, main = "loglik")
-abline(v = 1, col = "grey", lty = 2, lwd = 2)
-plot(psi, dl(psi), type = "l", col = "red", lwd = 2, main = "dloglik")
-abline(h = 0, v = 1, col = "grey", lty = 2, lwd = 2)
+ddl <- function(psi, k = 1, nu = 10, ni = 1, xi = 1)  {
+  - k*nu/(2 *psi^2) + (nu + ni)/2 * (nu - 2)^2/((nu - 2)*psi + xi^2)^2
+}
+par(mfrow = c(1,3), mar = c(2, 2, 2, 0) + 0.2)
+psi <- seq(1, 10, by = 0.05)
+plot(psi, l(psi), type = "l", col = "red", lwd = 2, main = "log-likelihood")
+plot(psi, dl(psi), type = "l", col = "red", lwd = 2, main = "1. derivative")
+abline(h = 0, col = "grey", lty = 2, lwd = 2)
+plot(psi, ddl(psi), type = "l", col = "red", lwd = 2, main = "2. derivative")
+abline(h = 0, col = "grey", lty = 2, lwd = 2)
 ## ---- end ----
 dev.off()
 
