@@ -1,7 +1,7 @@
 \documentclass{article}
 \input{preamble.tex}
 
-\title{Estimation of covariance matrices from multiple studies}
+\title{Estimation of a common covariance matrix in multiple groups with applications in meta-analysis}
 \author{
   Anders Ellern Bilgrau \\ \texttt{abilgrau@math.aau.dk} \and
   Poul Svante Eriksen \\ \texttt{svante@math.aau.dk} \and
@@ -16,8 +16,10 @@ options(width = 80)
 opts_chunk$set(size = "footnotesize", fig.align = "center")
 read_chunk("RCM.R")
 @
+
 <<initialize_script, echo=FALSE, results='hide', message=FALSE>>=
 @
+
 <<auxiliary_functions, echo=FALSE>>=
 @
 
@@ -25,16 +27,16 @@ read_chunk("RCM.R")
 \phantomsection
 \addcontentsline{toc}{section}{Abstract}
 \begin{abstract}
-We propose a conceptually simple hierarchical random effects model and estimators for a common covariance matrix in cases where multiple groups or datasets are present.
-It is applicable where the groups or datasets are believed to share a common covariance of interest obscured by noise.
+We propose a hierarchical random effects model and estimators for a common covariance matrix in cases where multiple groups or datasets are present.
+It is applicable where the datasets are believed to share a common covariance matrix of interest obscured by group-dependent noise.
 As such, it provides a basis for meta-analysis of gaussian graphical models where the groups are formed by datasets.
 Our approach is inspired by traditional meta-analysis using random effects models.
-We derive the basic properties and estimators suggested by the model and compare their properties.
-Though only a modest improvement, explicitly accounting for the inter-study variance seems superior to the alternative.
-Simple inference on the introduced parameter measuring the intergroup homogeneity is also suggested.
-The model is also shown to be applicable as an intermediate between linear discriminant analysis (LDA) and quadratic discriminant analysis (QDA). \medskip
+We derive the basic properties and estimators of the model and compare their properties.
+% Though only a modest improvements, explicitly accounting for the inter-study variance seems superior to the alternative.
+Simple inference of the introduced parameter measuring the intergroup homogeneity is suggested.
+The model is also shown to be applicable as an intermediate between linear and quadratic discriminant analysis. \medskip
 
-\noindent \textbf{Keywords:} \textit{meta-analysis, covariance estimation, integrative analysis, network integration, structural meta-analysis, gaussian graphical modeling, linear discriminant analysis, quadratic discriminant analysis}
+\noindent \textbf{Keywords:} \textit{meta-analysis, covariance estimation, integrative analysis, network integration, gaussian graphical modeling, discriminant analysis}
 \end{abstract}
 
 
@@ -59,57 +61,70 @@ As with many other cancers, a large number of DLBCL studies are now available on
 
 
 
-
 \section{A random effects model of the covariance}
-Meta-analysis comes principally in various flavors corresponding to the assumption on the nature of the inter-study treatment effect.
-Random-effects models (REM) for meta-analysis model the effects as random variables realized for each study.
+The model below was motivated by regular meta-analysis.
+Meta-analysis comes in various flavors corresponding to the assumption on the nature of the inter-study treatment effect.
+Random-effects models (REM) for meta-analysis model the inter-study effects as random variables.
 In a vein similar to the regular meta-analysis by \citet{Choi2003}, we think of the different studies as related but perturbed experiments.
-The true underlying covariance matrix is the effect of interest to be estimated in this paper.
-Following the train of thought of \citet{Choi2003} we propose the following simple random covariance model (RCM) of the observations.
+Analogous to \citet{Choi2003}, we propose the following deceivingly simple random covariance model (RCM) of the observations.
 Let $p$ be the number of features and $k$ the number of studies.
 We model an observation $\vx$ from the $i$th study as a $p$-dimensional zero-mean multivariate gaussian vector with covariance matrix realized from an inverse Wishart distribution, i.e.\ $\vx$ follows the hierarchical model
 \begin{align}
 \begin{split} \label{eq:RCM}
-  \vSigma_i  &\sim \calW^{-1}_p\big((\nu - p - 1)\vPsi, \nu\big), \\
+  \vSigma_i  &\sim \calW^{-1}_p\big((\nu - p - 1)\vSigma, \nu\big), \\
   \vx | \vSigma_i &\sim \calN_p(\vec{0}_p, \vSigma_i), \qquad i = 1, ..., k,
 \end{split}
 \end{align}
-where $\calN_p(\vec{\mu},\vSigma)$ denotes a $p$-dimensional multivariate gaussian distribution with mean $\vec{\mu}$, positive definite (p.d.)\ covariance matrix $\vSigma$, and probability density function (pdf)
+where $\calN_p(\vec{\mu},\vSigma_i)$ denotes a $p$-dimensional multivariate gaussian distribution with mean $\vec{\mu}$, positive definite (pd) covariance matrix $\vSigma_i$, and probability density function (pdf)
 \begin{align*}
-  f(\vec{x}| \vec{\mu}, \vSigma) =
-  (2\pi)^{-\frac{p}{2}} |\vSigma|^{-\frac{1}{2}}
-  \exp\!\left( -\frac{1}{2} (\vx - \vec{\mu})^\top \vSigma^{-1}(\vx - \vec{\mu}) \right),
+  f(\vec{x}| \vec{\mu}, \vSigma_i) =
+  (2\pi)^{-\frac{p}{2}} |\vSigma_i|^{-\frac{1}{2}}
+  \exp\!\left( -\frac{1}{2} (\vx - \vec{\mu})^\top \vSigma_i^{-1}(\vx - \vec{\mu}) \right).
 \end{align*}
-where we use the generic notation $f(\cdot | \cdot)$ and $f(\cdot)$ for the conditional and unconditional pdf of random variables, respectively, throughout this paper.
-In the above $\calW^{-1}_p(\vec{V}, \nu)$ denotes an $p$-dimensional inverse Wishart distribution with degrees of freedom $\nu$, p.d.\ $p \times p$ scale matrix $\vec{V}$, and pdf
+As seen, we use the generic notation $f(\cdot | \cdot)$ and $f(\cdot)$ for the conditional and unconditional pdf of random variables, respectively, throughout this paper.
+In the above $\calW^{-1}_p(\vPsi, \nu)$ denotes a $p$-dimensional inverse Wishart distribution with degrees of freedom $\nu$, pd\ $p \times p$ scale matrix $\vPsi$, and pdf
 \begin{align}
   \label{eq:wishartpdf}
-  f(\vSigma) =
-  \frac{ |\vec{V}|^\frac{\nu}{2} }{
+  f(\vSigma_i) =
+  \frac{ |\vPsi|^\frac{\nu}{2} }{
         2^\frac{\nu p}{2} \Gamma_p\!\left( \frac{\nu}{2} \right) }
-        |\vSigma|^{-\frac{\nu+p+1}{2}}
-  \exp\!\left( -\frac{1}{2} \tr\!\big(\vec{V}\vSigma^{-1}\big) \right),
+        |\vSigma_i|^{-\frac{\nu+p+1}{2}}
+  \exp\!\left( -\frac{1}{2} \tr\!\big(\vPsi\vSigma_i^{-1}\big) \right),
+  \quad\nu > p - 1
 \end{align}
-where $\vSigma$ is p.d., $\nu > p - 1$, and $\Gamma_p$ is the multivariate generalization seen in Appendix \ref{sec:multigamma} of the gamma function $\Gamma$.
-While the inverse Wishart distribution is defined for all $\nu > p - 1$, the 1 order moment $(\nu - p - 1)^{-1}\vec{V}$ exists only when $\nu > p + 1$.
+where $\vSigma_i$ is pd, $\nu > p - 1$, and $\Gamma_p$ is the multivariate generalization of the gamma function $\Gamma$ seen in Appendix \ref{sec:multigamma}.
+While the inverse Wishart distribution is defined for all $\nu > p - 1$, the first order moment $(\nu - p - 1)^{-1}\vPsi$ exists only when $\nu > p + 1$.
 
-With the reparameterization of the inverse Wishart distribution of \eqref{eq:RCM}, the pdf of $\vSigma$ is given by
+With the reparameterization
+\begin{align}
+  \label{eq:reparameterization}
+  \vPsi = (\nu - p - 1)\vSigma
+\end{align}
+of the inverse Wishart distribution of \eqref{eq:RCM}, the pdf of $\vSigma$ is given by
 \begin{align}
   \label{eq:reparwishartpdf}
   f(\vSigma) =
-  \frac{ (\nu-p-1)^\frac{\nu}{2} |\vec{V}|^\frac{\nu}{2} }{
+  \frac{ |\nu-p-1|^\frac{\nu}{2} |\vPsi|^\frac{\nu}{2} }{
         2^\frac{\nu p}{2} \Gamma_p\!\left( \frac{\nu}{2} \right) }
         |\vSigma|^{-\frac{\nu+p+1}{2}}
-  \exp\!\left( -\frac{\nu - p - 1}{2} \tr\!\big(\vec{V}\vSigma^{-1}\big) \right),
+  \exp\!\left( -\frac{\nu - p - 1}{2} \tr\!\big(\vPsi\vSigma^{-1}\big) \right),
 \end{align}
-and the common expected covariance matrix is
+where $\nu > p + 1$, and the common expected covariance matrix is
 \begin{align}
   \label{eq:expcovar}
-  \bbE[\vSigma_i] = \vPsi \quad\text{ for } \nu > p + 1.
+  \bbE[\vSigma_i] = \frac{\vPsi}{\nu-p-1} = \vSigma \quad\text{ for } \nu > p + 1.
 \end{align}
-Hence in the model \eqref{eq:RCM}, $\vPsi$ can be interpreted as a location-like parameter (though not strictly such) where $\nu$ inversely controls the inter-study variation.
-From the construction, $\vSigma_i$ concentrates around $\vPsi$ for $\nu\to\infty$ which can be interpreted as the inter-study variation goes towards zero for larger $\nu$.
-In the following, we wish to infer the parameters $\vPsi$ and $\nu$ from observed data.
+Hence in the RCM given by \eqref{eq:RCM}, $\vSigma$ can be interpreted as a location-like parameter (though not strictly such) as it is the expected covariance matrix in each study.
+The parameter $\nu$ inversely controls the inter-study or inter-group variation and can thus be considered an inter-study homogeneity parameter of the covariance structure.
+A large $\nu$ corresponds to high study homogeneity (and thus low study heterogeneity) and vice versa for small $\nu$.
+This can be further seen as $\vSigma_i$ concentrates around $\vSigma$ for $\nu\to\infty$ which can be interpreted as the inter-study variation goes towards zero for increasing $\nu$.
+Thus, the true underlying covariance matrix and the homogeneity parameters are the effects of interest to be estimated in this paper.
+
+In the following, we wish to infer the parameters $\vSigma$ and $\nu$ from observed data.
+These basic properties of the RCM motivates the construction.
+We note that while the reparameterization of \eqref{eq:RCM} has preferable interpretation, the likelihood is much more complex and often numerically unstable.
+The reparameterization is especially problematic (and indeed senseless) when the expected covariance cease to exists for $p - 1 < \nu \leq p + 1$.
+Therefore, we use the usual parameterization $\vPsi$ in the actual fitting procedure and the and much of the remainder of this paper.
 
 
 
@@ -118,17 +133,16 @@ In the following, we wish to infer the parameters $\vPsi$ and $\nu$ from observe
 \subsection{The likelihood function}
 Suppose we have $n_i$ i.i.d.\ observations, $\vx_{i1}, \dots,\vx_{in_i}$, from each of the $i = 1,...,k$ independent studies from the model given in \eqref{eq:RCM}.
 Let $\vX_i = (\vx_{i1}, \dots,\vx_{in_i})^\top$ be the $n_i \times p$ matrix of observations for the $i$th study where rows correspond to samples and columns to variables.
-%For the archetypal example in genomics, $\vX_i$ is transposed gene expression matrix with genes in the columns and samples in the rows.
 By the independence assumptions, the log-likelihood for $\vPsi$ and $\nu$ is given by
 \begin{align*}
   &\ell\!\left(\vPsi, \nu \big|\vX_1, ..., \vX_k  \right)
   = \log f\!\left(\vX_1, ..., \vX_k \big| \vPsi, \nu \right) \\
-  &= \log\!\int %\cdots \int
-               f(\vX_1, ...,\vX_k |
+  &= \log\!\int
+             f(\vX_1, ...,\vX_k |
                \vSigma_1, ..., \vSigma_k, \vPsi, \nu)
              f(\vSigma_1, ..., \vSigma_k | \vPsi, \nu)
              d\vSigma_1 \cdots d\vSigma_k \\
-  &= \log\!\int %\cdots \int
+  &= \log\!\int
                \prod_{i=1}^k
                f(\vX_i | \vSigma_i)
                f(\vSigma_i | \vPsi, \nu)
@@ -142,14 +156,15 @@ Since the inverse Wishart distribution is conjugate to the multivariate gaussian
 \small
 \begin{align}
   &\ell\!\left(\vPsi, \nu \big| \vX_1, ..., \vX_k \right) %\notag\\
-  = \sum_{i=1}^k \log
-    \frac{\big|(\nu-p-1)\vPsi\big|^\frac{\nu}{2} \Gamma_p\!\left(\frac{\nu+n_i}{2}\right)}
-         {2^\frac{n_i p}{2} \big|(\nu-p-1)\vPsi +\vX_i^\top\vX_i\big|^\frac{\nu+n_i}{2}
+  = \log\prod_{i=1}^k
+    \frac{\big|\vPsi\big|^\frac{\nu}{2} \Gamma_p\!\left(\frac{\nu+n_i}{2}\right)}
+         {\pi^\frac{n_i p}{2} \big|\vPsi +\vX_i^\top\vX_i\big|^\frac{\nu+n_i}{2}
           \Gamma_p\!\left(\frac{\nu}{2}\right)}          \notag\\
   &= c + \sum_{i=1}^k \!\bigg[
-            \frac{\nu}{2}  \log\big|(\nu-p-1)\vPsi\big|
-            + \log\Gamma_p\!\left(\frac{\nu + n_i}{2}\right) \notag\\
-    &\hspace{1.5cm} - \frac{\nu + n_i}{2}\log\big|(\nu-p-1)\vPsi +\vX_i^\top\vX_i\big|
+            \frac{\nu}{2}  \log\big|\vPsi\big|
+            + \log\Gamma_p\!\left(\frac{\nu + n_i}{2}\right)
+   % \notag\\ &\hspace{1.5cm}
+       - \frac{\nu + n_i}{2}\log\big| \vPsi +\vX_i^\top\vX_i \big|
             - \log\Gamma_p\!\left(\frac{\nu}{2}\right)
             \!\bigg]\!,
     \label{eq:loglik}
@@ -162,34 +177,37 @@ Note that $\vS_i$ is conditionally Wishart distributed, $\vS_i|\vSigma_i \sim \c
 In general, the likelihood is not log-concave, cf.\ Proposition \ref{prop:nonconcavityinpsi} in Appendix \ref{sec:concaveloglik}.
 We show that it is log-concave in $\nu$ for fixed $\vPsi$, cf.\ Proposition \ref{prop:concavityinnu} in Appendix \ref{sec:concaveloglik}.
 Reversely, for fixed $\nu$ and $\sum_{i = 1}^k n_i > p$ we show that the Hessian in any stationary point (i.e.\ where $\frac{\partial\ell}{\partial\vPsi} = \vec{0}$) is negative definite, cf.\ Lemma \ref{lem:negativesdefinite} in Appendix \ref{sec:negativedefinite}, and hence every stationary point is a local maxima.
-With this combined with the observation that $\ell(\vPsi) \to -\infty$ whenever an eigenvalue $\lambda_i \to 0$ or $\lambda_i \to \infty$, cf.\ Lemma \ref{lem:elltominusinfty} in Appendix \ref{sec:negativedefinite}, we prove that any stationary point indeed is a global maximum, cf.\ Proposition \ref{prop:uniquemax} in Appendix \ref{sec:negativedefinite}.
+This combined with the observation that $\ell(\vPsi) \to -\infty$ whenever an eigenvalue $\lambda_i \to 0$ or $\lambda_i \to \infty$, cf.\ Lemma \ref{lem:elltominusinfty} in Appendix \ref{sec:negativedefinite}, we prove that any stationary point indeed is a global maximum, cf.\ Proposition \ref{prop:uniquemax} in Appendix \ref{sec:negativedefinite}.
 Hence we have existence and uniqueness of a global maximum in $\vPsi$.
 
-We first attempted to derive MLE estimators using a first order approximation. However, as simulation experiments later show, this estimator performed quite poorly and has therefore been deferred to Appendix \ref{sec:amle}.
+We have also derived MLE estimators using a first order approximation. However, as simulation experiments later show, this estimator performed quite poorly and has therefore been deferred to Appendix \ref{sec:amle}.
+
 
 
 \subsection{Moment estimator}
-%In the following, estimation of $\vPsi$ for fixed $\nu$ is considered.
-With the RCM framework, we show that, properly scaled, the pooled empirical covariance matrix and the mean empirical covariance matrix can be viewed as different moment estimators of $\vPsi$.
-%These straight-forward estimators are thus movtivated by the model.
-%Simple estimates of $\vPsi$ are readily available by the hierachical construction.
+Within the RCM framework, we show that the pooled empirical covariance matrix can be viewed as a moment estimator of $\vSigma$.
 
-By the assumptions the first and second moment of the $j$th observation in the $i$th study, $\vx_{ij}$, is given by
+By the assumptions the first and second moment of the $j$th observation in the $i$th study, $\vx_{ij}$, is given by $\bbE[\vx_{ij}] = \vec{0}_p$ and
 \begin{align*}
-  \bbE[\vx_{ij}] &= \vec{0} \\
   \bbE[\vx_{ij}\vx_{ij}^\top]
     &= \bbE\!\left[\bbE[\vx_{ij}\vx_{ij}^\top | \vSigma_i ]\right]
     = \bbE[\vSigma_i]
-    = \frac{(\nu - p - 1)\vPsi}{\nu - p - 1}
-    = \vPsi.
+    = \frac{\vPsi}{\nu - p - 1}
+    = \vSigma.
 \end{align*}
-for all $j = 1, ..., n_i$ and $i = 1, ..., k$. This yield the estimator
+for all $j = 1, ..., n_i$ and $i = 1, ..., k$. This suggests the estimator
 \begin{align}
   \label{eq:pooledest}
   \hvPsi_\text{pool}
-  = \frac{\sum_{i = 1}^k \vS_i}{\sum_{i = 1}^k n_i},
+  = (\nu - p - 1)\frac{\sum_{i = 1}^k \vS_i}{\sum_{i = 1}^k n_i},
 \end{align}
-which is the well-known pooled empirical covariance matrix.
+from which
+\begin{align*}
+  \hvSigma_\text{pool}
+  = \frac{\sum_{i = 1}^k \vS_i}{\sum_{i = 1}^k n_i}, \qquad \nu > p + 1
+\end{align*}
+by e.g.\ plugging the estimate $\hvPsi_\text{pool}$ into \eqref{eq:reparameterization} or \eqref{eq:expcovar}.
+This is the well-known pooled empirical covariance matrix.
 
 % Note that if the common or expected covariance matrix is of interest, then the pooled covariance are obtained as estimators by plugging \eqref{eq:pooledest} into \eqref{eq:expcovar} which cancels out the scaling factor.
 
@@ -203,13 +221,13 @@ We now compute the expectation step of the EM-algorithm.
 
 From \eqref{eq:RCM} we equivalently have that,
 \begin{align*}
-  \vSigma_i          &\sim \calW^{-1}_p\big((\nu - p - 1)\vPsi, \nu\big), \\
+  \vSigma_i          &\sim \calW^{-1}_p\big(\vPsi, \nu\big), \\
   \vS_i | \vSigma_i  &\sim \calW_p(\vSigma_i, n_i) \quad \text{ for } i = 1, ..., k.
 \end{align*}
 Let $\vDelta_i = \vSigma_i^{-1}$ be the precision matrix (or, concentration matrix) and let $\vTheta = \vPsi^{-1}$, then
 \begin{align}
   \vDelta_i
-  &\sim \calW_p\big((\nu - p - 1)^{-1}\vTheta, \nu\big)
+  &\sim \calW_p\big(\vTheta, \nu\big)
 %   &\Leftrightarrow & &
 %   f(\vDelta_i)
 %   &\propto
@@ -229,11 +247,11 @@ Let $\vDelta_i = \vSigma_i^{-1}$ be the precision matrix (or, concentration matr
 From the conjugacy of the inverse Wishart and the Wishart distribution, we have the posterior distribution for the precision matrix,
 \begin{align*}
     \vDelta_i | \vS_i
-    &\sim \calW_p\!\Big( \big((\nu-p-1)\vTheta^{-1} + \vS_i\big)^{-1}, n_i + \nu\Big)
+    &\sim \calW_p\!\Big( \big(\vTheta^{-1} + \vS_i\big)^{-1}, n_i + \nu\Big)
 \end{align*}
 Hence, the expectation step is then given by
 \begin{align*}
-  \bbE[\vDelta_i |\vS_i] = (n_i + \nu)\big((\nu-p-1)\vTheta^{-1} + \vS_i\big)^{-1}.
+  \bbE[\vDelta_i |\vS_i] = (n_i + \nu)\big(\vTheta^{-1} + \vS_i\big)^{-1}.
 \end{align*}
 The maximization step, in which the log-likelihood $\ell(\vTheta|\vDelta_1, ..., \vDelta_k)$ is maximized, yields the estimate
 \begin{align*}
@@ -246,9 +264,11 @@ The above yield the updating scheme
   \label{eq:em}
   \hvTheta_{(t+1)}
   = \frac{1}{k\nu}\sum_{i = 1}^k
-    (n_i + \nu)\left((\nu-p-1)\hvTheta_{(t)}^{-1} + \vS_i\right)^{-1}
+    (n_i + \nu)\left(\hvTheta_{(t)}^{-1} + \vS_i\right)^{-1}
 \end{align}
-for $\vTheta$. The connection to the likelihood equation \eqref{eq:firstordderivloglik} is immediately seen. We denote the estimate obtained from \eqref{eq:em} with $\hvPsi_\text{EM}$.
+for $\vTheta$.
+The connection to the likelihood equation \eqref{eq:firstordderivloglik} is immediately seen.
+We denote the inverse of the estimate obtained by repeated iteration of \eqref{eq:em} with $\hvPsi_\text{EM}$.
 
 \subsection{Estimation procedure}
 We propose an alternating procedure between estimating $\nu$ and $\vPsi$ while keeping the other fixed.
@@ -281,20 +301,20 @@ More precisely, in pseudo-code, we propose the algorithm seen in Algorithm \ref{
 \end{algorithmic}
 \end{algorithm}
 The update function $U$ in the algorithm is defined by the derived estimators above.
-That is, equations \eqref{eq:pooledest}, \eqref{eq:mle}, or \eqref{eq:em} define $U$ to be the moment, approximate MLE, and EM estimate respectively.
+That is, equations \eqref{eq:pooledest}, \eqref{eq:mle}, or \eqref{eq:em} define $U$ to be the pooled, approximate MLE, and EM estimate respectively.
 
-This algorithm utilize the results about the log-likelihood and thus provide us with a guarantee of convergence along with the advantage of a very simple implementation.
+The EM algorithm utilize the results about the log-likelihood and thus provide us with a guarantee of convergence along with the advantage of a very simple implementation.
 However the obvious disadvantage is that the identified maxima might be a saddle-point when considering the log-likelihood jointly in $(\vPsi, \nu)$.
 
 
 
-\subsection[Inference on nu]{Inference on $\nu$}
-This section describes basic inference on the parameter $\nu$ also of interest.
-By the model construction, $\nu$ parameterize an inter-study variance where the size of $\nu$ corresponds the homogeneity between the studies or groups.
-Large $\nu$ yield high study homogeneity and small $\nu$ low homogeneity.
-Thus it could be of interest to test if the estimated homogeneity $\hat{\nu}$ is extreme under the null-hypothesis of no heterogeneity (i.e.\ infinite homogeneity). We wish to test the hypothesis $H_0: \nu = \infty$ which is equivalent to
+\subsection[Interpretation and inference of nu]{Interpretation and inference of $\nu$}
+This section describes basic inference on the parameter $\nu$.
+By the RCM construction, $\nu$ parameterizes an inter-study variance where the size of $\nu$ corresponds the homogeneity between the studies or groups.
+Large $\nu$ yield high study homogeneity and small $\nu$ yield low homogeneity.
+Thus it is of interest to test if the estimated homogeneity $\hat{\nu}$ is extreme under the null-hypothesis of no heterogeneity (i.e.\ infinite homogeneity). We wish to test the hypothesis $H_0: \nu = \infty$ which is equivalent to
 \begin{align*}
-  H_0: \vSigma_1 = ... = \vSigma_k = \vPsi.
+  H_0: \vSigma_1 = ... = \vSigma_k = \vSigma,
 \end{align*}
 The two are equivalent since the sampling of the covariance matrix from the inverse Wishart distribution become deterministic when $\nu = \infty$. Testing this hypothesis can therefore also be interpreted as testing if the data is adequately explained when leaving out the hierarchical structure.
 
@@ -307,12 +327,101 @@ To do this, the model is simply fitted on datasets generated under $H_0$ a large
 where $\bbOne[\cdot ]$ is the indicator function. Hence, this is approximately the fraction of $\hat{\nu}_0$'s smaller than $\hat{\nu}_\text{obs}$.
 
 
-\section{Assessment of estimation procedure}
+\subsubsection*{Intra-class correlation coefficient analogue}
+We also introduce a descriptive statistic analogous to the intra-class correlation coefficient (ICC) value to better determine what constitute large values of $\nu$.
+We wish to define a modified ICC (mICC) analogous to the ordinary ICC as the ratio of the between-study variation and the total variation of the samples.
+Consider observations from \eqref{eq:RCM}. We (temporarily) abuse our own notation and let
+\begin{align*}
+  \vSigma \sim \calW_p^{-1}\!( \vPsi, \nu) \quad \text{ and }\quad
+  \vS | \vSigma \sim \calW_p\!(\vSigma, 1),
+\end{align*}
+where we only consider a single observation (n = 1).
+Further let $\vS = (S_{ij})_{p\times p}$, $\vSigma = (\Sigma_{ij})_{p \times p}$, and $\vPsi = (\Psi_{ij})_{p \times p}$.
+To compute the mICC, we are thus interested in the ratio of the quantities $\var(\Sigma_{ij})$ and $\var(S_{ij})$ corresponding to the between-study and total variation of the covariance between $i$ and $j$, respectively.
+That is, the mICC is the proportion of the total variance that is between studies,
+\begin{align}
+  \text{mICC}
+  = \frac{\var(\Sigma_{ij})}{\var(S_{ij})}
+  = \frac{\var(\Sigma_{ij})}{\var(\Sigma_{ij}) + \bbE[\var(S_{ij}|\vSigma)]},
+  \label{eq:mICC}
+\end{align}
+where the second equality is obtained by the law of total variation and since $\bbE[S_{ij}|\vSigma] = \Sigma_{ij}$.
+This equality agree with the usual ICC as $\bbE[\var(S_{ij}|\Sigma_{ij})]$ can be interpreted as the (expected) within-study variation.
+Using the variance $\var(S_{ij}|\vSigma) = \Sigma_{ij}^2 + \Sigma_{ii} \Sigma_{jj}$ the needed quantities can be found
+.
+To compute an expression for \eqref{eq:mICC} we need to consider the third-order moments of the observations.
+From the model,
+\begin{align}
+  \label{eq:invwishcovar}
+  \cov(\Sigma_{ij}, \Sigma_{kl})
+  &= \frac{2\Psi_{ij}\Psi_{kl}+ (\nu-p-1)\big(\Psi_{ik}\Psi_{jl} + \Psi_{il}\Psi_{kj}\big)}
+          {(\nu-p)(\nu-p-1)^2(\nu-p-3)}, \quad\nu > p +3,
+  \intertext{implying that}
+  \var(\Sigma_{ij})
+  &= \cov(\Sigma_{ij}, \Sigma_{ij})
+  \label{eq:invwishvar}
+  = \frac{(\nu-p+1)\Psi_{ij}^2 + (\nu-p-1)\Psi_{ii}\Psi_{jj}}
+          {(\nu-p)(\nu-p-1)^2(\nu-p-3)}
+\end{align}
+by known results of the inverse Wishart distribution, cf.\ \citep{Cook2011, Rosen1988}.
+We continue with the conditional variance of $S_{ij}|\vSigma$ in the denominator of \eqref{eq:mICC},
+\small
+\begin{align}
+  \bbE\big[\var(S_{ij}|\Sigma_{ij})\big]
+  &= \var(\Sigma_{ij}) + \bbE[\Sigma_{ij}]^2
+    + \cov(\Sigma_{ii}, \Sigma_{jj})
+    + \bbE[\Sigma_{ii}]\bbE[\Sigma_{jj}]  \notag\\
+  &= \var(\Sigma_{ij}) + \cov(\Sigma_{ii}, \Sigma_{jj})
+    + (\nu-p-1)^{-2}(\Psi_{ij}^2 + \Psi_{ii}\Psi_{jj})
+    \label{eq:varSij}
+\end{align}
+\normalsize
+% \small
+% \begin{align}
+%   &\var(n^{-1}S_{ij})\\
+%   &= n^{-2}\Big( \var\!\big(\bbE[S_{ij}|\vSigma ]\big)
+%     + \bbE\!\big[\var(S_{ij}|\vSigma )\big] \Big) \notag\\
+% %  &= n^{-2}\Big( \var(\Sigma_{ij})
+% %    + \bbE\big[ n( \Sigma_{ij}^2 + \Sigma_{ii}\Sigma_{jj} )\big] \Big)  \notag\\
+%   &=  n^{-2}\Big( \var(\Sigma_{ij}) + n\bbE[\Sigma_{ij}^2]
+%      + n\bbE[\Sigma_{ii}\Sigma_{jj}] \Big) \notag\\
+% %   &= n^{-2}\Big( (n+1)\var(\Sigma_{ij}) + n\bbE[\Sigma_{ij}]^2
+% %      + n\bbE[\Sigma_{ii}\Sigma_{jj}] \Big) \notag\\
+%   &= n^{-2}\Big((n+1)\var(\Sigma_{ij}) + n\bbE[\Sigma_{ij}]^2
+%     + n\cov(\Sigma_{ii}, \Sigma_{jj})
+%     + n\bbE[\Sigma_{ii}]\bbE[\Sigma_{jj}] \Big) \notag\\
+%   &= n^{-2}\Big( (n+1)\var(\Sigma_{ij}) + n\cov(\Sigma_{ii}, \Sigma_{jj})
+%     + n(\nu-p-1)^{-2}(\Psi_{ij}^2 + \Psi_{ii}\Psi_{jj})
+%      \Big)
+%     \label{eq:varSij}
+% \end{align}
+% \normalsize
+An expression of $\var(S_{ij})$ in terms of the elements of $\vPsi$ can then found by substituting of \eqref{eq:invwishcovar} and \eqref{eq:invwishvar} into \eqref{eq:varSij} and by extension an expression for the mICC \eqref{eq:mICC} can be obtained.
+We omit this tedious calculation which can be verified to yield
+\begin{align}
+  \text{mICC}(\nu) &= \frac{1}{\nu-p},
+  \label{eq:mICCexprs}
+\end{align}
+in the RCM.
+Naturally enough, the mICC depends only on $\nu$.
+A straight-forward plug-in estimator $\widehat{\text{mICC}}(\nu)$ of the mICC of some gene-gene interaction is then $\text{mICC}(\hat{\nu})$.
+
+Though $v > p + 3$ is required for the variances to exist, it is clear that
+\begin{align*}
+  \lim_{\nu \to (p+1)^+} \text{mICC}(\nu) = 1 \quad \text{ and } \quad
+  \lim_{\nu \to \infty^-} \text{mICC}(\nu) = 0,
+\end{align*}
+as should be expected.
+
+
+
+
 <<numerical_experiment, echo=FALSE, results='hide'>>=
 @
+\section{Assessment of estimation procedures}
 To assess the precision and stability of the estimation procedure we generated data from the hierarchical model \eqref{eq:RCM} for $p = \Sexpr{par.ne[["p"]]}$ variables and $k = \Sexpr{par.ne[["k"]]}$ studies each with an equal number of observations, $n = n_1 = n_2 = n_3$. We chose the parameters $\nu = \Sexpr{par.ne[["nu"]]}$ and
 \begin{align*}
-\vPsi =
+\vSigma =
   \begin{bmatrix}
      1 & 0.5 & 0.5 & \cdots\\
      0.5 & 1 & 0.5 & \cdots\\
@@ -325,17 +434,19 @@ The number of observations is each study $n$ was varied in the range $\Sexpr{pas
 We measure the precision of the estimated values against the expected covariance matrix given by \eqref{eq:expcovar}.
 Let $\hvPsi$ and $\hat{\nu}$ be the estimates obtained using the moment, EM, or approximate MLE (deferred to Appendix \ref{sec:amle}) approach as described. We benchmark the proposed estimators against the known truth. The benchmarking measure used is the following weighted sum of squared errors,
 \begin{align*}
-  \text{SSE}(\hvPsi) = \sum_{i \leq j} \frac{(\hat{\Psi}_{ij}- \Psi{ij})^2}{\var(\Psi{ij})}
+  \text{SSE}(\hvPsi) = \sum_{i \leq j} \frac{(\hat{\Psi}_{ij}- \Psi_{ij})^2}{\var(\Psi_{ij})}
 \end{align*}
 where
 \begin{align*}
- \var(\Psi{ij}) = n(\Psi_{ij}^2 + \Psi_{ii}\Psi_{jj}).
+ \var(\Psi_{ij}) = n(\Psi_{ij}^2 + \Psi_{ii}\Psi_{jj}).
 \end{align*}
 
 For each $n = \Sexpr{par.ne$n.obs}$, the squared sum of errors for each estimator, $\text{SSE}(\hvPsi)$, where computed for $\Sexpr{par.ne[["n.sims"]]}$ datasets and the average of these values are seen in Figure \ref{fig:numerical_experiment_plot} as function of the number of samples in each dataset $n_i$.
-<<numerical_experiment_plot, echo=FALSE, results='markup', fig.pos="tb", fig.height=7/2, fig.width=7, out.width = ".8\\linewidth", fig.scap = "", fig.cap=paste0("\\it The average sum of squared errors (SSE), of ", par.ne$n.sims, " simulations, as a function of the number of samples $n_i$ in each study.")>>=
+
+<<numerical_experiment_plot, echo=FALSE, results='markup', fig.pos="tb", fig.height=7/2, fig.width=7, out.width = ".8\\linewidth", fig.scap = "", fig.cap=paste0("\\it The estimated mean sum of squared errors (MSSE) based on ", par.ne$n.sims, " simulations, as a function of the number of samples $n_i$ in each study.")>>=
 @
-Unsurprisingly, the proper EM estimation outperform the simple alternative estimates.
+
+\noindent Unsurprisingly, the proper EM estimation outperform the simple alternative estimates.
 We see that the EM estimation is superior to that of the approximate MLE and moment.
 
 
@@ -351,47 +462,49 @@ See the documentation here for further details.
 
 
 \section{Applications}
-\subsection{Meta-analysis in DLBCL}
 <<dlbcl_analysis, echo=FALSE, results='hide', message=FALSE>>=
 @
-Diffuse large B-cell lymphoma (DLBCL) is an aggressive cancer subtype of accounting for approximately $31 \%$ of all non-Hodgkin's lymphoma (NHL) \citep{Project1997} which itself constitute about $90 \%$ of all lymphomas.
-A further molecular sub-classification of DLBCL into germinal center B-cell-like (GCB) DBLCL and activated B-cell-like (ABC) DLCBL exists with very large differences at the molecular level.
-The GCB cases exhibit a clinically favorable overall survival prognosis compared to that of ABCs.
+
+\subsection{Meta-analysis in DLBCL}
+Diffuse large B-cell lymphoma (DLBCL) is an aggressive cancer subtype accounting for approximately $31 \%$ of all non-Hodgkin's lymphoma (NHL) \citep{Project1997} which itself constitute about $90 \%$ of all lymphomas.
+%A further molecular sub-classification of DLBCL into germinal center B-cell-like (GCB) DBLCL and activated B-cell-like (ABC) DLCBL exists with very large differences at the molecular level.
+%The GCB cases exhibit a clinically favorable overall survival prognosis compared to that of ABCs.
 
 \subsubsection*{Data and preprocessing}
 A large amount of DLBCL datasets are now available online at the NCBI (National Center for Biotechnology Information) Gene Expression Omnibus (GEO) website.
-We downloaded 10 DLBCL large-scale gene expression studies and preprocessed these using the custom brainarray chip definition files (CDF) and RMA-normalization [7, 3].
-The corresponding GEO-accession numbers are \Sexpr{paste(grep("XXX", base::unique(studies[,"GSE"]), invert = TRUE, value = TRUE), collapse = ", ")} of various microarray platforms.
+We downloaded 10 DLBCL large-scale gene expression studies and preprocessed these using the custom brainarray chip definition files (CDF) and RMA-normalization using the R-package \texttt{affy}. \citep{Dai2005, affy}
+The corresponding GEO-accession numbers are \Sexpr{grep("XXX", base::unique(studies[,"GSE"]), invert = TRUE, value = TRUE)} based on various microarray platforms.
 The downloaded data together with our own yields a total of \Sexpr{rowSums(dlbcl.dims)["Samples"]} samples with study sizes in the range \Sexpr{paste(range(dlbcl.dims["Samples",]), collapse = "-")}.
 The summarization using brainarray CDFs facilitates cross-platform integration.
 
 After the RMA normalization and summarization, the data was brought to a common scale by quantile normalizing all data to the common cumulative distribution function of all arrays.
-
 Lastly, the datasets were reduced to the total of \Sexpr{dim(gep[[1]])["Features"]} common features represented in all studies and array platforms.
 
 \subsubsection*{Meta-analysis}
-We wanted to perform a co-expression network (i.e.\ weighted correlation network) analysis across all datasets.
+We wanted to perform a co-expression network (i.e.\ weighted correlation network) analysis integrating all datasets.
 For each dataset the scatter matrix $\vS_i$ of the top \Sexpr{dlbcl.par$top.n} most variable genes (as measured by the pooled variance across studies) was computed as the sufficient statistics along with the number of samples.
 Hence, we investigate \Sexpr{format(dlbcl.par$top.n*(dlbcl.par$top.n + 1)/2, big.mark = ",")} pairwise interactions.
 
-The parameters of the RCM model was estimated using the EM algorithm and yielded the $\Sexpr{dlbcl.par$top.n} \times \Sexpr{dlbcl.par$top.n}$ matrix $\vPsi$ and $\hat{\nu} = \Sexpr{round(dlbcl.rcm[["nu"]], 2)}$.
-Subsequently, $\hvPsi$ was scaled to the corresponding correlation matrix $\hat{\vec{R}}$.
+The parameters of the RCM model was estimated using the EM algorithm and yielded the $\Sexpr{dlbcl.par$top.n} \times \Sexpr{dlbcl.par$top.n}$ matrix $\hvPsi$ and $\hat{\nu} = \Sexpr{round(dlbcl.rcm[["nu"]], 2)}$.
+From these, $\hvSigma = (\hat{\nu}-p-1)^{-1}\hvPsi$ was computed and subsequently scaled to the corresponding correlation matrix $\hat{\vec{R}}$.
 
 
 <<dlbcl_mappings, echo=FALSE, results='hide'>>=
 @
+
 <<dlbcl_clustering, echo=FALSE, results='hide'>>=
 @
+
 <<dlbcl_plot_2, echo = FALSE, message=FALSE, results='hide'>>=
 @
+
 \fig{\Sexpr{dlbcl_plot_2}}{0.8\textwidth}{\it{}Top left: dendrograms of the hierarchical clustering, the identified modules, and the correlation matrix. Top right: the correlation network as laid out by the Fruchterman-Reingold algorithm using the edge-weights. The nodes are colored after the identified modules with sizes proportional to the node connectivity (defined by row sums of $\hat{\vec{R}}$). The opacity of the edges are drawn as function of the edge weight. Bottom: A Hierarchical edge bundling representation of the network. Negative and positive correlations are colored blue and red, resp.
 }
 
-We have thus estimated a correlation matrix across all studies to which standard correlation network analyses can be employed.
-To identify sub-graphs, we used agglomerative hierarchical clustering with \Sexpr{capitalize(dlbcl.clust$method)} linkage on the distance measure defined by 1 minus the absolute value of the correlation.
+We have thus estimated a common correlation matrix $\hat{\vec{R}}$ across all studies to which standard correlation network analyses can be employed.
+To identify sub-graphs, we used agglomerative hierarchical clustering with \Sexpr{capitalize(dlbcl.clust$method)}-linkage on the distance measure defined by 1 minus the absolute value of the correlation.
 The tree was arbitrarily pruned at a height which yielded \Sexpr{length(unique(dlbcl.modules))} sub-graphs (or, modules) colored and named by colors.
-Figure \ref{\Sexpr{dlbcl_plot_2}} show these results.
-Table \ref{tab:dlbcl_mod_tab} show the genes within each module.
+Figure \ref{\Sexpr{dlbcl_plot_2}} shows these results and Table \ref{tab:dlbcl_mod_tab} shows the genes within each module.
 
 Next, the modules were screened for biological relevance using GO (Gene Ontology) enrichment analysis.
 Table \ref{tab:GO_tabs} in Appendix \ref{sec:sig_go_term} show the significant GO-terms at significance level \Sexpr{dlbcl.par$go.alpha.level} for each module.
@@ -399,10 +512,11 @@ As seen, the GO-terms all appear highly relevant to the pathology of DLBCL.
 
 <<dlbcl_go_analysis, echo=FALSE, results='hide'>>=
 @
+
 <<dlbcl_mod_tab, echo=FALSE, results='asis'>>=
 @
 
-Lastly, we checked if the identified modules were predictive of overall survival (OS) in the CHOP and R-CHOP-treated cohorts of the LLMPP dataset (GSE10846).
+Lastly, we checked if the identified modules were prognostic for overall survival (OS) in the CHOP and R-CHOP-treated cohorts of the LLMPP dataset (GSE10846).
 To do this, the eigengene \cite{Horvath2011} for each module was computed and a multiple Cox proportional hazards model for OS was fitted with the module eigengenes as covariates.
 For the most interesting modules, the Kaplan-Meier estimates were computed for groups arising when dichotomizing the values of corresponding eigengene as above or below the median value.
 These results are seen in Figure \ref{fig:survival_analysis}.
@@ -416,7 +530,8 @@ The results further corroborates that the identified modules are biologically me
 \subsection{Supervised classification}
 <<discriminant_analysis, echo=FALSE, message=FALSE, results='hide'>>=
 @
-Another application of the RCM is discriminant analysis.
+
+\noindent Another application of the RCM is discriminant analysis.
 As seen below, the estimates obtained can be utilized in supervised learning as a intermediate case between linear discriminant analysis (LDA) and quadratic discriminant analysis (QDA).
 
 Suppose $Y$ is a random variable denoting the classes $1, ..., k$ and suppose $\vx$ is a random vector of the explanatory variables.
@@ -431,17 +546,17 @@ where $\vx | Y = y$ is assumed to be $p$-dimensional gaussian distributed, i.e.\
   \vX | Y = y \sim \calN_p(\vec{\mu}_y, \vSigma_y).
 \end{align*}
 LDA differs from QDA by the additional assumption that $\vSigma = \vSigma_y$ for all classes $y$.
-An intermediate classifier of LDA and QDA can thus be constructed by assuming the $\vSigma_y$'s are inverse Wishart distributed as in \eqref{eq:RCM}, i.e., $\vSigma_y \sim \calW^{-1}_p\!\big((\nu-p-1)\vPsi, \nu\big)$, and using the estimates of a common expected $\vPsi$ discussed above.
+An intermediate classifier of LDA and QDA can thus be constructed by assuming the $\vSigma_y$'s are inverse Wishart distributed as in \eqref{eq:RCM}, i.e., $\vSigma_y \sim \calW^{-1}_p\!\big((\nu-p-1)\vSigma, \nu\big)$, and using the estimates of a common expected $\vPsi$ discussed above.
 This hierarchical discriminant analysis (HDA) is thus straight-forward to implement given that
 \begin{align*}
 f(\vx | Y = y)
   &= \int f(\vx| \vSigma, Y = y) f(\vSigma | Y = y) d\vSigma \\
-  &= \frac{ \big|(\nu-p-1)\vPsi\big|^{\frac{\nu}{2}} \Gamma_p\!\left(\frac{\nu + 1}{2}\right) }
+  &= \frac{ \big|\vPsi\big|^{\frac{\nu}{2}} \Gamma_p\!\left(\frac{\nu + 1}{2}\right) }
           { \pi^{-\frac{n}{2}}
-            \big|(\nu-p-1)\vPsi + (\vx-\vec{\mu}_y)(\vx-\vec{\mu}_y)^\top\big|^{\frac{\nu + 1}{2}}
+            \big|\vPsi + (\vx-\vec{\mu}_y)(\vx-\vec{\mu}_y)^\top\big|^{\frac{\nu + 1}{2}}
             \Gamma_p\!\left(\frac{\nu}{2}\right)},
 \end{align*}
-analogous to the derivation in Appendix \ref{sec:marginalization}. The matrix determinant lemma, $|\vec{A} + \vec{u}\vec{v}^\top| = (1 + \vec{v}^\top\vec{A}\vec{u})|\vec{A}|$, can then be applied to simplify the expression and speed up the computations \citep{Ding2007}.
+analogous to the derivation in Appendix \ref{sec:marginalization}. The matrix determinant lemma, $|\vec{A} + \vec{u}\vPsi^\top| = (1 + \vPsi^\top\vec{A}\vec{u})|\vec{A}|$, can then be applied to simplify the expression and speed up the computations \citep{Ding2007}.
 We note also that HDA generalizes the LDA in some sense to have a multivariate $t$-like distribution.
 The above become a multivariate $t$-distribution when the sample sizes of each group is $1$.
 Multivariate $t$-distributions has before been considered for discriminant analysis, cf.\ \citet{Andrews2011}.
@@ -472,9 +587,11 @@ Table \ref{HDA_tab} shows the results of the simulation experiments.
 \providecommand{\red}{\color{red}}
 \definecolor{mygreen}{rgb}{0,0.6,0}
 \providecommand{\green}{\color{mygreen}}
+
 <<hda_table_res, echo=FALSE, results='asis'>>=
 @
-In order to be able to evaluate $P(Y = y | \vX = \vx)$ in cases where the sample covariance matrix is not invertible, a small constant was added to the diagonal to allow for stable inversion similar to \citet{Friedman1989}. In the given setup, this modification was only necessary for QDA in the low-dimensional cases.
+
+\noindent In order to be able to evaluate $P(Y = y | \vX = \vx)$ in cases where the sample covariance matrix is not invertible, a small constant was added to the diagonal to allow for stable inversion similar to \citet{Friedman1989}. In the given setup, this modification was only necessary for QDA in the low-dimensional cases.
 
 In the equal and spherical case (a), HDA yields almost identical results to LDA, which both unsurprisingly outperform QDA.
 Also perhaps expected, the difference between LDA and QDA is less prominent for low dimensional spaces.
@@ -538,61 +655,63 @@ Hence, the present work should be considered a step in the direction of explicit
 
 \section[Marginalization of Sigma]{Marginalization of $\vSigma$}
 \label{sec:marginalization}
-This sections shows the marginalization out of $\vSigma$ in \eqref{eq:loglik}. For ease of notation we drop the subscript $i$ used on $\vSigma_i$, $\vX_i$, $\vS_i = \vX_i \vX_i^\top$, and $n_i$ in the above text. We do the computation straight-forwardly by the assumptions of the model,
+This section shows the marginalization over $\vSigma$ in \eqref{eq:loglik}.
+For ease of notation we drop the subscript $i$ on $\vSigma_i$, $\vX_i$, $\vS_i = \vX_i \vX_i^\top$, and $n_i$ in the above text.
+By the model assumptions,
 \small
 \begin{align*}
   &f(\vX | \vPsi, \nu) \\
   &= \int f(\vX|\vSigma) f(\vSigma | \vPsi, \nu) d\vSigma \\
   &= \int \left[ \prod_{j = 1}^n  (2\pi)^{-\frac{p}{2}} |\vSigma|^{-\frac{1}{2}}
                          e^{-\frac{1}{2}\tr(\vx_{ij}\vx_{ij}^\top\vSigma^{-1})} \right]
-          \\ &\qquad\times
-          \frac{\big|(\nu-p-1)\vPsi\big|^\frac{\nu}{2}}
+          %\\ &\qquad\times
+          \frac{\big|\vPsi\big|^\frac{\nu}{2}}
                {2^{\frac{\nu p}{2}}\Gamma_p\!\left(\frac{\nu}{2}\right)}
-          |\vSigma|^{-\frac{\nu+p+1}{2}}e^{-\frac{1}{2}\tr\!\big((\nu-p-1)\vPsi\vSigma^{-1}\big)}
+          |\vSigma|^{-\frac{\nu+p+1}{2}}e^{-\frac{1}{2}\tr\!\big(\vPsi\vSigma^{-1}\big)}
       \;d\vSigma \\
   &= (2\pi)^{-\frac{np}{2}}
-      \frac{\big|(\nu-p-1)\vPsi\big|^\frac{\nu}{2}}
+      \frac{\big|\vPsi\big|^\frac{\nu}{2}}
            {2^{\frac{\nu p}{2}}\Gamma_p\!\left(\frac{\nu}{2}\right)}
       \int
         |\vSigma|^{-\frac{n}{2}}  e^{-\frac{1}{2}\tr(\vS\vSigma^{-1})}
-        |\vSigma|^{-\frac{\nu+p+1}{2}} e^{-\frac{1}{2}\tr\!\big((\nu-p-1)\vPsi\vSigma^{-1}\big)}
+        |\vSigma|^{-\frac{\nu+p+1}{2}} e^{-\frac{1}{2}\tr\!\big(\vPsi\vSigma^{-1}\big)}
       \;d\vSigma \\
   &=
-      \frac{\big|(\nu-p-1)\vPsi\big|^\frac{\nu}{2}}
+      \frac{\big|\vPsi\big|^\frac{\nu}{2}}
            {\pi^\frac{np}{2} 2^{\frac{(\nu + n) p}{2}}\Gamma_p\!\left(\frac{\nu}{2}\right)}
       \int
         |\vSigma|^{-\frac{(\nu + n)+p+1}{2}}
-         e^{-\frac{1}{2}\tr\!\Big(\big((\nu-p-1)\vPsi+ \vS\big)\vSigma^{-1}\Big)}
+         e^{-\frac{1}{2}\tr\!\Big(\big(\vPsi+ \vS\big)\vSigma^{-1}\Big)}
       \;d\vSigma.
 \end{align*}
 \normalsize
-The integrand here can be recognized as a unnormalized inverse Wishart pdf,  $\calW^{-1}\big((\nu-p-1)\vPsi + \vS, \nu + n\big)$, and so the integral evaluates to the reciprocal value of the normalizing constant in that density. Thus,
+The integrand can be recognized as a unnormalized inverse Wishart pdf of the distribution $\calW^{-1}\big(\vPsi + \vS, \nu + n\big)$, and so the integral evaluates to the reciprocal value of the normalizing constant in that density. Thus,
 \begin{align}
   f(\vX | \vPsi, \nu)
   &=
-    \frac{\big|(\nu-p-1)\vPsi\big|^\frac{\nu}{2}}
+    \frac{\big|\vPsi\big|^\frac{\nu}{2}}
          {\pi^\frac{np}{2} 2^{\frac{(\nu + n) p}{2} } \Gamma_p\!\left(\frac{\nu}{2}\right)}
-    \frac{2^\frac{(v+n)p}{2} \Gamma\left(\frac{\nu + n}{2}\right)}
-         {\big|(\nu-p-1)\vPsi + \vS\big|^{\frac{\nu + n}{2}}} \notag \\
+    \frac{2^\frac{(v+n)p}{2} \Gamma_p\left(\frac{\nu + n}{2}\right)}
+         {\big|\vPsi + \vS\big|^{\frac{\nu + n}{2}}} \notag \\
   &=
-    \frac{\big|(\nu-p-1)\vPsi\big|^\frac{\nu}{2} \Gamma\left(\frac{\nu + n}{2}\right)}
+    \frac{\big|\vPsi\big|^\frac{\nu}{2} \Gamma_p\left(\frac{\nu + n}{2}\right)}
          {\pi^\frac{np}{2}
-           \big|(\nu-p-1)\vPsi + \vS\big|^{\frac{\nu + n}{2}} \Gamma_p\!\left(\frac{\nu}{2}\right)}.
+           \big|\vPsi + \vS\big|^{\frac{\nu + n}{2}} \Gamma_p\!\left(\frac{\nu}{2}\right)}.
     \label{eq:marg1}
 \end{align}
 Using the matrix determinant lemma and $\vS = \vX^\top\vX$, this can be further simplified to
 \begin{align*}
   f(\vX | \vPsi, \nu)
   &=
-  \frac{\big|(\nu-p-1)\vPsi\big|^\frac{\nu}{2} \Gamma\left(\frac{\nu + n}{2}\right)}
+  \frac{\big|\vPsi\big|^\frac{\nu}{2} \Gamma_p\left(\frac{\nu + n}{2}\right)}
        {\pi^\frac{np}{2}
-         \big|\vI + (\nu-p-1)\vX\vPsi^{-1}\vX^\top\big|^\frac{\nu + n}{2}
-         \big|(\nu-p-1)\vPsi\big|^\frac{\nu + n}{2}
+         \big|\vI + \vX\vPsi^{-1}\vX^\top\big|^\frac{\nu + n}{2}
+         \big|\vPsi\big|^\frac{\nu + n}{2}
          \Gamma_p\!\left(\frac{\nu}{2}\right)} \\
   &=
-  \frac{\Gamma\left(\frac{\nu + n}{2}\right)}
-       {\pi^\frac{np}{2} (\nu-p-1)^\frac{np}{2}
-          \big| \vI + (\nu-p-1)\vX\vPsi^{-1}\vX^\top\big|^\frac{\nu + n}{2}
+  \frac{\Gamma_p\left(\frac{\nu + n}{2}\right)}
+       {\pi^\frac{np}{2}
+          \big| \vI + \vX\vPsi^{-1}\vX^\top\big|^\frac{\nu + n}{2}
           \big|\vPsi\big|^\frac{n}{2}
           \Gamma_p\!\left(\frac{\nu}{2}\right)},
 \end{align*}
@@ -618,7 +737,7 @@ For fixed $\nu$, the log-likelihood function \eqref{eq:loglik} is not concave in
 For fixed $\vPsi \succeq 0$, the log-likelihood function \eqref{eq:loglik} is concave in $\nu$.
 \end{proposition}
 
-\begin{proof}[Proof of Proposition \ref{prop:nonconcavityinpsi}]
+\begin{proof}[\textbf{Proof of Proposition \ref{prop:nonconcavityinpsi}}]
 Assume $\nu$ fixed and consider only the terms involving $\vPsi$ in \eqref{eq:loglik}.
 % Not counting the constant, the first term, $\frac{\nu}{2}  \log | \vPsi |$, is concave by the well known result that the log-determinant of positive semi-definite matrix is concave \citep[See e.g.][pp. 73-74]{Boyd2004}.
 % The third term in \eqref{eq:loglik}, $- \frac{\nu + n_i}{2}\log|\vPsi + \vS_i|$, is convex by the same argument however negated by the sign.
@@ -627,17 +746,17 @@ Assume $\nu$ fixed and consider only the terms involving $\vPsi$ in \eqref{eq:lo
 We reduce to the one-dimensional case where
 \begin{align*}
   \ell(\psi)
-  = \frac{k\nu}{2}\log\!\big((\nu - 2)\psi\big)
-     - \sum_{i = 1}^k \frac{\nu + n_i}{2}\log\!\big((\nu - 2)\psi + x_i^2\big)
+  = \frac{k\nu}{2}\log\!\big(\psi\big)
+     - \sum_{i = 1}^k \frac{\nu + n_i}{2}\log\!\big(\psi + x_i^2\big)
 \end{align*}
 which implies
 \begin{align*}
   \ell'(\psi)
   &= \frac{k\nu}{2}\frac{1}{\psi}
-     - \sum_{i = 1}^k \frac{\nu + n_i}{2}\frac{\nu - 2}{(\nu - 2)\psi + x_i^2} \\
+     - \sum_{i = 1}^k \frac{\nu + n_i}{2}\frac{1}{\psi + x_i^2} \\
   \ell''(\psi)
-  &=  - \frac{k\nu}{2(\nu - 2)}\frac{1}{\psi^2}
-      + \sum_{i = 1}^k \frac{\nu + n_i}{2}\frac{(\nu-2)^2}{\big((\nu - 2)\psi + x_i^2\big)^2}.
+  &=  - \frac{k\nu}{2}\frac{1}{\psi^2}
+      + \sum_{i = 1}^k \frac{\nu + n_i}{2}\frac{1}{\big(\psi + x_i^2\big)^2}.
 \end{align*}
 We see, that
 \begin{align*}
@@ -646,16 +765,17 @@ We see, that
   \lim_{\psi \to \infty^-} \ell''(\psi) = 0.
 \end{align*}
 We draw the likelihood and its derivative with $k = 1$ and other appropriately chosen parameters as seen in Figure \ref{fig:one_dimensional_loglik} generated by
+
 <<one_dimensional_loglik, echo=-3, fig.height=2, fig.width=6, fig.pos="tb", ig.scap = "", fig.cap = "\\it The one-dimensional log-likelihood and its first and second derivative as a function of $\\psi$.">>=
 @
-The log-likelihood $\ell$ is not log-concave as the second derivative is not always negative.
+
+\noindent The log-likelihood $\ell$ is not log-concave as the second derivative is not always negative.
 Alternatively, the first derivative not monotonically non-increasing which is a necessary and sufficient condition for a differentiable function of one variable to be concave.
 \end{proof}
 
-\begin{proof}[Proof of Proposition \ref{prop:concavityinnu}]
+\begin{proof}[\textbf{Proof of Proposition \ref{prop:concavityinnu}}]
 Consider the terms involving $\nu$.
 Clearly, the mixed terms involving both $\nu$ and $\vPsi$ are log-linear in $\nu$ and hence log-concave.
-\fxnote{This does not hold with the new parameterization!}
 We thus restrict our attention to the remaining terms not dependent on $\vPsi$.
 By themselves, the second term in \eqref{eq:loglik},
 $
@@ -667,7 +787,7 @@ $
   - \log \Gamma_p\!\left(\frac{\nu}{2}\right),
 $
 is concave by the negative sign.
-The sum however of these terms involving $\Gamma_p$ are concave in $\nu$, since
+The sum of these terms, however, are concave in $\nu$, since
 \begin{align*}
   &\log\Gamma_p\!\left( \frac{\nu + n_i}{2} \right) -
     \log\Gamma_p\!\left( \frac{\nu}{2} \right)
@@ -686,11 +806,8 @@ is concave for all $x>0$ and $a > 0$. The concavity of $h$ is easily seen by the
 \begin{align*}
   h''(x) = \psi(x + a) - \psi(x) < 0,
 \end{align*}
-where $\psi(\cdot)$ is the tri-gamma function which is a known monotonically decreasing function.
-The mapping $h$ is plotted in Figure \ref{fig:log_gamma_ratio}.
-<<log_gamma_ratio, echo=FALSE, fig.height=3.5/2, fig.width=3.5, fig.pos="ht", fig.scap = "", fig.cap="\\it Plots of the mapping given in \\eqref{eq:logGammaRatio} for diffent values of $a$.">>=
-@
-Hence, the log-likelihood is (not) log-concave in $\nu$. \fxnote{???}
+where $\psi(\cdot)$ is the tri-gamma function which is a well-known monotonically decreasing function.
+Hence, the log-likelihood is log-concave in $\nu$.
 \end{proof}
 
 
@@ -742,21 +859,20 @@ The log-likelihood \eqref{eq:loglik} has a unique maximum in $\vPsi$ for fixed $
 \end{proposition}
 
 \noindent The log-likelihood in \eqref{eq:loglik}, assuming $\nu$ fixed, obey
-\begin{align*}
-  2\ell(\vPsi)
-  &= c + k\nu\log\big|(\nu-p-1)\vPsi\big| - \sum_{a=1}^k (n_a + \nu)\log\big|(\nu-p-1)\vPsi + \vS_a\big|\\
-  &= c' + k\nu\log\big|\vPsi\big| - \sum_{a=1}^k (n_a + \nu)\log\big|\vPsi + (\nu-p-1)^{-1}\vS_a\big|.
-\end{align*}
-Since $(\nu-p-1)^{-1}\vS_a$ is only dependent on data we can set $(\nu-p-1)^{-1}\vS_a
-:= \S_a$. Hence, without loss of generality we consider
 \begin{align}
-  2\ell(\vPsi)
-  = c + k\nu\log\big|\vPsi\big| - \sum_{a=1}^k (n_a + \nu)\log\big|\vPsi + \vS_a\big|,
   \label{eq:loglik2}
+  2\ell(\vPsi)
+  &= c + k\nu\log\big|\vPsi\big| - \sum_{a=1}^k (n_a + \nu)\log\big|\vPsi + \vS_a\big|
 \end{align}
-throughout this chapter.
+Notice that this equation also holds in the reparameterization. Here we have
+\begin{align*}
+  2\ell(\vSigma)
+  &= c + k\nu\log\big|(\nu-p-1)\vSigma\big| - \sum_{a=1}^k (n_a + \nu)\log\big|(\nu-p-1)\vSigma + \vS_a\big|\\
+  &= c' + k\nu\log\big|\vSigma\big| - \sum_{a=1}^k (n_a + \nu)\log\big|\vSigma + (\nu-p-1)^{-1}\vS_a\big|.
+\end{align*}
+Since $(\nu-p-1)^{-1}\vS_a$ is only dependent on data (when $\nu$ is fixed) we can set $(\nu-p-1)^{-1}\vS_a := \vS_a$. Hence, without loss of generality we consider \eqref{eq:loglik2}.
 
-\begin{proof}[Proof of Proposition \ref{prop:uniquemax}]
+\begin{proof}[\textbf{Proof of Proposition \ref{prop:uniquemax}}]
 The proposition follows from Lemma \ref{lem:elltominusinfty} and
 Lemma \ref{lem:negativesdefinite}.
 We first prove existence of the maximum.
@@ -767,11 +883,23 @@ By Lemma \ref{lem:elltominusinfty}, the set
 is compact for any $\vPsi^*\succ 0$ since it is bounded and closed by the virtue of the Lemma and continuity of $\ell$, respectively.
 The existence of a maximum follows from the extreme value theorem by the continuity of $\ell$. A stationary point exists due to Rolle's theorem and the differentiability of $\ell$.
 
-Next, we prove the uniqueness of the maximum.
-[...] \fxnote{Complete proof}
+Next, we show the uniqueness of maxima.
+Suppose there exists two (or more) countable many stationary points $m_1, m_2, ..., m_N$.
+By Lemma \ref{lem:elltominusinfty}, the $\ell(\vPsi)$ has a finite upper bound given by the value of the log-likelihood in those points.
+All gradient curves (that is, solutions to $\dot(\vPsi) = \nabla \ell(\vPsi)$) must then converge toward exactly one of the stationary points where $\ell$ monotonically increase along each curve.
+The basin of attraction $A_i$ associated to each stationary point $m_i$,
+\begin{align*}
+   A_i = \Big\{\vPsi^* \in \calS_+ \Big| \vPsi(0) = \vPsi^*, \lim_{t->\infty} \vPsi(t) = m_i \Big\},
+\end{align*}
+are open sets in set of all postive semi-definite matrices $\calS_+$.
+This partitions the space $\calS_+$ into $N$ open sets.
+However, this is only possible if $A_i = A_j$ for all $i$ and $j$ and thus there is only a single basin of attraction and maximum of $\ell$.
 \end{proof}
 
-\begin{proof}[Proof of Lemma \ref{lem:elltominusinfty}]
+
+
+
+\begin{proof}[\textbf{Proof of Lemma \ref{lem:elltominusinfty}}]
 Assume the hypothesis of the lemma and consider the expression given in \eqref{eq:loglik2}.
 If $\lambda_i \to \infty$ then
 \begin{align*}
@@ -806,11 +934,11 @@ Hence, if $\lambda_i \to 0$ then
 which completes the proof.
 \end{proof}
 
-\begin{proof}[Proof of Lemma \ref{lem:negativesdefinite}]
-The matrix cookbook by \citet{Petersen2008} has been a useful reference here. See equations (41, p.\ 8) and (59, p.\ 9) and pages 14 and 52-53 in \citep{Petersen2008}. We first compute expression for the 1.\ and 2.\ order derivatives.
+\begin{proof}[\textbf{Proof of Lemma \ref{lem:negativesdefinite}}]
+The matrix cookbook by \citet{Petersen2008} has been a useful reference here. See equations (41, p.\ 8) and (59, p.\ 9) and pages 14 and 52-53 in \citep{Petersen2008}. We first compute expression for the first and second order derivatives.
 
-\textbf*{1.\ order derivatives.}
-From the log-likelihood expression, we compute the 1.\ order derivative $\nabla_\vPsi 2\ell(\vPsi)$ which is the matrix-valued function where each entry is given by
+\textbf{First order derivatives.}
+From the log-likelihood expression, we compute the first order derivative $\nabla_\vPsi 2\ell(\vPsi)$ which is the matrix-valued function where each entry is given by
 \begin{align}
   %\left(\frac{\partial 2\ell}{\partial \vPsi}\right)_{ij}=
   \frac{\partial 2\ell}{\partial \Psi_{ij}}
@@ -825,7 +953,7 @@ However, when $\vPsi$ is symmetric we have that $\frac{\partial}{\partial \Psi_{
 The first order derivative lives in a $\binom{p+1}{2}$-dimensional vector space with basis vectors $\vE^{ij}$ indexed by $(i,j)$, $i\leq j$.
 
 
-\textbf{2.\ order derivatives.}
+\textbf{Second order derivatives.}
 We proceed with the second order derivative $\nabla^2_\vPsi 2\ell(\vPsi)$ with entries given by
 \begin{align*}
   \frac{\partial^2 2\ell}{\partial \Psi_{kl} \partial \Psi_{ij}}
@@ -841,10 +969,7 @@ $\frac{\partial}{\partial \Psi_{ij}} \vPsi^{-1} = - \vPsi^{-1}\vE^{ij}\vPsi^{-1}
 
 The second order derivative can be thought of as a $\binom{p+1}{2} \times \binom{p+1}{2}$-dimensional matrix indexed by $(i,j)$ and $(k,l)$, $i \leq j$, $k \leq l$.
 
-
-
-
-\subsubsection*{Negative definiteness in stationary points}
+\textbf{Negative definiteness of stationary points.}
 With the above expressions we now show that the hessian is negative definite in all stationary points (or, extrema).
 Let $\vY = \sum_{(i,j)} y_{ij}E_{ij}$ be a symmetric matrix in the vector space where $\vY \neq \vec{0}$.
 The analog to $\vec{y}^\top \vec{A}\vec{y} = y_i \sum_{ij} A_{ij} y_j < 0$ in our vector space then becomes
@@ -960,13 +1085,12 @@ Suppose we have $k$ i.i.d. realizations, $\vDelta_1, ..., \vDelta_k$, from the W
   \ell(\vTheta | \vDelta_1, ..., \vDelta_k)
   &= \sum_{i = 1}^k \log f(\vDelta_i | \vTheta) \\
   &= \sum_{i = 1}^k \log
-    \frac{|\vTheta|^{-\frac{\nu}{2}}}{
-      2^{-\frac{vp}{2}}
-      \Gamma_p\!\left(\frac{\nu}{2}\right)}
-    |\vDelta_i|^\frac{\nu - p - 1}{2}e^{-\frac{1}{2}\tr(\vTheta^{-1}\vDelta_i)}\\
+    \frac{\big|\vTheta\big|^{-\frac{\nu}{2}}}
+         {2^{-\frac{vp}{2}}\Gamma_p\!\left(\frac{\nu}{2}\right)}
+    |\vDelta_i|^\frac{\nu - p - 1}{2}e^{-\frac{1}{2}\tr\!\big(\vTheta^{-1}\vDelta_i\big)}\\
    &= c + \sum_{i = 1}^k \left(
-     -\frac{\nu}{2} \log |\vTheta|
-     -\frac{1}{2}\tr(\vTheta^{-1}\vDelta_i)
+     -\frac{\nu}{2} \log \big|\vTheta\big|
+     -\frac{1}{2}\tr\!\big(\vTheta^{-1}\vDelta_i\big)
      \right)\\
    &= c - \frac{\nu k}{2}
      \left(
@@ -986,7 +1110,7 @@ is the MLE in this model.
 \section{Approximate maximum likelihood estimator}
 \label{sec:amle}
 To find the maximizing parameters we differentiate \eqref{eq:loglik} w.r.t.\ $\vPsi$ and equate to zero while assuming $\nu$ known and constant.
-The 1.\ order derivative can be seen in equation \eqref{eq:dloglik} where we note that the substitution $\vS_a' := (\nu - p - 1)^{-1}\vS_a$ has been made. Equating to zero is equivalent to
+The first order derivative can be seen in equation \eqref{eq:dloglik}. Equating zero we have that
 \begin{align}
   \vec{0}
   &= \frac{k\nu}{2} \vPsi^{-1}
@@ -995,85 +1119,61 @@ The 1.\ order derivative can be seen in equation \eqref{eq:dloglik} where we not
   \label{eq:firstordderivloglik} \\
   &= \frac{k\nu}{2} \vPsi^{-1}
     - \sum_{i=1}^k \frac{\nu + n_i}{2}
-      \left(\vec{I} + \vPsi^{-1}\vS_i'\right)^{-1}\vPsi^{-1}.
+      \left(\vec{I} + \vPsi^{-1}\vS_i\right)^{-1}\vPsi^{-1}.
       \notag
 \end{align}
 This implies
 \begin{align}
   k\nu \vec{I}
     - \sum_{i=1}^k (\nu + n_i)
-      \left(\vec{I} - (-\vPsi^{-1}\vS_i')\right)^{-1}
+      \left(\vec{I} - (-\vPsi^{-1}\vS_i)\right)^{-1}
    = \vec{0}.
 \end{align}
 which can be rewritten as
 \begin{align*}
     k\nu \vec{I}
     - \sum_{i=1}^k      (\nu + n_i)
-      \sum_{l=0}^\infty \left(-\vPsi^{-1}\vS_i'\right)^{l}
+      \sum_{l=0}^\infty \left(-\vPsi^{-1}\vS_i\right)^{l}
    = \vec{0}.
 \end{align*}
-by the Neumann series $\left((\vI + \vec{A})^{-1} = \sum_{l = 0}^\infty \vec{A}^l\right)$ if $\lim_{l \to \infty} (I - \vPsi^{-1}\vS_i')^l = \vec{0}$ for all $i$, i.e.\ the eigenvalues of $\vPsi^{-1}\vS_i'$ should be less than $1$.
+by the Neumann series $\left((\vI + \vec{A})^{-1} = \sum_{l = 0}^\infty \vec{A}^l\right)$ if $\lim_{l \to \infty} (I - \vPsi^{-1}\vS_i)^l = \vec{0}$ for all $i$, i.e.\ the eigenvalues of $\vPsi^{-1}\vS_i$ should be less than $1$.
 
 Thus, we can approximate the solution by using the first order expansion $(l = 1)$ and solve for $\vPsi$
 \begin{align*}
   \vec{0}
-  &= k\nu\vec{I} - \sum_{i=1}^k (\nu + n_i)(\vec{I} - \vPsi^{-1}\vS_i') \\
+  &= k\nu\vec{I} - \sum_{i=1}^k (\nu + n_i)(\vec{I} - \vPsi^{-1}\vS_i) \\
   &= k\nu\vec{I}
    - k\nu\vec{I}
    - n_\bullet\vec{I}
-   + \vPsi^{-1}\sum_{i=1}^k \nu\vS_i'
-   + \vPsi^{-1}\sum_{i=1}^k n_i\vS_i' \\
+   + \vPsi^{-1}\sum_{i=1}^k \nu\vS_i
+   + \vPsi^{-1}\sum_{i=1}^k n_i\vS_i \\
   &= - n_\bullet\vec{I}
-     + \vPsi^{-1}\sum_{i=1}^k (\nu + n_i) \vS_i'
+     + \vPsi^{-1}\sum_{i=1}^k (\nu + n_i) \vS_i
 \end{align*}
 where $n_\bullet = \sum_{i=1}^k n_i$ is the total number of observations. This implies
 \begin{align*}
-   \vPsi^{-1}\sum_{i=1}^k (\nu + n_i) \vS_i'
+   \vPsi^{-1}\sum_{i=1}^k (\nu + n_i) \vS_i
     = n_\bullet \vec{I}
 \end{align*}
-which is equivalent to
+which suggest the estimator
 \begin{align}
   \hat{\vPsi}_\text{MLE}
-  = \frac{\sum_{i=1}^k (\nu + n_i) \vec{S}_i}{(\nu - p - 1) n_\bullet}
+  = \frac{\sum_{i=1}^k (\nu + n_i) \vec{S}_i}{n_\bullet},
   \label{eq:mle}
 \end{align}
-when substituting back $(\nu - p - 1)^{-1}\vS_a$ for $\vS_a'$.
-This estimate is seen to corresponds to a weighted sum of the scatter matrices.
-
-
-
-
-
-% \section{Model and notation overview}
-% Let $\vDelta_i = \vSigma_i^{-1}$, $\vTheta = \vPsi^{-1}$, and $\vS_i = \vX_i^\top \vX_i$. Then the following equivalences hold.
-% \begin{equation*}
-% \begin{aligned}
-%   \vSigma_i &\sim \calW^{-1}_p(\vPsi, \nu) \\
-%   \vX_i | \vSigma_i &\sim \calN_p(\vec{0}_p, \vSigma_i) \\
-%   &\Updownarrow \\
-%   \vSigma_i | X_i  &\sim \calW^{-1}_p(\vPsi + \vS_i, \nu + n_i)
-% \end{aligned}
-% \begin{aligned}
-% \quad
-% &\Longleftrightarrow \\
-% &\Longleftrightarrow \\
-% \\
-% &\Longleftrightarrow
-% \quad
-% \end{aligned}
-% \begin{aligned}
-%   \vDelta_i &\sim \calW_p(\Theta, \nu) \\
-%   \vX_i | \vDelta_i &\sim \calN_p(\vec{0}_p, \vDelta_i^{-1}) \\
-%   &\Updownarrow \\
-%   \vDelta_i | X_i  &\sim \calW_p((\vTheta^{-1} + \vS_i)^{-1}, \nu + n_i)
-% \end{aligned}
-% \end{equation*}
-
+and
+\begin{align}
+  \hat{\vSigma}_\text{MLE}
+  = \frac{\sum_{i=1}^k (\nu + n_i) \vec{S}_i}{(\nu-p-1)n_\bullet}.
+\end{align}
+These estimate are seen to correspond to a weighted sum of the scatter matrices.
 
 
 
 \section{Module member genes}
 \label{sec:module_member_genes}
+A printout of the genes in each module
+
 <<print_dlbcl_module_genes>>=
 print(lapply(dlbcl.module.genes, unname))
 @
@@ -1081,6 +1181,7 @@ print(lapply(dlbcl.module.genes, unname))
 \section{Significant GO terms}
 \label{sec:sig_go_term}
 Tables of the significant GO terms.
+
 <<GO_tabs, echo=FALSE, results='asis'>>=
 @
 
