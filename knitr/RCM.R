@@ -8,14 +8,15 @@ library("Bmisc")
 library("correlateR")
 library("GMCM")
 library("MASS")
+library("flashClust")
 library("WGCNA")
 library("affy")
 library("biomaRt")
 library("ape")
-library("dplyr")
 library("topGO")
 library("igraph")
 library("MCMCpack")
+library("dplyr")
 if (file.exists("saved.RData")) load("saved.RData")
 
 # Multicore support
@@ -34,42 +35,25 @@ drcm <- correlateR::drcm
 
 # Simulate data
 test.rcm <- function(k = 4, n = 10, ns = rep(n, k), p = 10, nu = 15, Psi, ...) {
-  stopifnot(nu > p - 1)
-  rwishart.tmp <- function(n, Sigma) {
-    X <- rmvnormal(n = n, mu = rep(0, nrow(Sigma)), sigma = Sigma)
-    return(crossprod(X))
-  }
+  #stopifnot(nu > p - 1)
 
-  if (missing(Psi)) {  # Compound symmetry matrix
-    rho <- 0.5
+  if (missing(Psi)) {
+    rho <- 0.5  # Compound symmetry matrix
     std <- 1
     Psi <- matrix(rho*std^2, p, p) + diag(rep((1 - rho)*std^2, p))
   }
 
-  # Simulate data
-  sigmas <- rinvwishart(n = k, psi = Psi, nu = nu)
-  S <- lapply(seq_len(k), function(i) rwishart.tmp(ns[i], sigmas[,,i]))
-
-  # Fit model
+  S <- createRCMData(ns = ns, psi = Psi, nu = nu)
   e <- 1e-2
-  t_em   <-
-    system.time(res.em   <- fit.rcm(S, ns, method = "EM", eps=e, ...))
-  t_pool <-
-    system.time(res.pool <- fit.rcm(S, ns, method = "pool", eps=e, ...))
-  t_mean <-
-    system.time(res.mean <- fit.rcm(S, ns, method = "mean", eps=e, ...))
-  t_mle  <-
-    system.time(res.mle  <- fit.rcm(S, ns, method = "approxMLE", eps=e, ...))
-  time <- c(em = t_em[3], pool = t_pool[3], mean = t_mean[3], mle = t_mle[3])
+  t_em   <- system.time(res.em   <- fit.rcm(S, ns, method = "EM",   eps=e, ...))
+  t_pool <- system.time(res.pool <- fit.rcm(S, ns, method = "pool", eps=e, ...))
+  t_mle <- system.time(res.mle   <- fit.rcm(S, ns, method = "appr", eps=e, ...))
+  time <- c(em = t_em[3], pool = t_pool[3], mle = t_mle[3])
 
   return(list(S = S, ns = ns, nu = nu, Psi = Psi,
-              rcm.em = res.em,
-              rcm.pool = res.pool,
-              rcm.mean = res.mean,
-              rcm.mle = res.mle,
+              rcm.em = res.em, rcm.pool = res.pool, rcm.mle = res.mle,
               time = time))
 }
-
 
 SSEs <- function(x) {
   Svar <- function(Sigma, n) {
@@ -87,7 +71,6 @@ SSEs <- function(x) {
   expected  <- Psi2Sigma(Psi = x$Psi, nu = x$nu)
   sse.rcm.em   <- getSSE(getSigma(x$rcm.em),   expected, n = n)
   sse.rcm.mle  <- getSSE(getSigma(x$rcm.mle),  expected, n = n)
-  sse.rcm.mean <- getSSE(getSigma(x$rcm.mean), expected, n = n)
   sse.rcm.pool <- getSSE(getSigma(x$rcm.pool), expected, n = n)
 
   stopifnot(all(x$ns == x$ns[1]))
@@ -97,8 +80,7 @@ SSEs <- function(x) {
            p  = nrow(x$Psi),
            SSE.rcm.em   = sse.rcm.em,
            SSE.rcm.mle  = sse.rcm.mle,
-           SSE.rcm.pool = sse.rcm.pool,
-           SSE.rcm.mean = sse.rcm.mean))
+           SSE.rcm.pool = sse.rcm.pool))
 }
 
 to.df <- function(sim) {
@@ -160,9 +142,10 @@ Psi2Sigma <- function(Psi, nu) {
 par.ne <- list(k = 3,
                nu = 15,
                p = 10,
-               n.sims = 10,#1000,
-               n.obs = seq(4, 10, by = 1))
-if (!exists("res") | recompute) {
+               n.sims = 1000,
+               n.obs = seq(5, 11, by = 1))
+
+if (!exists("res") || recompute) {
   set.seed(64403101)
   st <- proc.time()
   res <- list()
@@ -181,22 +164,22 @@ if (!exists("res") | recompute) {
 
 ## ---- numerical_experiment_plot ----
 df <- as.data.frame(t(sapply(res, SSEs)))
-df <- aggregate(cbind(SSE.rcm.em, SSE.rcm.mle, SSE.rcm.pool, SSE.rcm.mean) ~
-                  n + nu + k + p, mean, data = df)
+df <- aggregate(cbind(SSE.rcm.em, SSE.rcm.mle, SSE.rcm.pool) ~
+                  n + nu + k + p, median, data = df)
+
 plot(df$n, df$SSE.rcm.em, col = "blue", type = "b", axes = FALSE,
      xlab = expression(n = n[i]),
      ylim = range(df[,5]),
-     ylab = "average SSE", pch = 15, lty = 1,
+     ylab = "median SSE", pch = 15, lty = 1,
      main = paste0("k = ", df$k, ", nu = ", df$nu, ", p = ", df$p)[1])
 axis(1)
 axis(2)
 grid()
 lines(df$n, df$SSE.rcm.pool, col = "red", type = "b", pch = 16, lty = 2, lwd = 2)
 lines(df$n, df$SSE.rcm.mle, col = "orange", type = "b", pch = 17, lty = 3,lwd=2)
-lines(df$n, df$SSE.rcm.mean, col = "green", type = "b", pch = 18, lty = 4, lwd=2)
-legend("topright", legend = c("EM", "pool", "Approx. MLE", "mean"),
-       lty = 1:4, pch = c(15, 16, 17, 18), lwd = 2, bty = "n",
-       col = c("blue", "red", "orange", "green"))
+legend("topright", legend = c("EM", "pool", "Approx. MLE"),
+       lty = 1:4, pch = c(15, 16, 17), lwd = 2, bty = "n",
+       col = c("blue", "red", "orange"))
 ## ---- end ----
 
 
@@ -214,9 +197,9 @@ e <- function(i, p) { # ith standard basis vector of length p
 par.xda <- list(K = 3,
                 n.obs = 40,
                 n.obs.valid = 100,
-                n.runs = 100, #2500,
+                n.runs = 2500,
                 p.dims = c(5, 10, 20, 35))
-if (!exists("misclassification.risks") | recompute) {
+if (!exists("misclassification.risks") || recompute) {
 
   inner <- structure(vector("list", 4),
                      names = c("eq.sph", "neq.sph",
@@ -274,15 +257,11 @@ if (!exists("misclassification.risks") | recompute) {
 
           qda.train <- qda.fit(train$classes, dplyr::select(train, -classes))
           lda.train <- qda2lda(qda.train)
-          hda.train <-
-            hda.fit(train$classes, dplyr::select(train, -classes), eps=1e-2)
+          hda.train <- hda.fit(train$classes, dplyr::select(train, -classes), eps=1e-2)
 
-          lda.pred <-
-            lda.predict(lda.train, newdata = dplyr::select(valid, -classes))
-          qda.pred <-
-            qda.predict(qda.train, newdata = dplyr::select(valid, -classes))
-          hda.pred <-
-            hda.predict(hda.train, newdata = dplyr::select(valid, -classes))
+          lda.pred <- lda.predict(lda.train, newdata = dplyr::select(valid, -classes))
+          qda.pred <- qda.predict(qda.train, newdata = dplyr::select(valid, -classes))
+          hda.pred <- hda.predict(hda.train, newdata = dplyr::select(valid, -classes))
 
           conf.lda <- table(True = valid$classes, Pred = lda.pred$class)
           conf.qda <- table(True = valid$classes, Pred = qda.pred$class)
@@ -380,7 +359,7 @@ psi <- seq(.9, 10, by = 0.05)
 plot(psi, l(psi),   type = "l", col = "red", lwd = 2, main = "log-likelihood")
 plot(psi, dl(psi),  type = "l", col = "red", lwd = 2, main = "1. derivative")
 plot(psi, ddl(psi), type = "l", col = "red", lwd = 2, main = "2. derivative",
-     ylim = c(-0.2, 0.1))
+     ylim = c(-0.01, 0.01))
 abline(h = 0, col = "grey", lty = 2, lwd = 2)
 ## ---- end ----
 dev.off()
@@ -414,7 +393,7 @@ load("gep.ensg.RData")
 studies <- studies[studies$Study != "Celllines", ]
 dlbcl.dims <- sapply(rev(gep)[-1], dim)
 
-dlbcl.par <- list(top.n = 100, #300,
+dlbcl.par <- list(top.n = 250,
                   linkage = "ward",
                   go.alpha.level = 0.01,
                   ontology = "MF",
@@ -426,13 +405,14 @@ var.pool  <- rowSums(vars)/(sum(sapply(gep, ncol)) - length(gep))
 use.genes <- names(sort(var.pool, decreasing = TRUE)[seq_len(dlbcl.par$top.n)])
 gep.sub <- lapply(gep, function(x) exprs(x)[use.genes, ])
 
-if (!exists("dlbcl.rcm") | !exists("var.pool") | recompute) {
+if (!exists("dlbcl.rcm") || !exists("var.pool") || recompute) {
   dlbcl.ns  <- sapply(gep.sub, ncol)
   dlbcl.S   <- lapply(gep.sub, function(x) correlateR::scatter(t(x)))
   nu <- sum(dlbcl.ns) + ncol(dlbcl.S[[1]]) + 1
   psi <- c(nu - ncol(dlbcl.S[[1]]) - 1)*correlateR:::pool(dlbcl.S, dlbcl.ns)
   dlbcl.rcm <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE,
-                       Psi.init = psi, nu.init = nu, eps = 0.01)
+                       Psi.init = psi, nu.init = nu, eps = 0.01,
+                       max.ite = 1500)
   dimnames(dlbcl.rcm$Psi) <- dimnames(dlbcl.S[[1]])
   resave(dlbcl.rcm, file = "saved.RData")
 }
@@ -476,8 +456,8 @@ map2hugo <- function(ensg) {
 
 ## ---- dlbcl_clustering ----
 dlbcl.clust <- flashClust(as.dist(1 - dlbcl.adjMat), method = dlbcl.par$linkage)
-# Cluster
 
+# Cluster
 dlbcl.modules <- labels2colors(cutree(dlbcl.clust, k = 5))
 names(dlbcl.modules) <- dlbcl.clust$labels
 
@@ -556,9 +536,6 @@ dev.off()
 ## ---- end ----
 
 
-
-
-
 ## ---- dlbcl_go_analysis ----
 # GO analysis
 if (!exists("dlbcl.module.genes") || !exists("dlbcl.go.analysis") ||
@@ -612,14 +589,15 @@ colnames(dlbcl.mod.tab.genes) <- # Number of gens in each module
 is.ensg <- structure(grepl("^ENSG", dlbcl.mod.tab.genes),
                      dim = dim(dlbcl.mod.tab.genes))
 nn <- 40
-latex(dlbcl.mod.tab.genes[seq_len(nn), ],
+seq_tmp <- seq_len(min(nn, nrow(dlbcl.mod.tab.genes)))
+latex(dlbcl.mod.tab.genes[seq_tmp, ],
       cgroup = cgroup,
       size = "tiny",
       caption = paste("The identified modules and their sizes and selected",
                       "member genes. For each module, the genes are sorted",
                       "by their intra-module connectivity from highest to",
                       "lowest. Only a maximum of", nn, "genes is shown."),
-      cellTexCmds = ifelse(is.ensg, "tiny", "")[seq_len(nn), ],
+      cellTexCmds = ifelse(is.ensg, "tiny", "")[seq_tmp, ],
       caption.loc = "bottom",
       label = "tab:dlbcl_mod_tab",
       landscape = FALSE,
