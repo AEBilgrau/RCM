@@ -29,10 +29,11 @@ read_chunk("RCM.R")
 \begin{abstract}
 We propose a hierarchical random effects model and estimators for a common covariance matrix in cases where multiple classes are present.
 It is applicable where the classes are believed to share a common covariance matrix of interest obscured by class-dependent noise.
-As such, it provides a basis for meta-analysis of covariance matrices where the classes are formed by datasets.
+As such, it provides a basis for integrative or meta-analysis of covariance matrices where the classes are formed by datasets.
 Our approach is inspired by traditional meta-analysis using random effects models but the model is also shown to be applicable as an intermediate between linear and quadratic discriminant analysis.
 We derive the basic properties and estimators of the model and compare their properties.
 Simple inference and interpretation of the introduced parameter measuring the inter-class homogeneity is suggested.
+\medskip
 
 \noindent \textbf{Keywords:} \textit{covariance estimation, meta-analysis, integrative analysis, network integration, gaussian graphical modeling, discriminant analysis}
 \end{abstract}
@@ -127,7 +128,7 @@ Therefore, we use the usual parameterization by $\vPsi$ in the fitting procedure
 
 
 \subsection{The likelihood function}
-Suppose we have $n_i$ i.i.d.\ observations, $\vx_{i1}, \dots,\vx_{in_i}$, from each of the $i = 1,...,k$ independent studies from the model given in \eqref{eq:RCM}.
+Suppose $\vx_{i1}, \dots,\vx_{in_i}$ are $n_i$ i.i.d.\ observations from $i = 1,...,k$ independent studies from the model given in \eqref{eq:RCM}.
 Let $\vX_i = (\vx_{i1}, \dots,\vx_{in_i})^\top$ be the $n_i \times p$ matrix of observations for the $i$'th study where rows correspond to samples and columns to variables.
 By the independence assumptions, the log-likelihood for $\vPsi$ and $\nu$ is given by
 \begin{align*}
@@ -465,7 +466,7 @@ This document was prepared with \texttt{knitr} \citep{Xie2013} and LaTeX.
 <<dlbcl_analysis, echo=FALSE, results='hide', message=FALSE>>=
 @
 
-\subsection{Meta-analysis in DLBCL}
+\subsection{Meta-analysis of DLBCL}
 Diffuse large B-cell lymphoma (DLBCL) is an aggressive cancer subtype accounting for approximately $31 \%$ of all non-Hodgkin's lymphoma (NHL) \citep{Project1997} which itself constitutes about $90 \%$ of all lymphomas.
 
 
@@ -473,7 +474,7 @@ Diffuse large B-cell lymphoma (DLBCL) is an aggressive cancer subtype accounting
 A large amount of DLBCL datasets are now available online at the NCBI (National Center for Biotechnology Information) Gene Expression Omnibus (GEO) website.
 We downloaded 10 DLBCL large-scale gene expression studies and preprocessed these using the custom brainarray chip definition files (CDF) \citep{Dai2005} and RMA-normalization using the R-package \texttt{affy} \citep{affy}.
 The corresponding GEO-accession numbers are \Sexpr{grep("XXX", base::unique(studies[,"GSE"]), invert = TRUE, value = TRUE)} based on various microarray platforms.
-The downloaded data together with our own (GSE56315, \citep{DykaerBoegsted2015}) yields a total of \Sexpr{rowSums(dlbcl.dims)["Samples"]} samples with study sizes in the range \Sexpr{paste(range(dlbcl.dims["Samples",]), collapse = "-")}.
+The downloaded data together with our own (GSE56315 \citep{DykaerBoegsted2015}) yields a total of \Sexpr{rowSums(dlbcl.dims)["Samples"]} samples with study sizes in the range \Sexpr{paste(range(dlbcl.dims["Samples",]), collapse = "-")}.
 The summarization using brainarray CDFs to Ensembl gene identifiers facilitates cross-platform integration.
 
 After the RMA normalization and summarization, the data was brought to a common scale by quantile normalizing all data to the common cumulative distribution function of all arrays.
@@ -523,12 +524,25 @@ Lastly, we checked if the identified modules were prognostic for overall surviva
 To do this, the eigengene \cite{Horvath2011} for each module was computed and a multiple Cox proportional hazards model for OS was fitted with the module eigengenes as covariates.
 For the most interesting modules, the Kaplan-Meier estimates were computed for groups arising when dichotomizing the values of corresponding eigengene as above or below the median value.
 These results are seen in Figure \ref{fig:survival_analysis}.
-The results further corroborates that the identified modules are biologically meaningful and that RCM provides a reasonable estimate of the covariance.
+
 
 <<survival_analysis, echo=FALSE, results='hide', fig.height=2.5*7*0.7, fig.width=2*7*0.7, fig.pos="tb", fig.scap = "", fig.cap="\\it The top row shows $95\\%$ and $99\\%$ confidence intervals for the estimate of the Hazard ratio in the multiple Cox proportional hazards model. The bottom two rows show Kaplan-Meier estimates of the dichotomizing eigengenes.">>=
 @
 
-\clearpage
+From the survival analysis, the yellow module appeared particular interesting.
+Therefore a manual screening of the 16 genes within the yellow module was performed.
+Products CHI3L1 , CHIT1, and LYZ are related to chitin degradation and suggests activated immune system response and inflammation.
+Enzymes related to chitin degradation can possibly originate from macrophages as CHIT1 is expressed by activated macrophages.
+The inflammation and modulated activity of the immune system are further suggested by genes ORM1, PLA2G2D, PLA2G7, IL18, IGSF6.
+CHIT3L1 (also known as YKL40) has been linked to the AKT anti-apoptotic signaling pathway in glioblastoma\cite{Francescone2011}.
+Some of the remaining, MMP9, ALDH1A1, PTGDS, ADAMDEC1, HSD11B1, APOC1, CYP27B1, are involved in metalloproteinase degradation and lipid metabolism.
+MMP9 is known have a central role in proliferation, migration, differentiation, angiogenesis, apoptosis and host defenses.
+Numerous studies have linked altered MMP expression in different human cancers with poor disease prognosis where up-regulation of MMPs are associated with enhanced cancer cell invasion.
+ADAMDEC1 is thought to have a central role in dendrite cell functions and their interactions with germinal center T cells.
+
+The manual screening and GO-analysis results further corroborates that the identified modules are biologically meaningful and that RCM provides a reasonable estimate of the covariance.
+
+
 
 \subsection{Supervised classification}
 <<discriminant_analysis, echo=FALSE, message=FALSE, results='hide'>>=
@@ -878,10 +892,14 @@ A stationary point exists due to Rolle's theorem and the differentiability of $\
 Next, we show the uniqueness of maxima.
 Suppose there exists two (or more) countable many stationary points $m_1, m_2, ..., m_N$.
 By Lemma \ref{lem:elltominusinfty}, the $\ell(\vPsi)$ has a finite upper bound given by the value of the log-likelihood in those points.
-All gradient curves (that is, solutions to $\dot(\vPsi) = \nabla \ell(\vPsi)$) must then converge toward exactly one of the stationary points where $\ell$ monotonically increase along each curve.
+All gradient curves (that is, solutions to $\dot{\vPsi} = \nabla \ell(\vPsi)$) must then converge toward exactly one of the stationary points where $\ell$ monotonically increase along each curve.
 The basin of attraction $A_i$ associated to each stationary point $m_i$,
 \begin{align*}
-   A_i = \Big\{\vPsi^* \in \calS_+ \Big| \vPsi(0) = \vPsi^*, \lim_{t->\infty} \vPsi(t) = m_i \Big\},
+   A_i = \Big\{ \quad
+     \vPsi^* \in \calS_+ \quad \Big| \quad
+     \vPsi(0) = \vPsi^*, \quad
+     \lim_{t \to \infty} \vPsi(t) = m_i\quad
+  \Big\},
 \end{align*}
 are open sets in set of all positive semi-definite matrices $\calS_+$.
 This partitions the space $\calS_+$ into $N$ open sets.

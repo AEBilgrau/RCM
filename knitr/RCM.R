@@ -142,7 +142,7 @@ Psi2Sigma <- function(Psi, nu) {
 par.ne <- list(k = 3,
                nu = 15,
                p = 10,
-               n.sims = 1000,
+               n.sims = 2500,
                n.obs = seq(5, 11, by = 1))
 
 if (!exists("res") || recompute) {
@@ -393,7 +393,7 @@ load("gep.ensg.RData")
 studies <- studies[studies$Study != "Celllines", ]
 dlbcl.dims <- sapply(rev(gep)[-1], dim)
 
-dlbcl.par <- list(top.n = 250,
+dlbcl.par <- list(top.n = 300,
                   linkage = "ward",
                   go.alpha.level = 0.01,
                   ontology = "MF",
@@ -417,8 +417,7 @@ if (!exists("dlbcl.rcm") || !exists("var.pool") || recompute) {
   resave(dlbcl.rcm, file = "saved.RData")
 }
 # Expected covariance matrix
-#s <- sample(1:nrow(dlbcl.rcm$Psi), 45)
-dlbcl.exp <- with(dlbcl.rcm, Psi2Sigma(Psi, nu))#[s,s]
+dlbcl.exp <- with(dlbcl.rcm, Psi2Sigma(Psi, nu))
 dlbcl.cor <- cov2cor(dlbcl.exp)
 dlbcl.adjMat <- abs(dlbcl.cor)
 
@@ -477,11 +476,11 @@ phylo$tip.label <- map2hugo(phylo$tip.label)
 
 ## ---- dlbcl_plot_2 ----
 dlbcl_plot_2 <- "figure/dlbcl_plot_2-1.png"
-png(dlbcl_plot_2, width = 1500, height = 2200, res = 150)
 if (!file.exists("figure/dlbcl_plot_2-1.png") || recompute) {
+  png(dlbcl_plot_2, width = 1500, height = 2200, res = 150)
 
   # LAYOUT
-  layout(rbind(c(0,0,5,6), c(0,0,2,6), c(4,1,3,6),7),
+  layout(rbind(c(0,0,5,6), c(0,0,2,6), c(4,1,3,6), 7),
          widths = c(4, 1, 15, 15), heights = c(4, 1, 10, 20))
 
   # PANEL A
@@ -506,7 +505,6 @@ if (!file.exists("figure/dlbcl_plot_2-1.png") || recompute) {
     return((s - min(s))/max(s))
   }
 
-  #o <- dlbcl.clust$order
   topn <- function(x, n = 6) {
     nms <- names(x)
     top <- names(tail(sort(x), n = n))
@@ -526,13 +524,27 @@ if (!file.exists("figure/dlbcl_plot_2-1.png") || recompute) {
   }
   points(scaleToLayout(gr$layout), pch = 16, cex = 0.7)
 
+
+#   # PANEL
+#   get <- dlbcl.modules == "yellow"
+#   gr <- plotModuleGraph(abs(thresholded)[get, get],
+#                         labels = map2hugo(topn(rowSums(abs(dlbcl.cor[get, get])), 16)),
+#                         diff.exprs = 3*get.size(abs(dlbcl.cor[get, get])) + 3,
+#                         layout = layout.custom,
+#                         mark.shape = .5,
+#                         ecol = "black",
+#                         vcol = "yellow")
+#   points(scaleToLayout(gr$layout), pch = 16, cex = 0.7)
+
+
+
   # PANEL C
   plotHierarchicalEdgeBundles(phylo, dlbcl.g, beta = 0.95,
                               cex = 0.7, type = "fan",
                               tip.color = dlbcl.modules,
                               e.cols = alp(E(dlbcl.g)$color, 0.6))
+  dev.off()
 }
-dev.off()
 ## ---- end ----
 
 
@@ -588,7 +600,7 @@ colnames(dlbcl.mod.tab.genes) <- # Number of gens in each module
 
 is.ensg <- structure(grepl("^ENSG", dlbcl.mod.tab.genes),
                      dim = dim(dlbcl.mod.tab.genes))
-nn <- 40
+nn <- 30
 seq_tmp <- seq_len(min(nn, nrow(dlbcl.mod.tab.genes)))
 latex(dlbcl.mod.tab.genes[seq_tmp, ],
       cgroup = cgroup,
@@ -596,7 +608,7 @@ latex(dlbcl.mod.tab.genes[seq_tmp, ],
       caption = paste("The identified modules and their sizes and selected",
                       "member genes. For each module, the genes are sorted",
                       "by their intra-module connectivity from highest to",
-                      "lowest. Only a maximum of", nn, "genes is shown."),
+                      "lowest. Only the top", nn, "genes is shown."),
       cellTexCmds = ifelse(is.ensg, "tiny", "")[seq_tmp, ],
       caption.loc = "bottom",
       label = "tab:dlbcl_mod_tab",
@@ -636,7 +648,8 @@ plot.cis <- function(coxph,...) {
   rng <- range(ci99)
 
   plot(1, type = "n", xlim = rng, ylim = c(0, nrow(ci99)+1),
-       xlab = "", ylab = "", axes = FALSE, log = "x", ...)
+       xlab = "", ylab = "", axes = FALSE, log = "x",
+       xaxs = "r", ...)
   h <- 0.2
   col <- gsub("^ME", "", rownames(ci95))
   for (ci in  list(ci95, ci99)) {
@@ -651,15 +664,14 @@ plot.cis <- function(coxph,...) {
   abline(v = 1, lty = 2, col = "darkgrey")
   axis(3, at = axTicks(3), label = formatC(axTicks(3)))
   axis(2, at = 1:nrow(ci), label = col,
-       las = 2, tick = FALSE, pos = axTicks(3)[1])
+       las = 2, tick = FALSE, pos = min(ci99[,3]))
 }
 
 load("metadata.RData")
 library("WGCNA")
 library("survival")
-#library("rms")
 
-par(mar = c(.1,5,5,0.1), oma = c(2,0,0,0))
+par(mar = c(.1,5,5,0.1), oma = c(2,0,0,0), xpd = TRUE)
 layout(cbind(1:3,4:6), heights = c(1,2,2))
 
 for (j in 1:2) {
@@ -673,21 +685,22 @@ for (j in 1:2) {
   # Check order
   stopifnot(rownames(meta) == colnames(expr))
 
+  #expr <- t(t(expr)/colSds(expr))  # Standardize
   res <- moduleEigengenes(t(expr), dlbcl.modules)
   eg <- res$eigengenes
   col <- gsub("^ME", "", colnames(eg))
+  eg <- as.data.frame(lapply(eg, function(x) x/sd(x))) # Standardize
 
   cph.fit <- coxph(meta$OS ~ ., data = eg, x = TRUE, y = TRUE)
 
   plot.cis(cph.fit, main = switch(j, "LLMPP CHOP", "LLMPP R-CHOP"))
 
-  eg.hl <- data.frame(eg >= apply(eg, 2, median))
+  eg.hl <- data.frame(eg >= apply(eg, 2, mean))
   for (i in seq_len(ncol(eg.hl))) {
-    if (col[i] %in% c("turquoise", "yellow"))
-      plot(survfit(meta$OS ~ factor(eg.hl[,i])), conf.int = TRUE, main = col[i],
-           col = c(col[i], "black"), lwd = 2)
+    if (col[i] %in% c("turquoise", "yellow")) {
+      plot(survfit(meta$OS ~ factor(eg.hl[,i])), conf.int = TRUE,
+           main = col[i], col = c(col[i], "black"), lwd = 2)
+    }
   }
 }
 ## ----
-
-
