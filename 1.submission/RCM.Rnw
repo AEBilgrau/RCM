@@ -488,10 +488,9 @@ To assess the precision and stability of the estimation procedure we generated d
 \begin{align*}
 \vSigma =
   \begin{bmatrix}
-     1 & 0.5 & 0.5 & \cdots\\
-     0.5 & 1 & 0.5 & \cdots\\
-     0.5 & 0.5 & 1 & \cdots\\
-     \vdots & \vdots & \vdots & \ddots
+     1 & 0.5 & \cdots\\
+     0.5 & 1 & \cdots\\
+     \vdots & \vdots & \ddots
   \end{bmatrix}.
 \end{align*}
 The number of observations in each study $n$ was varied in the range $\Sexpr{paste0("[", min(par.ne$n.obs), ",", max(par.ne$n.obs), "]")}$.
@@ -522,7 +521,7 @@ We see that the EM estimation is superior to that of the approximate MLE and mom
 The algorithm along with the different estimators are implemented in the statistical programming language R \cite{R} with workhorse functions in C++ using packages Rcpp and RcppArmadillo \citep{Eddelbuettel2011, RcppArmadillo}.
 They are incorporated in the open-source R-package \texttt{correlateR} freely available for forking and editing at \url{http://github.com/AEBilgrau/correlateR}.
 We refer to the information here for further details and installation instructions.
-This document was prepared with \texttt{knitr} \citep{Xie2013} and LaTeX.
+This document was prepared with \texttt{knitr} \citep{Xie2013} and LaTeX. To reproduce this document see Supplementary material \ref{suppA}.
 
 
 
@@ -579,7 +578,7 @@ The tree was arbitrarily pruned at a height which yielded \Sexpr{length(unique(d
 Figure \ref{\Sexpr{dlbcl_plot_2}} shows these results and Table \ref{tab:dlbcl_mod_tab} shows the genes within each module.
 
 Next, the modules were screened for biological relevance using GO (Gene Ontology) enrichment analysis.
-Table \ref{tab:GO_tabs} in Appendix \ref{sec:sig_go_term} show the significant GO-terms at significance level \Sexpr{dlbcl.par$go.alpha.level} for each module.
+The \ref{suppB} show the significant GO-terms at significance level \Sexpr{dlbcl.par$go.alpha.level} for each module.
 As seen, the GO-terms all appear highly relevant to the pathology of DLBCL.
 
 <<dlbcl_go_analysis, echo=FALSE, results='hide'>>=
@@ -729,14 +728,22 @@ Special thanks to Martin Raussen and Jon Johnsen for their help with the mathema
 The helpful statistical comments from Steffen Falgreen were much appreciated. As were the help on the microarray preprocessing workflow from Andreas Petri. The technical assistance from Alexander Schmitz, Julie S.\ B\o{}dker, Ann-Maria Jensen, Louise H. Madsen, and Helle H\o{}holt is also greatly appreciated.
 
 
+\begin{supplement}
+\sname{Supplement A}\label{suppA}
+\stitle{knitr document}
+\slink[url]{http://people.math.aau.dk/\%7eabilgrau/RCM/SuppA/}
+\sdescription{The \texttt{knitr} and \texttt{.R} documents and other needed files to perform the analyses to reproduce this article.}
+\end{supplement}
 
-% \newpage
-% \phantomsection
-% \addcontentsline{toc}{section}{References}
-% \bibliographystyle{plainnat}
-\bibliographystyle{imsart-nameyear}
-\bibliography{references_manual}
+\begin{supplement}
+\sname{Supplement B}\label{suppB}
+\stitle{Identified modules and GO analysis}
+\slink[url]{http://people.math.aau.dk/\%7eabilgrau/RCM/SuppB/}
+\sdescription{Complete lists of gene module membersships, auxiliary information, and the significant GO-terms for each identified module.}
+\end{supplement}
 
+<<GO_tabs, echo=FALSE, results='hide'>>=
+@
 
 
 \newpage
@@ -744,10 +751,7 @@ The helpful statistical comments from Steffen Falgreen were much appreciated. As
 
 
 
-
-
-
-\section[Marginalization of Sigma]{Marginalization of $\vSigma$}
+\section{Marginalization of covariance}
 \label{sec:marginalization}
 This section shows the marginalization over $\vSigma$ in \eqref{eq:loglik}.
 For ease of notation we drop the subscript $i$ on $\vSigma_i$, $\vX_i$, $\vS_i = \vX_i \vX_i^\top$, and $n_i$ in the above text.
@@ -1135,7 +1139,7 @@ $\vY(\vX_1, ..., \vX_k) = 0$. If $n_\bullet\geq p$ then almost surely $(\vX_1, .
 %   \label{eq:lasteq}
 %   (1 + \lambda_M)^{-1} \sum_a \tr\!\Big( \vY\vY\vX_a\vX_a^\top \Big)
 %   \geq
-%   \tr\!\left( \vY\vY \sum_a \vX_a\vX_a^\top \right)
+%   \tr\!\left( \vY\vY \sum_a \vX_a\vX_a^\top \right),
 %   > 0
 % \end{align}
 % However, as we assume that
@@ -1250,23 +1254,8 @@ and
 These estimate are seen to correspond to a weighted sum of the scatter matrices.
 
 
-
-\section{Module member genes}
-\label{sec:module_member_genes}
-A printout of the genes in each module
-
-<<print_dlbcl_module_genes>>=
-print(lapply(dlbcl.module.genes, unname))
-@
-
-\section{Significant GO terms}
-\label{sec:sig_go_term}
-Tables of the significant GO terms.
-
-<<GO_tabs, echo=FALSE, results='asis'>>=
-@
-
-
+\bibliographystyle{imsart-nameyear}
+\bibliography{references_manual}
 
 \end{document}
 

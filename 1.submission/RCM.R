@@ -1,4 +1,4 @@
-setwd("~/Documents/PhD/paper-RCM/knitr/")
+setwd("~/Documents/PhD/paper-RCM/1.submission//")
 
 ## ---- initialize_script ----
 rm(list = ls())
@@ -615,9 +615,16 @@ latex(dlbcl.mod.tab.genes[seq_tmp, ],
       landscape = FALSE,
       file = "")
 
+colnames(dlbcl.mod.tab.genes) <-
+  paste0(cgroup, " (", colnames(dlbcl.mod.tab.genes), ")")
+write.table(dlbcl.mod.tab.genes, file = "SuppB_module_genes.txt",
+            quote = FALSE, sep = "\t")
+## ---- end ----
+
 
 ## ---- GO_tabs ----
 go.table <- do.call(rbind, dlbcl.go.analysis)
+write.table(go.table, file = "SuppB_go_table.txt", quote = FALSE, sep = "\t")
 go.col <- gsub("(^|[[:space:]])([[:alpha:]])",
                "\\1\\U\\2", gsub("\\.[0-9]+$", "", rownames(go.table)),
                perl = TRUE)
@@ -636,6 +643,9 @@ latex(go.table[, -c(1, 3)],
       longtable = TRUE,
       lines.page = 80,
       file = "")
+
+
+
 ## ---- end ----
 
 
