@@ -1,14 +1,94 @@
 \documentclass[aoas,preprint]{imsart}
+
+\RequirePackage[OT1]{fontenc}
+\RequirePackage{amsthm,amsmath}
+\RequirePackage[numbers]{natbib}
+\RequirePackage[colorlinks,citecolor=blue,urlcolor=blue]{hyperref}
+
+% settings
+%\pubyear{2005}
+%\volume{0}
+%\issue{0}
+%\firstpage{1}
+%\lastpage{8}
+\arxiv{arXiv:0000.0000}
+
+\startlocaldefs
+\numberwithin{equation}{section}
+\theoremstyle{plain}
+\newtheorem{thm}{Theorem}[section]
+\endlocaldefs
+
 \input{preamble.tex}
 
-\title{Estimation of a common covariance matrix for multiple classes with applications in meta- and discriminant analysis}
-\author{
-  Anders Ellern Bilgrau \\ \texttt{abilgrau@math.aau.dk} \and
-  Poul Svante Eriksen \\ \texttt{svante@math.aau.dk} \and
-  Martin B\o{}gsted \\ \texttt{mboegsted@dcm.aau.dk}
-}
 
 \begin{document}
+
+
+
+\begin{frontmatter}
+\title{Estimation of a common covariance matrix for multiple classes with applications in meta- and discriminant analysis\thanksref{T1}}
+\runtitle{Estimation of a common covariance matrix for multiple classes with applications in meta- and discriminant analysis}
+\thankstext{T1}{Supported by MSCNET, EU FP6, CHEPRE, the Danish Agency for Science, Technology, and Innovation as well as Karen Elise Jensen Fonden.}
+
+\begin{aug}
+\author{\fnms{Anders Ellern} \snm{Bilgrau}\thanksref{m1,m2}
+\ead[label=e1]{abilgrau@math.aau.dk}},
+\author{\fnms{Poul Svante} \snm{Eriksen}\thanksref{m1}
+\ead[label=e2]{svante@math.aau.dk}}
+\and
+\author{\fnms{Martin} \snm{B\o{}gsted}\thanksref{m1,m2}
+\ead[label=e3]{mboegsted@dcm.aau.dk}
+}
+
+% \thankstext{t1}{Some comment}
+% \thankstext{t2}{First supporter of the project}
+% \thankstext{t3}{Second supporter of the project}
+\runauthor{A. Bilgrau et al.}
+
+\affiliation{Aalborg University\thanksmark{m1} and Aalborg University Hospital\thanksmark{m2}}
+
+\address{
+Department of Haematology\\
+Sdr.\ Skovvej 15\\
+DK-9000 Aalborg\\
+\printead{e1}\\
+\phantom{E-mail:\ }
+\printead*{e3}}
+
+\address{
+Department of Matematical Sciences\\
+Fredrik Bajers Vej 7G\\
+DK-9220 Aalborg \O{}\\
+\printead{e1}\\
+\phantom{E-mail:\ }
+\printead*{e2}}
+\end{aug}
+
+\begin{abstract}
+We propose a hierarchical random effects model and estimators for a common covariance matrix in cases where multiple classes are present.
+It is applicable where the classes are believed to share a common covariance matrix of interest obscured by class-dependent noise.
+As such, it provides a basis for integrative or meta-analysis of covariance matrices where the classes are formed by datasets.
+Our approach is inspired by traditional meta-analysis using random effects models but the model is also shown to be applicable as an intermediate between linear and quadratic discriminant analysis.
+We derive the basic properties and estimators of the model and compare their properties.
+Simple inference and interpretation of the introduced parameter measuring the inter-class homogeneity is suggested.
+\end{abstract}
+
+% \begin{keyword}[class=MSC]
+% \kwd[Primary ]{60K35}
+% \kwd{60K35}
+% \kwd[; secondary ]{60K35}
+% \end{keyword}
+
+\begin{keyword}
+\kwd{covariance estimation}
+\kwd{integrative analysis}
+\kwd{meta-analysis}
+\kwd{gaussian graphical modeling}
+\kwd{discriminant analysis}
+\end{keyword}
+
+\end{frontmatter}
 
 <<initalize_knitr, echo=FALSE, results='hide', message=FALSE>>=
 library("knitr")
@@ -22,22 +102,6 @@ read_chunk("RCM.R")
 
 <<auxiliary_functions, echo=FALSE>>=
 @
-
-\maketitle
-\phantomsection
-\addcontentsline{toc}{section}{Abstract}
-\begin{abstract}
-We propose a hierarchical random effects model and estimators for a common covariance matrix in cases where multiple classes are present.
-It is applicable where the classes are believed to share a common covariance matrix of interest obscured by class-dependent noise.
-As such, it provides a basis for integrative or meta-analysis of covariance matrices where the classes are formed by datasets.
-Our approach is inspired by traditional meta-analysis using random effects models but the model is also shown to be applicable as an intermediate between linear and quadratic discriminant analysis.
-We derive the basic properties and estimators of the model and compare their properties.
-Simple inference and interpretation of the introduced parameter measuring the inter-class homogeneity is suggested.
-\medskip
-
-\noindent \textbf{Keywords:} \textit{covariance estimation, meta-analysis, integrative analysis, network integration, gaussian graphical modeling, discriminant analysis}
-\end{abstract}
-
 
 
 \section{Introduction}
@@ -666,11 +730,12 @@ The helpful statistical comments from Steffen Falgreen were much appreciated. As
 
 
 
-\newpage
-\phantomsection
-\addcontentsline{toc}{section}{References}
-\bibliographystyle{plainnat}
-\bibliography{references_manual,references_mendelay}
+% \newpage
+% \phantomsection
+% \addcontentsline{toc}{section}{References}
+% \bibliographystyle{plainnat}
+\bibliographystyle{imsart-nameyear}
+\bibliography{references_manual}
 
 
 
