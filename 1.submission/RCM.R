@@ -2,6 +2,7 @@ setwd("~/Documents/PhD/paper-RCM/1.submission//")
 
 ## ---- initialize_script ----
 rm(list = ls())
+set.seed(1)
 recompute <- FALSE
 library("Hmisc")
 library("Bmisc")
@@ -47,7 +48,7 @@ test.rcm <- function(k = 4, n = 10, ns = rep(n, k), p = 10, nu = 15, Psi, ...) {
   e <- 1e-2
   t_em   <- system.time(res.em   <- fit.rcm(S, ns, method = "EM",   eps=e, ...))
   t_pool <- system.time(res.pool <- fit.rcm(S, ns, method = "pool", eps=e, ...))
-  t_mle <- system.time(res.mle   <- fit.rcm(S, ns, method = "appr", eps=e, ...))
+  t_mle  <- system.time(res.mle  <- fit.rcm(S, ns, method = "appr", eps=e, ...))
   time <- c(em = t_em[3], pool = t_pool[3], mle = t_mle[3])
 
   return(list(S = S, ns = ns, nu = nu, Psi = Psi,
@@ -146,7 +147,7 @@ par.ne <- list(k = 3,
                n.obs = seq(5, 11, by = 1))
 
 if (!exists("res") || recompute) {
-  set.seed(64403101)
+  set.seed(987654321) #set.seed(64403101)
   st <- proc.time()
   res <- list()
   for (i in seq_along(par.ne$n.obs)) {
@@ -600,7 +601,7 @@ colnames(dlbcl.mod.tab.genes) <- # Number of gens in each module
 
 is.ensg <- structure(grepl("^ENSG", dlbcl.mod.tab.genes),
                      dim = dim(dlbcl.mod.tab.genes))
-nn <- 30
+nn <- 20
 seq_tmp <- seq_len(min(nn, nrow(dlbcl.mod.tab.genes)))
 latex(dlbcl.mod.tab.genes[seq_tmp, ],
       cgroup = cgroup,
@@ -671,8 +672,8 @@ plot.cis <- function(coxph,...) {
   }
   rect(ci99[,3], 1:nrow(ci99) - h, ci99[,4], 1:nrow(ci99) + h)
   rect(ci95[,3], 1:nrow(ci95) - h, ci95[,4], 1:nrow(ci95) + h)
-  abline(v = 1, lty = 2, col = "darkgrey")
-  axis(3, at = axTicks(3), label = formatC(axTicks(3)))
+  segments(x0 = 1, y0 = 0, y1 = 6, col = "darkgrey", lty = 2)
+  axis(1, at = axTicks(3), label = formatC(axTicks(3)))
   axis(2, at = 1:nrow(ci), label = col,
        las = 2, tick = FALSE, pos = min(ci99[,3]))
 }
@@ -681,9 +682,10 @@ load("metadata.RData")
 library("WGCNA")
 library("survival")
 
-par(mar = c(.1,5,5,0.1), oma = c(2,0,0,0), xpd = TRUE)
-layout(cbind(1:3,4:6), heights = c(1,2,2))
+par(mar = c(4, 4, 1, 0) + 0.1, oma = c(0,0,0,0), xpd = TRUE, cex = 1.2)
+layout(cbind(1:2,3:4), heights = c(1,2))
 
+# for (j in 1:4) plot(1)
 for (j in 1:2) {
   meta <- switch(j, metadataLLMPPCHOP, metadataLLMPPRCHOP)
   rownames(meta) <- as.character(meta$GEO.ID)
@@ -694,31 +696,29 @@ for (j in 1:2) {
 
   # Check order
   stopifnot(rownames(meta) == colnames(expr))
-
-  #expr <- t(t(expr)/colSds(expr))  # Standardize
   res <- moduleEigengenes(t(expr), dlbcl.modules)
   eg <- res$eigengenes
-#   tmp <- expr[names(which(dlbcl.modules == "yellow")), ]
-#   tmp <- t(scale(t(tmp)))
-#   a <- prcomp(t(tmp), center = FALSE, scale. = FALSE)
-#   head((cbind(eg$MEyellow,
-#               svd(tmp)$v[, 1],
-#               eigen(crossprod(tmp))$vectors[,1])))
-
-
   col <- gsub("^ME", "", colnames(eg))
   eg <- as.data.frame(lapply(eg, function(x) x/sd(x))) # Standardize
 
   cph.fit <- coxph(meta$OS ~ ., data = eg, x = TRUE, y = TRUE)
+  plot.cis(cph.fit)
 
-  plot.cis(cph.fit, main = switch(j, "LLMPP CHOP", "LLMPP R-CHOP"))
 
-  eg.hl <- data.frame(eg >= apply(eg, 2, mean))
-  for (i in seq_len(ncol(eg.hl))) {
-    if (col[i] %in% c("turquoise", "yellow")) {
-      plot(survfit(meta$OS ~ factor(eg.hl[,i])), conf.int = TRUE,
-           main = col[i], col = c(col[i], "black"), lwd = 2)
+  for (i in seq_len(ncol(eg))) {
+    if (col[i] == "yellow") {
+      eg.i <- eg[, paste0("ME", col[i])]
+      eg.high <- eg.i >= mean(eg.i)
+      plot(survfit(meta$OS ~ factor(eg.high)), conf.int = TRUE,
+           main = "", col = c(col[i], "black"), lwd = 2,
+           axes = FALSE)
+      axis(1); axis(2)
+      legend("bottom", bty = "n", lwd = 2,
+             legend = c("High eigengene", "Low eigengene"),
+             col = c(col[i], "black"), horiz = TRUE)
+      legend("topright", legend = paste(col[i], "eigengene"), bty = "n")
     }
   }
+  title(switch(j, "GSE10846 CHOP", "GSE10846 R-CHOP"), xpd = TRUE)
 }
 ## ----

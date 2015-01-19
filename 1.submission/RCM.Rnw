@@ -24,11 +24,9 @@
 
 \begin{document}
 
-
-
 \begin{frontmatter}
 \title{Estimation of a common covariance matrix for multiple classes with applications in meta- and discriminant analysis\thanksref{T1}}
-\runtitle{Estimation of a common covariance matrix for multiple classes with applications in meta- and discriminant analysis}
+\runtitle{Estimation of a common covariance matrix}
 \thankstext{T1}{Supported by MSCNET, EU FP6, CHEPRE, the Danish Agency for Science, Technology, and Innovation as well as Karen Elise Jensen Fonden.}
 
 \begin{aug}
@@ -40,11 +38,7 @@
 \author{\fnms{Martin} \snm{B\o{}gsted}\thanksref{m1,m2}
 \ead[label=e3]{mboegsted@dcm.aau.dk}
 }
-
-% \thankstext{t1}{Some comment}
-% \thankstext{t2}{First supporter of the project}
-% \thankstext{t3}{Second supporter of the project}
-\runauthor{A. Bilgrau et al.}
+\runauthor{A.\ Bilgrau et al.}
 
 \affiliation{Aalborg University\thanksmark{m1} and Aalborg University Hospital\thanksmark{m2}}
 
@@ -70,15 +64,9 @@ We propose a hierarchical random effects model and estimators for a common covar
 It is applicable where the classes are believed to share a common covariance matrix of interest obscured by class-dependent noise.
 As such, it provides a basis for integrative or meta-analysis of covariance matrices where the classes are formed by datasets.
 Our approach is inspired by traditional meta-analysis using random effects models but the model is also shown to be applicable as an intermediate between linear and quadratic discriminant analysis.
-We derive the basic properties and estimators of the model and compare their properties.
+We derive basic properties and estimators of the model and compare their properties.
 Simple inference and interpretation of the introduced parameter measuring the inter-class homogeneity is suggested.
 \end{abstract}
-
-% \begin{keyword}[class=MSC]
-% \kwd[Primary ]{60K35}
-% \kwd{60K35}
-% \kwd[; secondary ]{60K35}
-% \end{keyword}
 
 \begin{keyword}
 \kwd{covariance estimation}
@@ -157,24 +145,11 @@ Above, $\calW^{-1}_p(\vPsi, \nu)$ denotes a $p$-dimensional inverse Wishart dist
 \end{align}
 where $\vSigma_i$ is p.d., $\nu > p - 1$, and $\Gamma_p$ is the multivariate generalization of the gamma function $\Gamma$ seen in Appendix \ref{sec:multigamma}.
 While the inverse Wishart distribution is defined for all $\nu > p - 1$, the first order moment $(\nu - p - 1)^{-1}\vPsi$ exists only when $\nu > p + 1$.
-With the reparameterization
-\begin{align}
-  \label{eq:reparameterization}
-  \vPsi = (\nu - p - 1)\vSigma, \qquad \nu > p + 1,
-\end{align}
-of the inverse Wishart distribution of \eqref{eq:RCM}, the pdf of $\vSigma$ is given by
-\begin{align}
-  \label{eq:reparwishartpdf}
-  f(\vSigma) =
-  \frac{ |\nu-p-1|^\frac{\nu}{2} |\vPsi|^\frac{\nu}{2} }{
-        2^\frac{\nu p}{2} \Gamma_p\!\left( \frac{\nu}{2} \right) }
-        |\vSigma|^{-\frac{\nu+p+1}{2}}
-  \exp\!\left( -\frac{\nu - p - 1}{2} \tr\!\big(\vPsi\vSigma^{-1}\big) \right),
-\end{align}
-and the common expected covariance matrix is
+With the reparameterization $\vPsi = (\nu - p - 1)\vSigma$
+in the inverse Wishart distribution of \eqref{eq:RCM} the common expected covariance matrix is
 \begin{align}
   \label{eq:expcovar}
-  \bbE[\vSigma_i] = \frac{\vPsi}{\nu-p-1} = \vSigma \quad\text{ for } \nu > p + 1.
+  \vSigma = \bbE[\vSigma_i] = \frac{\vPsi}{\nu-p-1} \quad\text{ for } \nu > p + 1.
 \end{align}
 Hence in the RCM given by \eqref{eq:RCM}, $\vSigma$ can be interpreted as a location-like parameter as it is the expected covariance matrix in each study.
 The parameter $\nu$ inversely controls the inter-study or inter-class variation and can thus be considered an inter-study homogeneity parameter of the covariance structure.
@@ -183,7 +158,7 @@ This can be further seen as $\vSigma_i$ concentrates around $\vSigma$ for $\nu\t
 Thus, the true underlying covariance matrix and the homogeneity parameters are the effects of interest to be estimated in this paper.
 
 These basic properties of the RCM motivates the construction.
-We note that while the reparameterization of \eqref{eq:RCM} has preferable interpretation, the likelihood is much more complex and often numerically unstable.
+We note that while the reparameterization of \eqref{eq:RCM} has a preferable interpretation, the likelihood is much more complex and often numerically unstable.
 The reparameterization is especially problematic for $\nu$ near $p+1$ and indeed senseless when the expected covariance cease to exist for $p - 1 < \nu \leq p + 1$.
 Therefore, we use the usual parameterization by $\vPsi$ in the fitting procedure and the remainder of this paper.
 
@@ -203,11 +178,11 @@ By the independence assumptions, the log-likelihood for $\vPsi$ and $\nu$ is giv
                \vSigma_1, ..., \vSigma_k, \vPsi, \nu)
              f(\vSigma_1, ..., \vSigma_k | \vPsi, \nu)
              d\vSigma_1 \cdots d\vSigma_k \\
-  &= \log\!\int
-               \prod_{i=1}^k
-               f(\vX_i | \vSigma_i)
-               f(\vSigma_i | \vPsi, \nu)
-               d\vSigma_1 \cdots d\vSigma_k \\
+%   &= \log\!\int
+%                \prod_{i=1}^k
+%                f(\vX_i | \vSigma_i)
+%                f(\vSigma_i | \vPsi, \nu)
+%                d\vSigma_1 \cdots d\vSigma_k \\
   &= \sum_{i=1}^k \log\!\int
                f(\vX_i | \vSigma_i)
                f(\vSigma_i | \vPsi, \nu)
@@ -222,12 +197,11 @@ Since the inverse Wishart distribution is conjugate to the multivariate gaussian
          {\pi^\frac{n_i p}{2} \big|\vPsi +\vX_i^\top\vX_i\big|^\frac{\nu+n_i}{2}
           \Gamma_p\!\left(\frac{\nu}{2}\right)}          \notag\\
   &= c + \sum_{i=1}^k \!\bigg[
-            \frac{\nu}{2}  \log\big|\vPsi\big|
-            + \log\Gamma_p\!\left(\frac{\nu + n_i}{2}\right)
-   % \notag\\ &\hspace{1.5cm}
+       \frac{\nu}{2}  \log\big|\vPsi\big|
+       %+ \log\Gamma_p\!\left(\frac{\nu + n_i}{2}\right)
        - \frac{\nu + n_i}{2}\log\big| \vPsi +\vX_i^\top\vX_i \big|
-            - \log\Gamma_p\!\left(\frac{\nu}{2}\right)
-            \!\bigg]\!,
+       - \log\frac{\Gamma_p\!\left(\frac{\nu + n_i}{2}\right)}{\Gamma_p\!\left(\frac{\nu}{2}\right)}
+       \!\bigg]\!,
     \label{eq:loglik}
 \end{align}
 \normalsize
@@ -235,7 +209,7 @@ where constant terms are abbreviated by $c$.
 As should be expected, the scatter matrix $\vec{S}_i =\vX_i^\top\vX_i$ and study sample size $n_i$ are sufficient statistics for each study.
 Note that $\vS_i$ is conditionally Wishart distributed, $\vS_i|\vSigma_i \sim \calW(\vSigma_i, n_i)$, by construction.
 
-As stated in the following two propositions, the likelihood is not log-concave in general. However it is log-concave as a function of $\nu$.
+As stated in the following two propositions, the likelihood is not log-concave in general. However, it is log-concave as a function of $\nu$.
 
 \begin{restatable}[Non-concavity in $\vPsi$]{proposition}{propositionNonConcavityInPsi}
   \label{prop:nonconcavityinpsi}
@@ -249,10 +223,10 @@ As stated in the following two propositions, the likelihood is not log-concave i
   is concave in $\nu$.
 \end{restatable}
 
-\noindent The proofs of these propositions has been deferred to Appendix \ref{sec:concaveloglik}.
+\noindent The proofs of these propositions has been deferred to Appendix \ref{sec:proofs}.
 While the likelihood is not concave in $\vPsi$ we are able to show that the existence and uniqueness of a global maximum in $\vPsi$.
 
-\begin{restatable}[Existence and uniqueness of maximum]{proposition}{propositionUniqueMax}
+\begin{restatable}[Existence and uniqueness]{proposition}{propositionUniqueMax}
 \label{prop:uniquemax}
 The log-likelihood \eqref{eq:loglik} has a unique maximum in $\vPsi$ for fixed $\nu$ and $n_\bullet = \sum_{a=1}^k n_a \geq p$.
 \end{restatable}
@@ -261,7 +235,7 @@ The log-likelihood \eqref{eq:loglik} has a unique maximum in $\vPsi$ for fixed $
 
 \begin{restatable}{lemma}{lemmaOne}
 \label{lem:elltominusinfty}
-  If $\nu$ is fixed and $n_\bullet = \sum_{a=1}^k n_a \geq p$ then the log-likelihood $\ell(\vPsi) \to -\infty$ whenever $\exists \lambda_i : \lambda_i \to 0 \vee \lambda_i \to \infty$, where $\lambda_i$ is a eigenvalue of $\vPsi$.
+  If $\nu$ is fixed and $n_\bullet = \sum_{a=1}^k n_a \geq p$ then $\ell(\vPsi) \to -\infty$ whenever $\exists \lambda_i : \lambda_i \to 0 \vee \lambda_i \to \infty$, where $\lambda_i$ is an eigenvalue of $\vPsi$.
 \end{restatable}
 
 \begin{restatable}{lemma}{lemmaTwo}
@@ -269,17 +243,16 @@ The log-likelihood \eqref{eq:loglik} has a unique maximum in $\vPsi$ for fixed $
 If $n_\bullet > p$ and $\nu$ is fixed then the hessian of the log-likelihood \eqref{eq:loglik} is negative definite in all stationary points.
 \end{restatable}
 
-\noindent Lemma \ref{lem:negativesdefinite} tells that the Hessian in any stationary point (i.e.\ where $\frac{\partial\ell}{\partial\vPsi} = \vec{0}$) is negative definite, and hence every stationary point is a local maxima.
+\noindent Lemma \ref{lem:negativesdefinite} tells that the Hessian in any stationary point (where $\frac{\partial\ell}{\partial\vPsi} = \vec{0}$) is negative definite, and hence every stationary point is a local maxima.
 This combined with the observation that $\ell(\vPsi) \to -\infty$ whenever an eigenvalue $\lambda_i \to 0$ or $\lambda_i \to \infty$ of Lemma \ref{lem:elltominusinfty} implies Proposition \ref{prop:uniquemax} and the existence and uniqueness of global maximum.
-Again, proofs for Proposition \ref{prop:uniquemax} and the accompanying lemmas can be found in Appendix \ref{sec:negativedefinite}.
+% Again, proofs for Proposition \ref{prop:uniquemax} and the accompanying lemmas can be found in Appendix \ref{sec:negativedefinite}.
 
-We have also derived MLE estimators using a first order approximation. However, as simulation experiments later show, this estimator performed quite poorly and has therefore been deferred to Appendix \ref{sec:amle}.
+We also derived an approximate MLE using a first order approximation. This deriviation has been deferred to Appendix \ref{sec:amle}.
 
 
 
 \subsection{Moment estimator}
-Within the RCM framework, we show that the pooled empirical covariance matrix can be viewed as a moment estimator of $\vSigma$.
-
+The pooled empirical covariance matrix can be viewed as a moment estimator of $\vSigma$.
 By the assumptions the first and second moment of the $j$'th observation in the $i$'th study, $\vx_{ij}$, is given by $\bbE[\vx_{ij}] = \vec{0}_p$ and
 \begin{align*}
   \bbE[\vx_{ij}\vx_{ij}^\top]
@@ -288,18 +261,16 @@ By the assumptions the first and second moment of the $j$'th observation in the 
     = \frac{\vPsi}{\nu - p - 1}
     = \vSigma.
 \end{align*}
-for all $j = 1, ..., n_i$ and $i = 1, ..., k$. This suggests the estimator
+for all $j = 1, ..., n_i$ and $i = 1, ..., k$. This suggests the estimators
 \begin{align}
   \label{eq:pooledest}
   \hvPsi_\text{pool}
   = (\nu - p - 1)\frac{\sum_{i = 1}^k \vS_i}{\sum_{i = 1}^k n_i},
-\end{align}
-from which
-\begin{align*}
+  \text{ and }
   \hvSigma_\text{pool}
   = \frac{\sum_{i = 1}^k \vS_i}{\sum_{i = 1}^k n_i}, \qquad \nu > p + 1
-\end{align*}
-by e.g.\ plugging the estimate $\hvPsi_\text{pool}$ into \eqref{eq:reparameterization} or \eqref{eq:expcovar}.
+\end{align}
+where the latter is obtained by plugging $\hvPsi_\text{pool}$ into \eqref{eq:expcovar}.
 This is the well-known pooled empirical covariance matrix.
 
 
@@ -333,9 +304,9 @@ Hence, the expectation step is given by
   \bbE[\vDelta_i |\vS_i] = (n_i + \nu)\big(\vTheta^{-1} + \vS_i\big)^{-1}.
 \end{align*}
 The maximization step, in which the log-likelihood $\ell(\vTheta|\vDelta_1, ..., \vDelta_k)$ is maximized, yields the estimate
-\begin{align*}
+$
  \hat{\vTheta} = \frac{1}{k\nu}\sum_{i = 1}^k \vDelta_i,
-\end{align*}
+$
 which is the mean of the scaled precision matrices $\frac{1}{\nu}\vDelta_i$.
 The derivation of this estimate can be seen in Appendix \ref{sec:precisionloglik}.
 The above yield the updating scheme
@@ -356,7 +327,7 @@ Given parameters $\hat{\nu}_{(t)}$ and $\hvPsi_{(t)}$ at iteration $t$, we estim
 This coordinate ascent approach is repeated until convergence.
 More precisely, in pseudo-code, we propose the algorithm seen in Algorithm \ref{alg:RCM}.
 \begin{algorithm}[tb]
-\caption{Pseudo-code for the RCM coordinate ascent estimation procedure}
+\caption{RCM coordinate ascent estimation procedure}
 \label{alg:RCM}
 \begin{algorithmic}[1]
 \State \algorithmicrequire{
@@ -365,14 +336,14 @@ More precisely, in pseudo-code, we propose the algorithm seen in Algorithm \ref{
 \State \emph{Convergence criterion:} $\varepsilon > 0$
 }
 \State \algorithmicensure{
-\State \emph{Parameters:} $\hvPsi, \hat{\nu}$
+\State \emph{Parameter estimates:} $\hvPsi, \hat{\nu}$
 }
 \Procedure{fitRCM}{$\vS_1, ..., \vS_k, n_1, ..., n_k, \hvPsi_{(0)}, \hat{\nu}_{(0)}, \varepsilon$}
   \State \emph{Initialize}: $l_{(0)} \gets \ell(\hvPsi_{(0)}, \hat{\nu}_{(0)})$
   \For {$t = 1, 2, 3, ...$}
-    \State {$\hvPsi_{(t)} \gets U\!\left(\hvPsi_{(t-1)}, \hat{\nu}_{(t-1)}\right)$}
-    \State {$\hat{\nu}_{(t)} \gets \argmax_\nu \ell\!\left(\hvPsi_{(t)}, \nu\right)$}
-    \State {$l_{(t)} \gets \ell\!\left(\hvPsi_{(t)}, \hat{\nu}_{(t)}\right)$}
+    \State {Set $\hvPsi_{(t)} \gets U\!\left(\hvPsi_{(t-1)}, \hat{\nu}_{(t-1)}\right)$}
+    \State {Set $\hat{\nu}_{(t)} \gets \argmax_\nu \ell\!\left(\hvPsi_{(t)}, \nu\right)$}
+    \State {Set $l_{(t)} \gets \ell\!\left(\hvPsi_{(t)}, \hat{\nu}_{(t)}\right)$}
     \If {$l_{(t)} - l_{(t-1)} < \varepsilon$}
       \State \Return {$\Big(\hvPsi_{(t)}, \nu_{(t)}\Big)$}
     \EndIf
@@ -405,13 +376,16 @@ However, the distribution of $\hat{\nu}$ under $H_0$ is not easily characterized
 We propose to approximate the distribution of $\hat{\nu}$ under $H_0$ by simulation.
 To do this, the model is simply fitted on datasets generated under $H_0$ a large number of times $N$ to get $\hat{\nu}_0^{(1)}, ..., \hat{\nu}_0^{(N)}$. As \textit{small} values of $\hat{\nu}$ are critical for $H_0$ approximate acceptance regions can be constructed from $\hat{\nu}_0^{(j)}, j = 1,...,N$. Likewise, an approximation of the $P$-value testing $H_0$ can be obtained by
 \begin{align*}
-  P = \frac{1}{N+1} \left( 1 + \sum_{j=1}^N \bbOne\!\Big[\hat{\nu}_0^{(j)} < \hat{\nu}_\text{obs}\Big] \right)
+  P = \frac{1}{N+1}
+  \Bigg(
+    1 + \sum_{j=1}^N \bbOne\!\Big[\hat{\nu}_0^{(j)} < \hat{\nu}_\text{obs}\Big]
+  \Bigg)
 \end{align*}
 where $\bbOne[\cdot ]$ is the indicator function. This is approximately the fraction of $\hat{\nu}_0$'s smaller than $\hat{\nu}_\text{obs}$.
 
 
-\subsubsection*{Intra-class correlation coefficient analogue}
-We also introduce a descriptive statistic analogous to the intra-class correlation coefficient (ICC) \citep[See e.g.]{Stanish1983} well known from ordinary meta-analysis to better determine what constitute large values of $\nu$.
+\subsubsection*{Intra-class correlation coefficient}
+We introduce a descriptive statistic analogous to the intra-class correlation coefficient (ICC) \citep{Stanish1983} well known from ordinary meta-analysis to better determine what constitute large values of $\nu$.
 We define a modified ICC given by
 \begin{align}
   \text{ICC}(\nu)
@@ -484,24 +458,22 @@ as should be expected.
 <<numerical_experiment, echo=FALSE, results='hide'>>=
 @
 \section{Assessment of the estimation procedures}
-To assess the precision and stability of the estimation procedure we generated data from the hierarchical model \eqref{eq:RCM} for $p = \Sexpr{par.ne[["p"]]}$ variables and $k = \Sexpr{par.ne[["k"]]}$ studies each with an equal number of observations, $n = n_1 = n_2 = n_3$. We chose the parameters $\nu = \Sexpr{par.ne[["nu"]]}$ and
-\begin{align*}
-\vSigma =
-  \begin{bmatrix}
-     1 & 0.5 & \cdots\\
-     0.5 & 1 & \cdots\\
-     \vdots & \vdots & \ddots
-  \end{bmatrix}.
-\end{align*}
+To assess the precision and stability of the estimation procedure we generated data from the hierarchical model \eqref{eq:RCM} for $p = \Sexpr{par.ne[["p"]]}$ variables and $k = \Sexpr{par.ne[["k"]]}$ studies each with an equal number of observations, $n = n_1 = n_2 = n_3$. We chose the parameters $\nu = \Sexpr{par.ne[["nu"]]}$ and $\Psi_{ij} = 1$ for all $i = j$ and $\Psi_{ij} = 0.5$ for all $i \neq j$.
+% \begin{align*}
+% \vPsi =
+%   \begin{bmatrix}
+%      1 & 0.5 & \cdots\\
+%      0.5 & 1 & \cdots\\
+%      \vdots & \vdots & \ddots
+%   \end{bmatrix}.
+% \end{align*}
 The number of observations in each study $n$ was varied in the range $\Sexpr{paste0("[", min(par.ne$n.obs), ",", max(par.ne$n.obs), "]")}$.
 
 We measure the precision of the estimated values against the expected covariance matrix given by \eqref{eq:expcovar}.
 Let $\hvPsi$ and $\hat{\nu}$ be the estimates obtained using the moment, EM, or approximate MLE (defined in Appendix \ref{sec:amle}) approach as described. We benchmark the proposed estimators against the known truth. The benchmarking measure used is the following weighted sum of squared errors,
 \begin{align*}
   \text{SSE}(\hvPsi) = \sum_{i \leq j} \frac{(\hat{\Psi}_{ij}- \Psi_{ij})^2}{\var(\Psi_{ij})}
-\end{align*}
-where
-\begin{align*}
+  \quad \text{ where } \quad
  \var(\Psi_{ij}) = n(\Psi_{ij}^2 + \Psi_{ii}\Psi_{jj}).
 \end{align*}
 
@@ -521,7 +493,7 @@ We see that the EM estimation is superior to that of the approximate MLE and mom
 The algorithm along with the different estimators are implemented in the statistical programming language R \cite{R} with workhorse functions in C++ using packages Rcpp and RcppArmadillo \citep{Eddelbuettel2011, RcppArmadillo}.
 They are incorporated in the open-source R-package \texttt{correlateR} freely available for forking and editing at \url{http://github.com/AEBilgrau/correlateR}.
 We refer to the information here for further details and installation instructions.
-This document was prepared with \texttt{knitr} \citep{Xie2013} and LaTeX. To reproduce this document see Supplementary material \ref{suppA}.
+This document was prepared with \texttt{knitr} \citep{Xie2013} and LaTeX. To reproduce this document see \ref{suppA}.
 
 
 
@@ -545,7 +517,7 @@ Lastly, the datasets were reduced to \Sexpr{dim(gep[[1]])["Features"]} common ge
 
 
 \subsubsection*{Meta-analysis}
-We wanted to perform a co-expression network (i.e.\ weighted correlation network) analysis integrating all datasets.
+A co-expression network (or, weighted correlation network) analysis integrating all datasets was wanted.
 For each dataset the scatter matrix $\vS_i$ of the top \Sexpr{dlbcl.par$top.n} most variable genes (as measured by the pooled variance across studies) was computed as the sufficient statistics along with the number of samples.
 Hence, we investigate \Sexpr{format(dlbcl.par$top.n*(dlbcl.par$top.n + 1)/2, big.mark = ",")} pairwise interactions.
 
@@ -587,7 +559,7 @@ As seen, the GO-terms all appear highly relevant to the pathology of DLBCL.
 <<dlbcl_mod_tab, echo=FALSE, results='asis'>>=
 @
 
-Lastly, we checked if the identified modules were prognostic for overall survival (OS) in the CHOP and R-CHOP-treated cohorts of the LLMPP dataset (GSE10846).
+Lastly, we checked if the identified modules were prognostic for overall survival (OS) in the CHOP and R-CHOP-treated cohorts of the GSE10846 datasets.
 To do this, the eigengene \cite{Horvath2011} for each module was computed and a multiple Cox proportional hazards model for OS was fitted with the module eigengenes as covariates.
 The module eigengene is simply the first principal component applied to the expression matrix of the module which can thus be representation by a linear combination of the module genes.
 Hence, the module eigengene is a weighted average of the module genes.
@@ -595,7 +567,7 @@ For the most interesting modules, the Kaplan-Meier estimates were computed for g
 These results are seen in Figure \ref{fig:survival_analysis}.
 
 
-<<survival_analysis, echo=FALSE, results='hide', fig.height=2.5*7*0.7, fig.width=2*7*0.7, fig.pos="tb", fig.scap = "", fig.cap="\\it The top row shows $95\\%$ and $99\\%$ confidence intervals for the estimate of the Hazard ratio in the multiple Cox proportional hazards model. The bottom two rows show Kaplan-Meier estimates of the dichotomizing eigengenes.">>=
+<<survival_analysis, echo=FALSE, results='hide', fig.height=1.2*7, fig.width=2*7, fig.pos="tb", fig.scap = "", fig.cap="\\it The top row shows $95\\%$ and $99\\%$ CI for the hazard ratio in the multiple Cox proportional hazards model. The bottom row show Kaplan-Meier estimates (and $95\\%$ CI) of the yellow dichotomized eigengene.">>=
 @
 
 From the survival analysis, the yellow module appeared particular interesting.
@@ -603,7 +575,7 @@ Therefore a manual screening of the 16 genes within the yellow module was perfor
 Genes CHI3L1 , CHIT1, and LYZ are related to chitin degradation and suggests activated immune system response and inflammation.
 Enzymes related to chitin degradation can possibly originate from macrophages as CHIT1 is expressed by activated macrophages.
 The inflammation and modulated activity of the immune system are further suggested by genes ORM1, PLA2G2D, PLA2G7, IL18, and IGSF6.
-CHIT3L1 (also known as YKL40) has been linked to the AKT anti-apoptotic signaling pathway in glioblastoma\cite{Francescone2011}.
+CHIT3L1 (also known as YKL40) has been linked to the AKT anti-apoptotic signaling pathway in glioblastoma \cite{Francescone2011}.
 Some of the remaining, MMP9, ALDH1A1, PTGDS, ADAMDEC1, HSD11B1, APOC1, CYP27B1, are involved in metalloproteinase degradation and lipid metabolism.
 MMP9 in particular is known to have a central role in proliferation, migration, differentiation, angiogenesis, apoptosis, and host defenses.
 Numerous studies have linked altered MMP expression in different human cancers with poor disease prognosis where up-regulation of MMPs are associated with enhanced cancer cell invasion.
@@ -710,7 +682,7 @@ As demonstrated, combining multiple studies can yield a sufficiently large total
 The generalization of the model to $p \gg n_\bullet$ is extremely interesting though out of scope for this article.
 We believe this work could be further enriched by combining the method with regularized estimation.
 
-The recent advances in such regularized techniques which allows for analysis of very large covariance matrices has unfortunately diminished the focus on collecting larger sample.
+The recent advances in such regularized techniques which allows for analysis of large covariance matrices has unfortunately diminished the focus on collecting larger sample.
 Just because it is technically possible, it does not mean a good estimate is achieved.
 For example, while non-zero entries often can be accurately recalled in graphical LASSO, actual estimates of the covariances (or precisions) can still be heavily biased.
 Large sample-sizes are still needed to achieve unbiased estimates of the covariance due to the bias-variance trade-off.
@@ -718,48 +690,46 @@ Therefore, an increased focus should also be appointed to efficiently aggregatin
 
 One might question whether the added utility of the $\nu$ parameter is an obvious relaxation of covariance homogeneity.
 For example, it is unclear how large a proportion a \textit{single} extra parameter can explain of the inter-study variance.
-Hence, the present work should be considered a first step in the direction of explicitly modeling the inter-study variation.
+Hence, the present work should be considered a first step in the direction of explicitly modeling the inter-study variation of covariances.
 
 As an addition to the discriminant analysis toolbox, we recognize that further and more sophisticated simulation experiments are needed to explore scenarios where HDA should be considered a serious alternative.
 
 \section*{Acknowledgments}
-Special thanks to Martin Raussen and Jon Johnsen for their help with the mathematical proofs.
+We thank Martin Raussen and Jon Johnsen for help with some of the mathematical proofs.
 % We also thank Karen Dyk\ae{}r for her assistance on the biological interpretation of the results.
 The helpful statistical comments from Steffen Falgreen were much appreciated. As were the help on the microarray preprocessing workflow from Andreas Petri. The technical assistance from Alexander Schmitz, Julie S.\ B\o{}dker, Ann-Maria Jensen, Louise H. Madsen, and Helle H\o{}holt is also greatly appreciated.
 
 
 \begin{supplement}
 \sname{Supplement A}\label{suppA}
-\stitle{knitr document}
-\slink[url]{http://people.math.aau.dk/\%7eabilgrau/RCM/SuppA/}
-\sdescription{The \texttt{knitr} and \texttt{.R} documents and other needed files to perform the analyses to reproduce this article.}
+\stitle{Documents for reproducibility}
+\slink[url]{http://people.math.aau.dk/\~{}abilgrau/RCM/SuppA/}
+\sdescription{The documents and other needed files to perform the analyses to reproduce this article. See the \texttt{README} file.}
 \end{supplement}
 
 \begin{supplement}
 \sname{Supplement B}\label{suppB}
 \stitle{Identified modules and GO analysis}
-\slink[url]{http://people.math.aau.dk/\%7eabilgrau/RCM/SuppB/}
-\sdescription{Complete lists of gene module membersships, auxiliary information, and the significant GO-terms for each identified module.}
+\slink[url]{http://people.math.aau.dk/\~{}abilgrau/RCM/SuppB/}
+\sdescription{Lists of gene module membersships, auxiliary information, and the significant GO-terms for each identified module.}
 \end{supplement}
 
 <<GO_tabs, echo=FALSE, results='hide'>>=
 @
 
-
-\newpage
 \appendix
 
 
 
-\section{Marginalization of covariance}
+\section{Marginalization of the covariance}
 \label{sec:marginalization}
 This section shows the marginalization over $\vSigma$ in \eqref{eq:loglik}.
 For ease of notation we drop the subscript $i$ on $\vSigma_i$, $\vX_i$, $\vS_i = \vX_i \vX_i^\top$, and $n_i$ in the above text.
 By the model assumptions,
 \small
 \begin{align*}
-  &f(\vX | \vPsi, \nu) \\
-  &= \int f(\vX|\vSigma) f(\vSigma | \vPsi, \nu) d\vSigma \\
+  &f(\vX | \vPsi, \nu)
+  = \int f(\vX|\vSigma) f(\vSigma | \vPsi, \nu) d\vSigma \\
   &= \int \left[ \prod_{j = 1}^n  (2\pi)^{-\frac{p}{2}} |\vSigma|^{-\frac{1}{2}}
                          e^{-\frac{1}{2}\tr(\vx_{ij}\vx_{ij}^\top\vSigma^{-1})} \right]
           %\\ &\qquad\times
@@ -784,29 +754,31 @@ By the model assumptions,
 \end{align*}
 \normalsize
 The integrand can be recognized as a unnormalized inverse Wishart pdf of the distribution $\calW^{-1}\big(\vPsi + \vS, \nu + n\big)$, and so the integral evaluates to the reciprocal value of the normalizing constant in that density. Thus,
+\small
 \begin{align}
   f(\vX | \vPsi, \nu)
-  &=
+  =
     \frac{\big|\vPsi\big|^\frac{\nu}{2}}
          {\pi^\frac{np}{2} 2^{\frac{(\nu + n) p}{2} } \Gamma_p\!\left(\frac{\nu}{2}\right)}
     \frac{2^\frac{(v+n)p}{2} \Gamma_p\left(\frac{\nu + n}{2}\right)}
-         {\big|\vPsi + \vS\big|^{\frac{\nu + n}{2}}} \notag \\
-  &=
+         {\big|\vPsi + \vS\big|^{\frac{\nu + n}{2}}} %\notag \\
+  =
     \frac{\big|\vPsi\big|^\frac{\nu}{2} \Gamma_p\left(\frac{\nu + n}{2}\right)}
          {\pi^\frac{np}{2}
            \big|\vPsi + \vS\big|^{\frac{\nu + n}{2}} \Gamma_p\!\left(\frac{\nu}{2}\right)}.
     \label{eq:marg1}
 \end{align}
+\normalsize
 Using the matrix determinant lemma and $\vS = \vX^\top\vX$, this can be further simplified to
 \begin{align*}
   f(\vX | \vPsi, \nu)
-  &=
-  \frac{\big|\vPsi\big|^\frac{\nu}{2} \Gamma_p\left(\frac{\nu + n}{2}\right)}
-       {\pi^\frac{np}{2}
-         \big|\vI + \vX\vPsi^{-1}\vX^\top\big|^\frac{\nu + n}{2}
-         \big|\vPsi\big|^\frac{\nu + n}{2}
-         \Gamma_p\!\left(\frac{\nu}{2}\right)} \\
-  &=
+%   =
+%   \frac{\big|\vPsi\big|^\frac{\nu}{2} \Gamma_p\left(\frac{\nu + n}{2}\right)}
+%        {\pi^\frac{np}{2}
+%          \big|\vI + \vX\vPsi^{-1}\vX^\top\big|^\frac{\nu + n}{2}
+%          \big|\vPsi\big|^\frac{\nu + n}{2}
+%          \Gamma_p\!\left(\frac{\nu}{2}\right)}
+  =
   \frac{\Gamma_p\left(\frac{\nu + n}{2}\right)}
        {\pi^\frac{np}{2}
           \big| \vI + \vX\vPsi^{-1}\vX^\top\big|^\frac{\nu + n}{2}
@@ -819,10 +791,9 @@ which can help to speed-up computations.
 
 
 
-\section{Proofs}
-\label{sec:proofs}
-\subsection{Non-concavity of the log-likelihood}
-\label{sec:concaveloglik}
+\section{Proofs}\label{sec:proofs}
+
+\subsection{Non-concavity of the log-likelihood}\label{sec:concaveloglik}
 The likelihood function is not log-concave in general.
 This section analyses the (non)-concavity of the log-likelihood function given in \eqref{eq:loglik}.
 More precisely, the following two propositions are proved.
@@ -840,27 +811,25 @@ We reduce to the one-dimensional case where
      - \sum_{i = 1}^k \frac{\nu + n_i}{2}\log\!\big(\psi + x_i^2\big)
 \end{align*}
 which implies
+\small
 \begin{align*}
   \ell'(\psi)
-  &= \frac{k\nu}{2}\frac{1}{\psi}
-     - \sum_{i = 1}^k \frac{\nu + n_i}{2}\frac{1}{\psi + x_i^2} \quad \text{ and} \\
+  = \frac{k\nu}{2}\frac{1}{\psi}
+     - \sum_{i = 1}^k \frac{\nu + n_i}{2}\frac{1}{\psi + x_i^2}
+  \text{ and }
   \ell''(\psi)
-  &=  - \frac{k\nu}{2}\frac{1}{\psi^2}
+  =  - \frac{k\nu}{2}\frac{1}{\psi^2}
       + \sum_{i = 1}^k \frac{\nu + n_i}{2}\frac{1}{\big(\psi + x_i^2\big)^2}.
 \end{align*}
-We see, that
-\begin{align*}
-  \lim_{\psi \to 0^+} \ell''(\psi) = - \infty
-  \;\text{  and  }\;
-  \lim_{\psi \to \infty^-} \ell''(\psi) = 0.
-\end{align*}
-We draw the likelihood and its derivative with $k = 1$ and other appropriately chosen parameters as seen in Figure \ref{fig:one_dimensional_loglik} which is generated by the \texttt{R}-code:
+\normalsize
+We see, that $\ell''(\psi) \to - \infty$ for $\psi \to 0^+$ and $\ell''(\psi) \to 0$ for $\psi \to \infty^-$.
+The likelihood and its derivative with $k = 1$ for appropriately chosen parameters is seen in Figure \ref{fig:one_dimensional_loglik}.% which is generated by the \texttt{R}-code:
+The log-likelihood $\ell$ is not log-concave as the second derivative is not always negative.
+Alternatively, the first derivative is not monotonically non-increasing which is a necessary and sufficient condition for a differentiable function of one variable to be concave.
 
-<<one_dimensional_loglik, echo=-3, fig.height=2, fig.width=6, fig.pos="tb", ig.scap = "", fig.cap = "\\it The one-dimensional log-likelihood and its first and second derivative as a function of $\\psi$.">>=
+<<one_dimensional_loglik, echo=FALSE, fig.height=1.5, fig.width=5, fig.pos="tb", ig.scap = "", fig.cap = "\\it The one-dimensional likelihood, the first and second derivatives as a function of $\\psi$.">>=
 @
 
-\noindent The log-likelihood $\ell$ is not log-concave as the second derivative is not always negative.
-Alternatively, the first derivative is not monotonically non-increasing which is a necessary and sufficient condition for a differentiable function of one variable to be concave.
 \end{proof}
 
 \begin{proof}[\textbf{Proof of Proposition \ref{prop:concavityinnu}}]
@@ -888,14 +857,13 @@ The sum of these terms, however, are concave in $\nu$, since
           \Gamma\!\left( \frac{\nu + 1 - j}{2} \right)}.
 \end{align*}
 which can be seen to be concave since $n_i \geq 1$ for all $i$ and
-\begin{align}
+$
   h(x) = \log\left(\frac{\Gamma(x + a)}{\Gamma(x)}\right)
-  \label{eq:logGammaRatio}
-\end{align}
+$
 is concave for all $x>0$ and $a > 0$. The concavity of $h$ is easily seen by the fact that
-\begin{align*}
+$
   h''(x) = \psi(x + a) - \psi(x) < 0,
-\end{align*}
+$
 where $\psi(\cdot)$ is the tri-gamma function which is a well-known monotonically decreasing function.
 Hence, the log-likelihood is log-concave in $\nu$.
 \end{proof}
@@ -907,7 +875,7 @@ Hence, the log-likelihood is log-concave in $\nu$.
 
 \subsubsection{log-convexity of the multivariate gamma function}
 \label{sec:multigamma}
-The log-convexity of the multivariate gamma function can seen using the following characterization of $\Gamma_p$,
+The multivariate gamma function $\Gamma_p$ is log-convex as can seen using the following characterization,
 \begin{align}
   \label{eq:multigamma}
   \Gamma_p(t) = \pi^{ \frac{1}{2} \binom{p}{2} }
@@ -957,26 +925,26 @@ The proposition follows from Lemma \ref{lem:elltominusinfty} and
 Lemma \ref{lem:negativesdefinite}.
 We first prove existence of the maximum.
 By Lemma \ref{lem:elltominusinfty} and the continuity of $\ell$, the set
-\begin{align*}
-  \Big\{ \; \vPsi \;\Big|\; \ell(\vPsi) \geq \ell(\vPsi^*) \; \Big\}
-\end{align*}
+$
+  \big\{  \vPsi \big| \ell(\vPsi) \geq \ell(\vPsi^*)  \big\}
+$
 is bounded and closed and hence compact for any $\vPsi^*\succ 0$..
 The existence of a maximum follows from the extreme value theorem again by continuity of $\ell$.
 A stationary point exists due to Rolle's theorem and the differentiability of $\ell$.
 
-Next, we show the uniqueness of maxima.
-Suppose there exists two (or more) countable many stationary points $m_1, m_2, ..., m_N$.
-By Lemma \ref{lem:elltominusinfty}, the $\ell(\vPsi)$ has a finite upper bound given by the value of the log-likelihood in those points.
-All gradient curves (that is, solutions to $\dot{\vPsi} = \nabla \ell(\vPsi)$) must then converge toward exactly one of the stationary points where $\ell$ monotonically increase along each curve.
-The basin of attraction $A_i$ associated to each stationary point $m_i$,
-\begin{align*}
-   A_i = \Big\{ \quad
-     \vPsi^* \in \calS_+ \quad \Big| \quad
-     \vPsi(0) = \vPsi^*, \quad
-     \lim_{t \to \infty} \vPsi(t) = m_i\quad
-  \Big\},
-\end{align*}
-are open sets in set of all positive semi-definite matrices $\calS_+$.
+Next, we show the uniqueness of the maxima.
+Suppose there exists two (or more) countably many stationary points $\vPsi_1, \vPsi_2, ...$.
+By Lemma \ref{lem:elltominusinfty}, $\ell(\vPsi)$ has a finite upper bound given by the value of the log-likelihood in those points.
+All gradient curves (that is, solution curves to $\dot{\vPsi}(t) = \nabla \ell(\vPsi(t))$) must then converge toward exactly one of the stationary points where $\ell$ monotonically increase along each curve.
+The basin of attraction
+$
+   A_i = \big\{
+     \vPsi^* \in \calS_+ \big|
+     \vPsi(0) = \vPsi^*,
+     \lim_{t \to \infty} \vPsi(t) = \vPsi_i
+  \big\},
+$
+associated to each stationary point $vPsi_i$ are open sets in set of all positive semi-definite matrices $\calS_+$.
 This partitions the space $\calS_+$ into $N$ open sets.
 However, this is only possible if $A_i = A_j$ for all $i$ and $j$ and thus there is only a single basin of attraction and maximum of $\ell$.
 \end{proof}
@@ -995,9 +963,9 @@ If $\lambda_i \to \infty$ then
 \end{align*}
 This proves the first case where the largest eigenvalue diverge to infinity.
 Suppose $\lambda_i \to 0$ and let
-\begin{align*}
+$
   C = \sum_{i = 1}^k \frac{(\nu + n_i)}{2} = \frac{k\nu}{2} + \frac{n_\bullet}{2},
-\end{align*}
+$
 then \eqref{eq:loglik2} can be expressed as
 \begin{align*}
   \ell(\vPsi)
@@ -1049,10 +1017,10 @@ We proceed with the second order derivative $\nabla^2_\vPsi 2\ell(\vPsi)$ with e
       \vE^{kl}\left(\vPsi + \vS_a\right)^{-1}
     \right),
 \end{align*}
-obtained by differentiation of \eqref{eq:dloglik} combined with
+obtained by differentiation of \eqref{eq:dloglik} using
 $\frac{\partial}{\partial \Psi_{ij}} \vPsi^{-1} = - \vPsi^{-1}\vE^{ij}\vPsi^{-1}$ \citep[eq.\ (40)]{Petersen2008} and the linearity of the trace operator.
 
-The second order derivative can be thought of as a $\binom{p+1}{2} \times \binom{p+1}{2}$-dimensional matrix indexed by $(i,j)$ and $(k,l)$, $i \leq j$, $k \leq l$.
+The second order derivative is a $\binom{p+1}{2} \times \binom{p+1}{2}$-dimensional matrix indexed by $(i,j)$ and $(k,l)$, $i \leq j$, $k \leq l$.
 
 \textbf{Negative definiteness of stationary points.}
 With the above expressions we now show that the hessian is negative definite in all stationary points (or, extrema).
@@ -1168,7 +1136,7 @@ $\vY(\vX_1, ..., \vX_k) = 0$. If $n_\bullet\geq p$ then almost surely $(\vX_1, .
 Suppose we have $k$ i.i.d. realizations, $\vDelta_1, ..., \vDelta_k$, from the Wishart distribution given in equation \eqref{eq:precisiondensity}. The corresponding log-likelihood can be computed straight-forwardly:
 \begin{align*}
   \ell(\vTheta | \vDelta_1, ..., \vDelta_k)
-  &= \sum_{i = 1}^k \log f(\vDelta_i | \vTheta) \\
+  %&= \sum_{i = 1}^k \log f(\vDelta_i | \vTheta) \\
   &= \sum_{i = 1}^k \log
     \frac{\big|\vTheta\big|^{-\frac{\nu}{2}}}
          {2^{-\frac{vp}{2}}\Gamma_p\!\left(\frac{\nu}{2}\right)}
@@ -1184,15 +1152,15 @@ Suppose we have $k$ i.i.d. realizations, $\vDelta_1, ..., \vDelta_k$, from the W
      \right).
 \end{align*}
 The last expression is to be maximized with respect to $\vTheta$ and can be recognized as the MLE problem in a multivariate Gaussian distribution. Hence,
-\begin{align*}
+$
   \vTheta = \frac{1}{k \nu} \sum_{i = 1}^k \vDelta_i,
-\end{align*}
+$
 is the MLE in this model.
 
 
 
 
-\section{Approximate maximum likelihood estimator}
+\section{Approximate MLE}
 \label{sec:amle}
 To find the maximizing parameters we differentiate \eqref{eq:loglik} w.r.t.\ $\vPsi$ and equate to zero while assuming $\nu$ known and constant.
 The first order derivative can be seen in equation \eqref{eq:dloglik}. Equating zero we have that
@@ -1208,12 +1176,12 @@ The first order derivative can be seen in equation \eqref{eq:dloglik}. Equating 
       \notag
 \end{align}
 This implies
-\begin{align}
+$ %\begin{align*}
   k\nu \vec{I}
     - \sum_{i=1}^k (\nu + n_i)
       \left(\vec{I} - (-\vPsi^{-1}\vS_i)\right)^{-1}
    = \vec{0}.
-\end{align}
+$ %\end{align*}
 which can be rewritten as
 \begin{align*}
     k\nu \vec{I}
@@ -1222,17 +1190,16 @@ which can be rewritten as
    = \vec{0}.
 \end{align*}
 by the Neumann series $\left((\vI + \vec{A})^{-1} = \sum_{l = 0}^\infty \vec{A}^l\right)$ if $\lim_{l \to \infty} (I - \vPsi^{-1}\vS_i)^l = \vec{0}$ for all $i$, i.e.\ the eigenvalues of $\vPsi^{-1}\vS_i$ should be less than $1$.
-
-Thus, we can approximate the solution by using the first order expansion $(l = 1)$ and solve for $\vPsi$
+We approximate by the first order expansion $(l = 1)$,
 \begin{align*}
   \vec{0}
-  &= k\nu\vec{I} - \sum_{i=1}^k (\nu + n_i)(\vec{I} - \vPsi^{-1}\vS_i) \\
-  &= k\nu\vec{I}
-   - k\nu\vec{I}
-   - n_\bullet\vec{I}
-   + \vPsi^{-1}\sum_{i=1}^k \nu\vS_i
-   + \vPsi^{-1}\sum_{i=1}^k n_i\vS_i \\
-  &= - n_\bullet\vec{I}
+  = k\nu\vec{I} - \sum_{i=1}^k (\nu + n_i)(\vec{I} - \vPsi^{-1}\vS_i)
+%   = k\nu\vec{I}
+%    - k\nu\vec{I}
+%    - n_\bullet\vec{I}
+%    + \vPsi^{-1}\sum_{i=1}^k \nu\vS_i
+%    + \vPsi^{-1}\sum_{i=1}^k n_i\vS_i \\
+  = - n_\bullet\vec{I}
      + \vPsi^{-1}\sum_{i=1}^k (\nu + n_i) \vS_i
 \end{align*}
 where $n_\bullet = \sum_{i=1}^k n_i$ is the total number of observations. This implies
@@ -1240,18 +1207,16 @@ where $n_\bullet = \sum_{i=1}^k n_i$ is the total number of observations. This i
    \vPsi^{-1}\sum_{i=1}^k (\nu + n_i) \vS_i
     = n_\bullet \vec{I}
 \end{align*}
-which suggest the estimator
+which suggest the estimators
 \begin{align}
   \hat{\vPsi}_\text{MLE}
-  = \frac{\sum_{i=1}^k (\nu + n_i) \vec{S}_i}{n_\bullet},
+  = \frac{\sum_{i=1}^k (\nu + n_i) \vec{S}_i}{n_\bullet}
   \label{eq:mle}
-\end{align}
-and
-\begin{align}
+  \quad \text{ and } \quad
   \hat{\vSigma}_\text{MLE}
   = \frac{\sum_{i=1}^k (\nu + n_i) \vec{S}_i}{(\nu-p-1)n_\bullet}.
 \end{align}
-These estimate are seen to correspond to a weighted sum of the scatter matrices.
+These estimates are seen to correspond to a weighted sum of the scatter matrices.
 
 
 \bibliographystyle{imsart-nameyear}
