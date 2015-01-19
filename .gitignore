@@ -11,8 +11,10 @@
 *-concordance.tex
 *.log
 *.synctex.gz
-*.tex
 *.pdf
 *.RData
 knitr/prof.R
 knitr/*
+*RCM.tex
+*.png
+0.drafting*

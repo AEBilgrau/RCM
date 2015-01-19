@@ -608,7 +608,7 @@ latex(dlbcl.mod.tab.genes[seq_tmp, ],
       caption = paste("The identified modules and their sizes and selected",
                       "member genes. For each module, the genes are sorted",
                       "by their intra-module connectivity from highest to",
-                      "lowest. Only the top", nn, "genes is shown."),
+                      "lowest. Only the top", nn, "genes are shown."),
       cellTexCmds = ifelse(is.ensg, "tiny", "")[seq_tmp, ],
       caption.loc = "bottom",
       label = "tab:dlbcl_mod_tab",
@@ -688,6 +688,14 @@ for (j in 1:2) {
   #expr <- t(t(expr)/colSds(expr))  # Standardize
   res <- moduleEigengenes(t(expr), dlbcl.modules)
   eg <- res$eigengenes
+#   tmp <- expr[names(which(dlbcl.modules == "yellow")), ]
+#   tmp <- t(scale(t(tmp)))
+#   a <- prcomp(t(tmp), center = FALSE, scale. = FALSE)
+#   head((cbind(eg$MEyellow,
+#               svd(tmp)$v[, 1],
+#               eigen(crossprod(tmp))$vectors[,1])))
+
+
   col <- gsub("^ME", "", colnames(eg))
   eg <- as.data.frame(lapply(eg, function(x) x/sd(x))) # Standardize
 

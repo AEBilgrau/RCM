@@ -56,7 +56,7 @@ We restrict ourselves to the case where the total number of samples exceed $p$.
 Hence, if $k$ classes or datasets are available with sample sizes $n_1, ..., n_k$, we consider the case where $p < \sum_{i=1}^k n_i$ while allowing $p$ to exceed $n_i$ for each individual class $i$.
 
 As with all major groups of cancer, a large number of diffuse large B-cell lymphoma (DLBCL) genomic datasets are now publicly available online.
-We wished to use these studies in combination with our own data to arrive at a good estimate of the covariance matrix whilst accounting for and assessing inter-study variation.
+We wished to use these studies in combination with data from our own laboratory to arrive at a good estimate of the covariance matrix whilst accounting for and assessing inter-study variation.
 Although this work was motivated by gene-gene interaction networks in DLBCL where the covariance matrix is assumed to contain all information about the conditional dependencies of the genes, the methods are general and not limited to such genomic data.
 
 
@@ -292,9 +292,9 @@ Given parameters $\hat{\nu}_{(t)}$ and $\hvPsi_{(t)}$ at iteration $t$, we estim
 This coordinate ascent approach is repeated until convergence.
 More precisely, in pseudo-code, we propose the algorithm seen in Algorithm \ref{alg:RCM}.
 \begin{algorithm}[tb]
-\caption{Pseudo-code for the RCM estimation procedure}\label{alg:RCM}
+\caption{Pseudo-code for the RCM coordinate ascent estimation procedure}
+\label{alg:RCM}
 \begin{algorithmic}[1]
-\Procedure{RCM coordinate ascent}{}
 \State \algorithmicrequire{
 \State \emph{Sufficient data:} $(\vS_1, n_1), ..., (\vS_k, n_k)$
 \State \emph{Initial parameters:} $\hvPsi_{(0)}, \hat{\nu}_{(0)}$
@@ -303,16 +303,16 @@ More precisely, in pseudo-code, we propose the algorithm seen in Algorithm \ref{
 \State \algorithmicensure{
 \State \emph{Parameters:} $\hvPsi, \hat{\nu}$
 }
-\State
-\State \emph{Initialize}: $l_{(0)} \gets \ell(\hvPsi_{(0)}, \hat{\nu}_{(0)})$
-\For {$t = 1, 2, 3, ...$}
-  \State $\hvPsi_{(t)} \gets U\!\left(\hvPsi_{(t-1)}, \hat{\nu}_{(t-1)}\right)$
-  \State $\hat{\nu}_{(t)} \gets \argmax_\nu \ell\!\left(\hvPsi_{(t)}, \nu\right)$
-  \State $l_{(t)} \gets \ell\!\left(\hvPsi_{(t)}, \hat{\nu}_{(t)}\right)$
+\Procedure{fitRCM}{$\vS_1, ..., \vS_k, n_1, ..., n_k, \hvPsi_{(0)}, \hat{\nu}_{(0)}, \varepsilon$}
+  \State \emph{Initialize}: $l_{(0)} \gets \ell(\hvPsi_{(0)}, \hat{\nu}_{(0)})$
+  \For {$t = 1, 2, 3, ...$}
+    \State {$\hvPsi_{(t)} \gets U\!\left(\hvPsi_{(t-1)}, \hat{\nu}_{(t-1)}\right)$}
+    \State {$\hat{\nu}_{(t)} \gets \argmax_\nu \ell\!\left(\hvPsi_{(t)}, \nu\right)$}
+    \State {$l_{(t)} \gets \ell\!\left(\hvPsi_{(t)}, \hat{\nu}_{(t)}\right)$}
     \If {$l_{(t)} - l_{(t-1)} < \varepsilon$}
-      \State \Return $\left(\hvPsi_{(t)}, \nu_{(t)}\right)$
+      \State \Return {$\Big(\hvPsi_{(t)}, \nu_{(t)}\Big)$}
     \EndIf
- \EndFor
+  \EndFor
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
@@ -457,7 +457,7 @@ We see that the EM estimation is superior to that of the approximate MLE and mom
 \subsection{Implementation and availability}
 The algorithm along with the different estimators are implemented in the statistical programming language R \cite{R} with workhorse functions in C++ using packages Rcpp and RcppArmadillo \citep{Eddelbuettel2011, RcppArmadillo}.
 They are incorporated in the open-source R-package \texttt{correlateR} freely available for forking and editing at \url{http://github.com/AEBilgrau/correlateR}.
-See the documentation here for further details.
+We refer to the information here for further details and installation instructions.
 This document was prepared with \texttt{knitr} \citep{Xie2013} and LaTeX.
 
 
@@ -474,23 +474,27 @@ Diffuse large B-cell lymphoma (DLBCL) is an aggressive cancer subtype accounting
 A large amount of DLBCL datasets are now available online at the NCBI (National Center for Biotechnology Information) Gene Expression Omnibus (GEO) website.
 We downloaded 10 DLBCL large-scale gene expression studies and preprocessed these using the custom brainarray chip definition files (CDF) \citep{Dai2005} and RMA-normalization using the R-package \texttt{affy} \citep{affy}.
 The corresponding GEO-accession numbers are \Sexpr{grep("XXX", base::unique(studies[,"GSE"]), invert = TRUE, value = TRUE)} based on various microarray platforms.
-The downloaded data together with our own (GSE56315 \citep{DykaerBoegsted2015}) yields a total of \Sexpr{rowSums(dlbcl.dims)["Samples"]} samples with study sizes in the range \Sexpr{paste(range(dlbcl.dims["Samples",]), collapse = "-")}.
+The downloaded data together with  a data set from our own laboratory (GSE56315 \citep{DykaerBoegsted2015}) yields a total of \Sexpr{rowSums(dlbcl.dims)["Samples"]} samples with study sizes in the range \Sexpr{paste(range(dlbcl.dims["Samples",]), collapse = "-")}.
 The summarization using brainarray CDFs to Ensembl gene identifiers facilitates cross-platform integration.
 
-After the RMA normalization and summarization, the data was brought to a common scale by quantile normalizing all data to the common cumulative distribution function of all arrays.
-Lastly, the datasets were reduced to the total of \Sexpr{dim(gep[[1]])["Features"]} common features represented in all studies and array platforms.
+After RMA normalization and summarization, the data were brought to a common scale by quantile normalizing all data to the common cumulative distribution function of all arrays.
+Lastly, the datasets were reduced to \Sexpr{dim(gep[[1]])["Features"]} common genes represented in all studies and array platforms.
+
 
 \subsubsection*{Meta-analysis}
 We wanted to perform a co-expression network (i.e.\ weighted correlation network) analysis integrating all datasets.
 For each dataset the scatter matrix $\vS_i$ of the top \Sexpr{dlbcl.par$top.n} most variable genes (as measured by the pooled variance across studies) was computed as the sufficient statistics along with the number of samples.
 Hence, we investigate \Sexpr{format(dlbcl.par$top.n*(dlbcl.par$top.n + 1)/2, big.mark = ",")} pairwise interactions.
 
-The parameters of the RCM model was estimated using the EM algorithm and yielded the $\Sexpr{dlbcl.par$top.n} \times \Sexpr{dlbcl.par$top.n}$ matrix $\hvPsi$ and $\hat{\nu} = \Sexpr{round(dlbcl.rcm[["nu"]], 2)}$.
+The parameters of the RCM were estimated using the EM algorithm and yielded the $\Sexpr{dlbcl.par$top.n} \times \Sexpr{dlbcl.par$top.n}$ matrix $\hvPsi$ and $\hat{\nu} = \Sexpr{round(dlbcl.rcm[["nu"]], 2)}$.
 From these, $\hvSigma = (\hat{\nu}-p-1)^{-1}\hvPsi$ was computed and subsequently scaled to the corresponding correlation matrix $\hat{\vec{R}}$.
 
 The $\hat{\nu}$ yield a surprisingly low estimated ICC of $\Sexpr{round(1/(dlbcl.rcm[["nu"]] - dlbcl.par[["top.n"]]), 4)}$.
-Hence by the RCM, only $\Sexpr{round(1/(dlbcl.rcm[["nu"]] - dlbcl.par[["top.n"]]), 4)*100} \%$ of the variability of the estimated covariances is between-studies.
-Possible explanations for this could be comparatively high within-study variability or indeed a high study homogeneity.
+Hence by the RCM, only $\Sexpr{round(1/(dlbcl.rcm[["nu"]] - dlbcl.par[["top.n"]]), 4)*100} \%$ of the variability of the gene-gene covariances is between-studies on average.
+The selection of only the most (within study) varying genes is an obvious contribution to the low ICC.
+Hence, by selection we have high within-study variability.
+An alternative contribution could indeed also be high study homogeneity.
+In any case, the low ICC might suggest high reproducibility of the covariances between studies of the selected genes.
 
 
 <<dlbcl_mappings, echo=FALSE, results='hide'>>=
@@ -506,8 +510,8 @@ Possible explanations for this could be comparatively high within-study variabil
 }
 
 We have thus estimated a common correlation matrix $\hat{\vec{R}}$ across all studies to which standard correlation network analyses can be employed.
-To identify sub-graphs, we used agglomerative hierarchical clustering with \Sexpr{capitalize(dlbcl.clust$method)}-linkage on the distance measure defined by 1 minus the absolute value of the correlation.
-The tree was arbitrarily pruned at a height which yielded \Sexpr{length(unique(dlbcl.modules))} sub-graphs (or, modules) colored and named by colors.
+To identify sub-graphs, we used agglomerative hierarchical clustering with \Sexpr{capitalize(dlbcl.clust$method)}-linkage and distance measure defined as 1 minus the absolute value of the correlation.
+The tree was arbitrarily pruned at a height which yielded \Sexpr{length(unique(dlbcl.modules))} sub-graphs (or, modules) named by colors.
 Figure \ref{\Sexpr{dlbcl_plot_2}} shows these results and Table \ref{tab:dlbcl_mod_tab} shows the genes within each module.
 
 Next, the modules were screened for biological relevance using GO (Gene Ontology) enrichment analysis.
@@ -522,7 +526,9 @@ As seen, the GO-terms all appear highly relevant to the pathology of DLBCL.
 
 Lastly, we checked if the identified modules were prognostic for overall survival (OS) in the CHOP and R-CHOP-treated cohorts of the LLMPP dataset (GSE10846).
 To do this, the eigengene \cite{Horvath2011} for each module was computed and a multiple Cox proportional hazards model for OS was fitted with the module eigengenes as covariates.
-For the most interesting modules, the Kaplan-Meier estimates were computed for groups arising when dichotomizing the values of corresponding eigengene as above or below the median value.
+The module eigengene is simply the first principal component applied to the expression matrix of the module which can thus be representation by a linear combination of the module genes.
+Hence, the module eigengene is a weighted average of the module genes.
+For the most interesting modules, the Kaplan-Meier estimates were computed for groups arising when dichotomizing the values of the corresponding eigengene as above or below the median value.
 These results are seen in Figure \ref{fig:survival_analysis}.
 
 
@@ -531,12 +537,12 @@ These results are seen in Figure \ref{fig:survival_analysis}.
 
 From the survival analysis, the yellow module appeared particular interesting.
 Therefore a manual screening of the 16 genes within the yellow module was performed.
-Products CHI3L1 , CHIT1, and LYZ are related to chitin degradation and suggests activated immune system response and inflammation.
+Genes CHI3L1 , CHIT1, and LYZ are related to chitin degradation and suggests activated immune system response and inflammation.
 Enzymes related to chitin degradation can possibly originate from macrophages as CHIT1 is expressed by activated macrophages.
-The inflammation and modulated activity of the immune system are further suggested by genes ORM1, PLA2G2D, PLA2G7, IL18, IGSF6.
+The inflammation and modulated activity of the immune system are further suggested by genes ORM1, PLA2G2D, PLA2G7, IL18, and IGSF6.
 CHIT3L1 (also known as YKL40) has been linked to the AKT anti-apoptotic signaling pathway in glioblastoma\cite{Francescone2011}.
 Some of the remaining, MMP9, ALDH1A1, PTGDS, ADAMDEC1, HSD11B1, APOC1, CYP27B1, are involved in metalloproteinase degradation and lipid metabolism.
-MMP9 is known have a central role in proliferation, migration, differentiation, angiogenesis, apoptosis and host defenses.
+MMP9 in particular is known to have a central role in proliferation, migration, differentiation, angiogenesis, apoptosis, and host defenses.
 Numerous studies have linked altered MMP expression in different human cancers with poor disease prognosis where up-regulation of MMPs are associated with enhanced cancer cell invasion.
 ADAMDEC1 is thought to have a central role in dendrite cell functions and their interactions with germinal center T cells.
 
@@ -655,7 +661,7 @@ As an addition to the discriminant analysis toolbox, we recognize that further a
 
 \section*{Acknowledgments}
 Special thanks to Martin Raussen and Jon Johnsen for their help with the mathematical proofs.
-We also thank Karen Dyk\ae{}r for her assistance on the biological interpretation of the results.
+% We also thank Karen Dyk\ae{}r for her assistance on the biological interpretation of the results.
 The helpful statistical comments from Steffen Falgreen were much appreciated. As were the help on the microarray preprocessing workflow from Andreas Petri. The technical assistance from Alexander Schmitz, Julie S.\ B\o{}dker, Ann-Maria Jensen, Louise H. Madsen, and Helle H\o{}holt is also greatly appreciated.
 
 
