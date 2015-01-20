@@ -1,0 +1,19 @@
+
+       "Estimation of a common covariance matrix for multiple classes
+            with applications in meta- and discriminant analysis"
+
+To reproduce the article run the RCM.Rnw via knit function in the knitr package.
+One way to do so is to cd to the directory and run
+
+       Rscript -e "knitr::knit('RCM.Rnw')"
+
+from the command line. Afterward the generated .tex document can be complied.
+
+The RCM.R document serves as both a standalone script and the code run via
+the RCM.Rnw document. To reproduce the numerical results only run:
+
+       Rscript RCM.R
+
+from the command line.
+
+Questions can be directed to: abilgrau (at) math.aau.dk
