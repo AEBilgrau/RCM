@@ -735,12 +735,13 @@ The helpful statistical comments from Steffen Falgreen were much appreciated. As
 \sname{Supplement B}\label{suppB}
 \stitle{Identified modules and GO analysis}
 \slink[url]{http://people.math.aau.dk/\~{}abilgrau/RCM/SuppB/}
-\sdescription{Lists of gene module memberships, auxiliary information, and the significant GO-terms for each identified module.}
+\sdescription{Tables of gene module memberships, auxiliary information, and the significant GO-terms for each identified module.}
 \end{supplement}
 
 <<GO_tabs, echo=FALSE, results='hide'>>=
 @
 
+\newpage
 \bibliographystyle{imsart-nameyear}
 \bibliography{references_manual}
 
