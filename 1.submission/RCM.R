@@ -74,6 +74,7 @@ SSEs <- function(x) {
   sse.rcm.mle  <- getSSE(getSigma(x$rcm.mle),  expected, n = n)
   sse.rcm.pool <- getSSE(getSigma(x$rcm.pool), expected, n = n)
 
+  get <- c("nu", "iterations", "loglik")
   stopifnot(all(x$ns == x$ns[1]))
   return(c(n  = x$ns[1],
            k  = length(x$ns),
@@ -81,7 +82,11 @@ SSEs <- function(x) {
            p  = nrow(x$Psi),
            SSE.rcm.em   = sse.rcm.em,
            SSE.rcm.mle  = sse.rcm.mle,
-           SSE.rcm.pool = sse.rcm.pool))
+           SSE.rcm.pool = sse.rcm.pool,
+           em = unlist(x$rcm.em[get]),
+           mle = unlist(x$rcm.mle[get]),
+           pool = unlist(x$rcm.pool[get]),
+           time = x$time))
 }
 
 to.df <- function(sim) {
@@ -137,16 +142,13 @@ hda.predict <- function(hda.fit, newdata) {
 
 
 ## ---- numerical_experiment ----
-Psi2Sigma <- function(Psi, nu) {
-  return(Psi/(nu - ncol(Psi) - 1))
-}
 par.ne <- list(k = 3,
                nu = 15,
                p = 10,
                n.sims = 2500,
                n.obs = seq(5, 11, by = 1))
 
-if (!exists("res") || recompute) {
+if (!exists("df.numerical") || recompute) {
   set.seed(987654321) #set.seed(64403101)
   st <- proc.time()
   res <- list()
@@ -158,21 +160,29 @@ if (!exists("res") || recompute) {
     cat("loop =", i, "of", length(par.ne$n.obs), "done after",
         (proc.time()-st)[3] %/% 60, "mins.\n")
   }
+  df.numerical <- as.data.frame(t(sapply(res, SSEs)))
   rm(tmp)
-  resave(res, file = "saved.RData")
+  resave(df.numerical, file = "saved.RData")
 }
 
 
 ## ---- numerical_experiment_plot ----
-df <- as.data.frame(t(sapply(res, SSEs)))
 df <- aggregate(cbind(SSE.rcm.em, SSE.rcm.mle, SSE.rcm.pool) ~
-                  n + nu + k + p, median, data = df)
+                  n + nu + k + p, median, data = df.numerical)
 
 plot(df$n, df$SSE.rcm.em, col = "blue", type = "b", axes = FALSE,
      xlab = expression(n = n[i]),
      ylim = range(df[,5]),
      ylab = "median SSE", pch = 15, lty = 1,
-     main = paste0("k = ", df$k, ", nu = ", df$nu, ", p = ", df$p)[1])
+     main = "")
+
+legend_expressions <-
+  sapply(1:3, function(i) {
+    as.expression(substitute(x == y, list(x = as.name(c("k", "nu", "p")[i]),
+                                          y = unique(c(df$k, df$nu, df$p))[i])))
+  })
+legend("bottomleft", inset = 0.01, bty = "n", horiz = TRUE,
+       legend = legend_expressions)
 axis(1)
 axis(2)
 grid()
@@ -338,7 +348,8 @@ latex(tmp, file = "",
       cellTexCmds = cmd,
       label = "HDA_tab",
       caption.loc = "bottom",
-      caption = paste("The results for the different scenarios. The minimum",
+      caption = paste("The misclassification risk for the different scenarios.",
+                      "The minimum",
                       "and maximum misclassification risks are highlighted in",
                       "green and red, respectively."))
 rm(cm, csd, tmp, df.rownames)
@@ -459,6 +470,7 @@ dlbcl.clust <- flashClust(as.dist(1 - dlbcl.adjMat), method = dlbcl.par$linkage)
 
 # Cluster
 dlbcl.modules <- labels2colors(cutree(dlbcl.clust, k = 5))
+dlbcl.modules[dlbcl.modules == "yellow"] <- "orange"
 names(dlbcl.modules) <- dlbcl.clust$labels
 
 dlbcl.g <- graph.adjacency(dlbcl.cor, mode = "undirected",
@@ -474,14 +486,13 @@ phylo$tip.label <- map2hugo(phylo$tip.label)
 
 
 
-
 ## ---- dlbcl_plot_2 ----
 dlbcl_plot_2 <- "figure/dlbcl_plot_2-1.png"
 if (!file.exists("figure/dlbcl_plot_2-1.png") || recompute) {
   png(dlbcl_plot_2, width = 1500, height = 2200, res = 150)
 
   # LAYOUT
-  layout(rbind(c(0,0,5,6), c(0,0,2,6), c(4,1,3,6), 7),
+  layout(rbind(c(8,8,5,6), c(8,8,2,6), c(4,1,3,6), 7),
          widths = c(4, 1, 15, 15), heights = c(4, 1, 10, 20))
 
   # PANEL A
@@ -526,16 +537,16 @@ if (!file.exists("figure/dlbcl_plot_2-1.png") || recompute) {
   points(scaleToLayout(gr$layout), pch = 16, cex = 0.7)
 
 
-#   # PANEL
-#   get <- dlbcl.modules == "yellow"
-#   gr <- plotModuleGraph(abs(thresholded)[get, get],
-#                         labels = map2hugo(topn(rowSums(abs(dlbcl.cor[get, get])), 16)),
-#                         diff.exprs = 3*get.size(abs(dlbcl.cor[get, get])) + 3,
-#                         layout = layout.custom,
-#                         mark.shape = .5,
-#                         ecol = "black",
-#                         vcol = "yellow")
-#   points(scaleToLayout(gr$layout), pch = 16, cex = 0.7)
+  #   # PANEL
+  #   get <- dlbcl.modules == "yellow"
+  #   gr <- plotModuleGraph(abs(thresholded)[get, get],
+  #                         labels = map2hugo(topn(rowSums(abs(dlbcl.cor[get, get])), 16)),
+  #                         diff.exprs = 3*get.size(abs(dlbcl.cor[get, get])) + 3,
+  #                         layout = layout.custom,
+  #                         mark.shape = .5,
+  #                         ecol = "black",
+  #                         vcol = "yellow")
+  #   points(scaleToLayout(gr$layout), pch = 16, cex = 0.7)
 
 
 
@@ -544,6 +555,13 @@ if (!file.exists("figure/dlbcl_plot_2-1.png") || recompute) {
                               cex = 0.7, type = "fan",
                               tip.color = dlbcl.modules,
                               e.cols = alp(E(dlbcl.g)$color, 0.6))
+
+  # Number of genes in modules
+  plot(1, type = "n", axes = FALSE, xlab = "", ylab = "")
+  tab <- table(dlbcl.modules)
+  legend("left", bty = "n", col = "black", fill = names(tab), cex = 1.2,
+         title = "Module size",
+         legend =  sprintf("n = %-3d (%s)", tab, names(tab)))
   dev.off()
 }
 ## ---- end ----
@@ -606,10 +624,10 @@ seq_tmp <- seq_len(min(nn, nrow(dlbcl.mod.tab.genes)))
 latex(dlbcl.mod.tab.genes[seq_tmp, ],
       cgroup = cgroup,
       size = "tiny",
-      caption = paste("The identified modules and their sizes and selected",
-                      "member genes. For each module, the genes are sorted",
-                      "by their intra-module connectivity from highest to",
-                      "lowest. Only the top", nn, "genes are shown."),
+      caption = paste("The identified modules, their sizes, and",
+                      "member genes. The genes are sorted decreasingly",
+                      "by their intra-module connectivity (sum of the incident",
+                      "edge weights). Only the top", nn, "genes are shown."),
       cellTexCmds = ifelse(is.ensg, "tiny", "")[seq_tmp, ],
       caption.loc = "bottom",
       label = "tab:dlbcl_mod_tab",
@@ -682,11 +700,12 @@ load("metadata.RData")
 library("WGCNA")
 library("survival")
 
-par(mar = c(4, 4, 1, 0) + 0.1, oma = c(0,0,0,0), xpd = TRUE, cex = 1.2)
+par(mar = c(4, 4, 1, 0) + 0.1, oma = c(0,0,0,0), xpd = TRUE, cex = 1.2,
+    mgp = c(3, 1, 0)*0.75)
 layout(cbind(1:2,3:4), heights = c(1,2))
 
-# for (j in 1:4) plot(1)
 for (j in 1:2) {
+
   meta <- switch(j, metadataLLMPPCHOP, metadataLLMPPRCHOP)
   rownames(meta) <- as.character(meta$GEO.ID)
   expr <- switch(j,
@@ -706,12 +725,13 @@ for (j in 1:2) {
 
 
   for (i in seq_len(ncol(eg))) {
-    if (col[i] == "yellow") {
+    if (col[i] == "orange") {
       eg.i <- eg[, paste0("ME", col[i])]
       eg.high <- eg.i >= mean(eg.i)
       plot(survfit(meta$OS ~ factor(eg.high)), conf.int = TRUE,
            main = "", col = c(col[i], "black"), lwd = 2,
-           axes = FALSE)
+           axes = FALSE,
+           xlab = "years", ylab = "Survival proportion")
       axis(1); axis(2)
       legend("bottom", bty = "n", lwd = 2,
              legend = c("High eigengene", "Low eigengene"),
