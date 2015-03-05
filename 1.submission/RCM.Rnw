@@ -557,14 +557,6 @@ In any case, the low ICC might suggest high reproducibility of the covariances b
 <<dlbcl_orange, echo = FALSE, message=FALSE, results='hide'>>=
 @
 
-To further investigate the low ICC, we refitted the RCM on the \Sexpr{length(orange.genes)} orange genes only which yielded $\text{ICC}(\Sexpr{round(orange.rcm$nu, 2)}) = \Sexpr{round(with(orange.rcm, ICC(nu, nrow(Psi))),3)}$.
-Subsequently the model repeatedly fitted on \Sexpr{length(orange.genes)} randomly chosen genes \Sexpr{length(rand.rcm)} times to gauge the size of the ICC without the selection bias.
-This gave and mean ICC (lower quartile, upper quartile) of \Sexpr{mean(sapply(rand.rcm, get.ICC))} (\Sexpr{summary(sapply(rand.rcm, get.ICC))[c("1st Qu.", "3rd Qu.")]})
-suggesting that while there indeed is a significant selection bias, there seems to be a high study homogeneity by low ICC under randomly selected genes.
-
-The test for null hypothesis of no study heterogeneity, $\nu = \infty$, is clearly rejected with a $p$~value of \Sexpr{signif(get.TestPValue(homogeneity.rcm, orange.rcm), 2)}.
-The mean (sd) of the fitted $\hat{\nu}$ on the \Sexpr{length(homogeneity.rcm)} permuted datasets was $\Sexpr{round(mean(sapply(homogeneity.rcm, "[[", "nu")),1)}, (\Sexpr{round(sd(sapply(homogeneity.rcm, "[[", "nu")),2)})$.
-
 \fig{\Sexpr{dlbcl_plot_2}}{0.8\textwidth}{Top left: dendrograms of the hierarchical clustering, the identified modules, and the correlation matrix. Top right: the correlation network as laid out by the Fruchterman-Reingold algorithm \citep{Fruchterman1991} using soft-thresholded edge-weights. The nodes are colored after the identified modules with sizes proportional to the node connectivity (defined by row sums of $\hat{\vec{R}}$). The opacity of the edges are drawn as function of the edge weight. Bottom: A Hierarchical edge bundling representation of the network. Negative and positive correlations are colored blue and red, respectively.
 }
 
@@ -578,6 +570,14 @@ The bottom plot shows the graph radially laid out and using hierarchical edge bu
 Table \ref{tab:dlbcl_mod_tab} shows the top genes within each module.
 As seen e.g.\ in the green module, genes from the same gene family are clustered together.
 
+To further investigate the low ICC, we refitted the RCM on the subset of the \Sexpr{length(orange.genes)} orange genes which yielded an
+$\text{ICC}(\Sexpr{round(orange.rcm$nu, 2)}) = \Sexpr{round(with(orange.rcm, ICC(nu, nrow(Psi))),3)}$.
+Subsequently the model was repeatedly fitted on \Sexpr{length(orange.genes)} randomly chosen genes \Sexpr{length(rand.rcm)} times to gauge the size of the ICC without the selection bias.
+This resulted in a mean ICC (lower quartile, upper quartile) of \Sexpr{round(mean(sapply(rand.rcm, get.ICC)),3)} (\Sexpr{round(summary(sapply(rand.rcm, get.ICC))[c("1st Qu.", "3rd Qu.")],3)})
+suggesting that, while there is indeed a significant selection bias, there seems to be a high study homogeneity by low ICC under randomly selected genes.
+
+The test for null hypothesis of no study heterogeneity, $\nu = \infty$, is clearly rejected with a $p$~value of \Sexpr{signif(get.TestPValue(homogeneity.rcm, orange.rcm), 2)}.
+The mean (sd) of the fitted $\hat{\nu}$ on the \Sexpr{length(homogeneity.rcm)} permuted datasets was $\Sexpr{round(mean(sapply(homogeneity.rcm, "[[", "nu")),1)}, (\Sexpr{round(sd(sapply(homogeneity.rcm, "[[", "nu")),2)})$ compared to $\hat{\nu}= \Sexpr{round(orange.rcm$nu, 2)}$ in the observed dataset.
 
 Next, the modules were screened for biological relevance using GO (Gene Ontology) enrichment analysis.
 \ref{suppB} shows the significant GO-terms at significance level \Sexpr{dlbcl.par$go.alpha.level} for each module in which the most GO-terms appear highly relevant to the pathology of DLBCL.
@@ -727,9 +727,8 @@ Therefore, an increased focus should also be appointed to efficiently aggregatin
 As an addition to the discriminant analysis toolbox, we recognize that further and more sophisticated simulation experiments are needed to explore scenarios where HDA should be considered a serious alternative.
 
 \section*{Acknowledgments}
-We thank Martin Raussen and Jon Johnsen for help with some of the mathematical proofs.
-% We also thank Karen Dyk\ae{}r for her assistance on the biological interpretation of the results.
-The helpful statistical comments from Steffen Falgreen were much appreciated. As were the help on the microarray preprocessing workflow from Andreas Petri. The technical assistance from Alexander Schmitz, Julie S.\ B\o{}dker, Ann-Maria Jensen, Louise H. Madsen, and Helle H\o{}holt is also greatly appreciated.
+We thank Martin Raussen and Jon Johnsen for thier assistance on some of the mathematical proofs.
+The helpful statistical comments from Steffen Falgreen were much appreciated. The technical assistance from Alexander Schmitz, Julie S.\ B\o{}dker, Ann-Maria Jensen, Louise H. Madsen, and Helle H\o{}holt is also greatly appreciated.
 
 
 \begin{supplement}

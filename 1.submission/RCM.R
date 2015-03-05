@@ -403,6 +403,7 @@ dev.off()
 # DLBCL analysis
 #
 
+
 ## ---- dlbcl_analysis ----
 load("studies.RData")
 load("gep.ensg.RData")
@@ -479,10 +480,6 @@ dlbcl.clust <- flashClust(as.dist(1 - dlbcl.adjMat), method = dlbcl.par$linkage)
 dlbcl.modules <- labels2colors(cutree(dlbcl.clust, k = 5))
 dlbcl.modules[dlbcl.modules == "yellow"] <- "orange"  # Change some bad colors
 dlbcl.modules[dlbcl.modules == "turquoise"] <- "purple"
-
-cols <- unique(dlbcl.modules)
-plot(seq_along(cols), col = cols, pch = 15, cex = 10)
-
 names(dlbcl.modules) <- dlbcl.clust$labels
 
 dlbcl.g <- graph.adjacency(dlbcl.cor, mode = "undirected",
@@ -775,7 +772,7 @@ if (!exists("rand.rcm") || recompute) {
     nu <- sum(dlbcl.ns) + ncol(dlbcl.S[[1]]) + 1
     psi <- c(nu - ncol(dlbcl.S[[1]]) - 1)*correlateR:::pool(dlbcl.S, dlbcl.ns)
 
-    rand.rcm.i <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = FALSE,
+    rand.rcm.i <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE,
                           Psi.init = psi, nu.init = nu, eps = 0.01,
                           max.ite = 1500)
     dimnames(rand.rcm.i$Psi) <- dimnames(dlbcl.S[[1]])
@@ -804,7 +801,7 @@ if (!exists("homogeneity.rcm") || recompute) {
     nu <- sum(dlbcl.ns) + ncol(dlbcl.S[[1]]) + 1
     psi <- c(nu - ncol(dlbcl.S[[1]]) - 1)*correlateR:::pool(dlbcl.S, dlbcl.ns)
 
-    rand.rcm.i <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = FALSE,
+    rand.rcm.i <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE,
                           Psi.init = psi, nu.init = nu, eps = 0.01,
                           max.ite = 1500)
     dimnames(rand.rcm.i$Psi) <- dimnames(dlbcl.S[[1]])
