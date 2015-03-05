@@ -18,6 +18,7 @@ library("topGO")
 library("igraph")
 library("MCMCpack")
 library("dplyr")
+
 if (file.exists("saved.RData")) load("saved.RData")
 
 # Multicore support
@@ -98,6 +99,10 @@ misclassificationRisk <- function(x) {
   return((s - sum(diag(x)))/s)
 }
 
+misclassificationRiskSE <- function(phat, n) {
+  return(sqrt(phat*(1 - phat)/n))
+}
+
 accuracy <- function(x) {
   return(sum(diag(x))/sum(x))
 }
@@ -149,7 +154,7 @@ par.ne <- list(k = 3,
                n.obs = seq(5, 11, by = 1))
 
 if (!exists("df.numerical") || recompute) {
-  set.seed(987654321) #set.seed(64403101)
+  set.seed(987654321)
   st <- proc.time()
   res <- list()
   for (i in seq_along(par.ne$n.obs)) {
@@ -293,7 +298,9 @@ if (!exists("misclassification.risks") || recompute) {
 ## ---- hda_table_res ----
 # Formatting results in misclassification.risks
 cm  <- rapply(misclassification.risks, colMeans)
-csd <- rapply(misclassification.risks, colSds)
+csd <- misclassificationRiskSE(cm, par.xda$n.runs)
+# csd2 <- rapply(misclassification.risks, colSds)/sqrt(par.xda$n.runs)
+# cbind(csd, csd2)
 tmp <- t(simplify2array(strsplit(names(cm), "\\.")))
 
 # Format
@@ -392,9 +399,6 @@ dev.off()
 
 
 
-
-
-
 #
 # DLBCL analysis
 #
@@ -403,6 +407,8 @@ dev.off()
 load("studies.RData")
 load("gep.ensg.RData")
 studies <- studies[studies$Study != "Celllines", ]
+gep <- gep[grep("Celllines", names(gep), invert = TRUE)]
+
 dlbcl.dims <- sapply(rev(gep)[-1], dim)
 
 dlbcl.par <- list(top.n = 300,
@@ -428,10 +434,13 @@ if (!exists("dlbcl.rcm") || !exists("var.pool") || recompute) {
   dimnames(dlbcl.rcm$Psi) <- dimnames(dlbcl.S[[1]])
   resave(dlbcl.rcm, file = "saved.RData")
 }
+
 # Expected covariance matrix
 dlbcl.exp <- with(dlbcl.rcm, Psi2Sigma(Psi, nu))
 dlbcl.cor <- cov2cor(dlbcl.exp)
 dlbcl.adjMat <- abs(dlbcl.cor)
+
+
 
 
 ## ---- dlbcl_mappings ----
@@ -463,14 +472,17 @@ map2hugo <- function(ensg) {
 }
 
 
-
-
 ## ---- dlbcl_clustering ----
 dlbcl.clust <- flashClust(as.dist(1 - dlbcl.adjMat), method = dlbcl.par$linkage)
 
 # Cluster
 dlbcl.modules <- labels2colors(cutree(dlbcl.clust, k = 5))
-dlbcl.modules[dlbcl.modules == "yellow"] <- "orange"
+dlbcl.modules[dlbcl.modules == "yellow"] <- "orange"  # Change some bad colors
+dlbcl.modules[dlbcl.modules == "turquoise"] <- "purple"
+
+cols <- unique(dlbcl.modules)
+plot(seq_along(cols), col = cols, pch = 15, cex = 10)
+
 names(dlbcl.modules) <- dlbcl.clust$labels
 
 dlbcl.g <- graph.adjacency(dlbcl.cor, mode = "undirected",
@@ -535,20 +547,6 @@ if (!file.exists("figure/dlbcl_plot_2-1.png") || recompute) {
     return(2*apply(x, 2, function(x) (x - min(x))/max(x - min(x))) - 1)
   }
   points(scaleToLayout(gr$layout), pch = 16, cex = 0.7)
-
-
-  #   # PANEL
-  #   get <- dlbcl.modules == "yellow"
-  #   gr <- plotModuleGraph(abs(thresholded)[get, get],
-  #                         labels = map2hugo(topn(rowSums(abs(dlbcl.cor[get, get])), 16)),
-  #                         diff.exprs = 3*get.size(abs(dlbcl.cor[get, get])) + 3,
-  #                         layout = layout.custom,
-  #                         mark.shape = .5,
-  #                         ecol = "black",
-  #                         vcol = "yellow")
-  #   points(scaleToLayout(gr$layout), pch = 16, cex = 0.7)
-
-
 
   # PANEL C
   plotHierarchicalEdgeBundles(phylo, dlbcl.g, beta = 0.95,
@@ -662,9 +660,6 @@ latex(go.table[, -c(1, 3)],
       longtable = TRUE,
       lines.page = 80,
       file = "")
-
-
-
 ## ---- end ----
 
 
@@ -736,9 +731,100 @@ for (j in 1:2) {
       legend("bottom", bty = "n", lwd = 2,
              legend = c("High eigengene", "Low eigengene"),
              col = c(col[i], "black"), horiz = TRUE)
-      legend("topright", legend = paste(col[i], "eigengene"), bty = "n")
+      legend("topright", legend = paste(col[i], "eigengene"), bty = "n",
+             text.col = col[i])
     }
   }
   title(switch(j, "GSE10846 CHOP", "GSE10846 R-CHOP"), xpd = TRUE)
 }
-## ----
+## ---- end ----
+
+
+
+## ---- dlbcl_orange ----
+
+# Refit the model on the orange module only
+orange.genes <- names(which(dlbcl.modules == "orange"))
+
+if (!exists("orange.rcm") || recompute) {
+
+  gep.sub <- lapply(gep, function(x) exprs(x)[orange.genes, ])
+  dlbcl.ns  <- sapply(gep.sub, ncol)
+  dlbcl.S   <- lapply(gep.sub, function(x) correlateR::scatter(t(x)))
+  nu <- sum(dlbcl.ns) + ncol(dlbcl.S[[1]]) + 1
+  psi <- c(nu - ncol(dlbcl.S[[1]]) - 1)*correlateR:::pool(dlbcl.S, dlbcl.ns)
+
+  orange.rcm <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE,
+                        Psi.init = psi, nu.init = nu, eps = 0.01,
+                        max.ite = 1500)
+  dimnames(orange.rcm$Psi) <- dimnames(dlbcl.S[[1]])
+
+  resave(orange.rcm, file = "saved.RData")
+}
+
+# Fit model with random genes of the same size a the orange module
+set.seed(10)
+if (!exists("rand.rcm") || recompute) {
+  rand.rcm <- vector("list", 1000)
+
+  for (i in seq_along(rand.rcm)) {
+    rand.genes <- sample(names(var.pool), length(orange.genes))
+    gep.sub <- lapply(gep, function(x) exprs(x)[rand.genes, ])
+    dlbcl.ns  <- sapply(gep.sub, ncol)
+    dlbcl.S   <- lapply(gep.sub, function(x) correlateR::scatter(t(x)))
+    nu <- sum(dlbcl.ns) + ncol(dlbcl.S[[1]]) + 1
+    psi <- c(nu - ncol(dlbcl.S[[1]]) - 1)*correlateR:::pool(dlbcl.S, dlbcl.ns)
+
+    rand.rcm.i <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = FALSE,
+                          Psi.init = psi, nu.init = nu, eps = 0.01,
+                          max.ite = 1500)
+    dimnames(rand.rcm.i$Psi) <- dimnames(dlbcl.S[[1]])
+    rand.rcm[[i]] <- rand.rcm.i
+    cat(i, "\n"); flush.console()
+  }
+
+  resave(rand.rcm, file = "saved.RData")
+}
+
+
+# Do the test for homogeneitiy
+set.seed(100)
+if (!exists("homogeneity.rcm") || recompute) {
+  homogeneity.rcm <- vector("list", 1000)
+  dat <- do.call(rbind, lapply(gep, function(x) t(exprs(x)[orange.genes, ])))
+  dat <- data.frame(dat)
+  class.lab <- rep(names(gep), sapply(gep, ncol))
+
+  for (i in seq_along(homogeneity.rcm)) {
+
+    s.class.lab <- sample(class.lab)
+    gep.sub <- split(dat, s.class.lab)
+    dlbcl.ns  <- sapply(gep.sub, nrow)
+    dlbcl.S   <- lapply(gep.sub, scatter)
+    nu <- sum(dlbcl.ns) + ncol(dlbcl.S[[1]]) + 1
+    psi <- c(nu - ncol(dlbcl.S[[1]]) - 1)*correlateR:::pool(dlbcl.S, dlbcl.ns)
+
+    rand.rcm.i <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = FALSE,
+                          Psi.init = psi, nu.init = nu, eps = 0.01,
+                          max.ite = 1500)
+    dimnames(rand.rcm.i$Psi) <- dimnames(dlbcl.S[[1]])
+    homogeneity.rcm[[i]] <- rand.rcm.i
+    cat(i, "\n"); flush.console()
+  }
+
+  resave(homogeneity.rcm, file = "saved.RData")
+}
+
+
+get.ICC <- function(x) {
+  with(x, ICC(nu, nrow(Psi)))
+}
+
+get.TestPValue <- function(the.list, the.object) {
+  n <- sum(sapply(the.list, "[[", "nu") < the.object$nu) + 1
+  N <- length(the.list) + 1
+  return(n / N)
+}
+
+
+## ---- end ----
