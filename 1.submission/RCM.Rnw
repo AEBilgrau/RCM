@@ -524,7 +524,7 @@ Lastly, the datasets were reduced to \Sexpr{dim(gep[[1]])["Features"]} common ge
 
 
 \subsubsection*{Analysis}
-A coexpression network (or weighted correlation network) analysis integrating all datasets was considered.
+A coexpression network (or weighted correlation network) ana\-ly\-sis integrating all datasets was carried out.
 For each dataset the scatter matrix $\vS_i$ of the top \Sexpr{dlbcl.par$top.n} most variable genes (as measured by the pooled variance across all studies) was computed as the sufficient statistics along with the number of samples.
 Hence, we investigate \Sexpr{format(dlbcl.par$top.n*(dlbcl.par$top.n + 1)/2, big.mark = ",")} pairwise interactions.
 
