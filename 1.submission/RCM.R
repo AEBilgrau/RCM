@@ -26,6 +26,11 @@ library("foreach")
 library("doMC") #library("doParallel") # Use this package on windows
 registerDoMC(detectCores())
 
+num2col <- c("indianred", "steelblue", "tan", "coral", "slategrey")
+#c("#C55F4B", "#98BE53", "#A463B5", "#94B9B5", "#614051")
+#names(num2col) <- c("Coral", "Pistachio", "Orchid", "Viridian", "Eggplant")
+
+
 ## ---- auxiliary_functions ----
 
 #
@@ -175,7 +180,7 @@ if (!exists("df.numerical") || recompute) {
 df <- aggregate(cbind(SSE.rcm.em, SSE.rcm.mle, SSE.rcm.pool) ~
                   n + nu + k + p, median, data = df.numerical)
 
-plot(df$n, df$SSE.rcm.em, col = "blue", type = "b", axes = FALSE,
+plot(df$n, df$SSE.rcm.em, col = num2col[3], type = "b", axes = FALSE,
      xlab = expression(n = n[i]),
      ylim = range(df[,5]),
      ylab = "median SSE", pch = 15, lty = 1,
@@ -191,11 +196,12 @@ legend("bottomleft", inset = 0.01, bty = "n", horiz = TRUE,
 axis(1)
 axis(2)
 grid()
-lines(df$n, df$SSE.rcm.pool, col = "red", type = "b", pch = 16, lty = 2, lwd = 2)
-lines(df$n, df$SSE.rcm.mle, col = "orange", type = "b", pch = 17, lty = 3,lwd=2)
+
+lines(df$n, df$SSE.rcm.pool, col = num2col[4], type = "b", pch=16, lty=2, lwd=2)
+lines(df$n, df$SSE.rcm.mle, col = num2col[5], type = "b", pch=17, lty=3, lwd=2)
 legend("topright", legend = c("EM", "pool", "Approx. MLE"),
        lty = 1:4, pch = c(15, 16, 17), lwd = 2, bty = "n",
-       col = c("blue", "red", "orange"))
+       col = num2col[c(3,4,5)])
 ## ---- end ----
 
 
@@ -355,8 +361,8 @@ latex(tmp, file = "",
       cellTexCmds = cmd,
       label = "HDA_tab",
       caption.loc = "bottom",
-      caption = paste("The misclassification risk for the different scenarios.",
-                      "The minimum",
+      caption = paste("The estimated misclassification risk for the different",
+                      "scenarios. The minimum",
                       "and maximum misclassification risks are highlighted in",
                       "green and red, respectively."))
 rm(cm, csd, tmp, df.rownames)
@@ -405,10 +411,13 @@ dev.off()
 
 
 ## ---- dlbcl_analysis ----
+the.module <- "indianred"
+
 load("studies.RData")
 load("gep.ensg.RData")
 studies <- studies[studies$Study != "Celllines", ]
 gep <- gep[grep("Celllines", names(gep), invert = TRUE)]
+
 
 dlbcl.dims <- sapply(rev(gep)[-1], dim)
 
@@ -417,7 +426,7 @@ dlbcl.par <- list(top.n = 300,
                   go.alpha.level = 0.01,
                   ontology = "MF",
                   minModuleSize = 20,
-                  threshold = 0.3)
+                  threshold = 0.4)
 
 vars      <- sapply(gep, function(x) rowSds(exprs(x))*(ncol(x) - 1))
 var.pool  <- rowSums(vars)/(sum(sapply(gep, ncol)) - length(gep))
@@ -439,8 +448,6 @@ if (!exists("dlbcl.rcm") || !exists("var.pool") || recompute) {
 # Expected covariance matrix
 dlbcl.exp <- with(dlbcl.rcm, Psi2Sigma(Psi, nu))
 dlbcl.cor <- cov2cor(dlbcl.exp)
-dlbcl.adjMat <- abs(dlbcl.cor)
-
 
 
 
@@ -474,92 +481,142 @@ map2hugo <- function(ensg) {
 
 
 ## ---- dlbcl_clustering ----
-dlbcl.clust <- flashClust(as.dist(1 - dlbcl.adjMat), method = dlbcl.par$linkage)
+n.col <- 256
+keybreaks <- seq(min(dlbcl.cor), max(dlbcl.cor), length.out = n.col)
 
-# Cluster
-dlbcl.modules <- labels2colors(cutree(dlbcl.clust, k = 5))
-dlbcl.modules[dlbcl.modules == "yellow"] <- "orange"  # Change some bad colors
-dlbcl.modules[dlbcl.modules == "turquoise"] <- "purple"
+keycols <- rep("White", n.col - 1)
+tmp <- rle(diff(sign(keybreaks)))
+neg <- tmp$lengths[1]
+pos <- tmp$lengths[3]
+keycols[1:neg] <- colorRampPalette(c("Blue", "White"))(neg)
+keycols[(neg+2):(neg+pos+1)] <- colorRampPalette(c("White", "Red"))(pos)
+
+# Clustering and tree cut
+dlbcl.clust <- flashClust(as.dist(1 - abs(dlbcl.cor)),
+                          method = dlbcl.par$linkage)
+dlbcl.cut <- cutree(dlbcl.clust, k = 5)
+dlbcl.modules <- num2col[dlbcl.cut]
 names(dlbcl.modules) <- dlbcl.clust$labels
 
+# Construct graph
 dlbcl.g <- graph.adjacency(dlbcl.cor, mode = "undirected",
                            weighted = TRUE, diag = FALSE)
-w <- E(dlbcl.g)$weight
-E(dlbcl.g)$color <- alp(ifelse(w < 0, "steelblue","tomato"), abs(w))
-V(dlbcl.g)$name <- map2hugo(V(dlbcl.g)$name)
 
-# Phylo
+
+V(dlbcl.g)$name <- map2hugo(V(dlbcl.g)$name)
+V(dlbcl.g)$color <- dlbcl.modules
+E(dlbcl.g)$color <- keycols[cut(E(dlbcl.g)$weight, keybreaks)]
+
+
+# Phylo / dendrogram
 phylo <- as.phylo(dlbcl.clust)
 phylo$tip.label <- map2hugo(phylo$tip.label)
 ## ---- end ----
 
 
 
-## ---- dlbcl_plot_2 ----
-dlbcl_plot_2 <- "figure/dlbcl_plot_2-1.png"
-if (!file.exists("figure/dlbcl_plot_2-1.png") || recompute) {
-  png(dlbcl_plot_2, width = 1500, height = 2200, res = 150)
+## ---- dlbcl_plot ----
 
-  # LAYOUT
-  layout(rbind(c(8,8,5,6), c(8,8,2,6), c(4,1,3,6), 7),
-         widths = c(4, 1, 15, 15), heights = c(4, 1, 10, 20))
+plotColourMat <- function(x, add = FALSE, ...) {
+  if (missing(x)) x <- matrix(sample(colors())[1:(6*10)], 6, 10)
+  nr <- nrow(x)
+  nc <- ncol(x)
+  if (!add) {
+    plot(1, type = "n", xlab = "", ylab = "", axes = FALSE,
+         xlim = c(.5, nc + .5), ylim = c(.5, nr + .5))
+  }
+  xx <- rep(seq_len(nc), each = nr)
+  yy <- rep(seq(nr, 1), nc)
+  col <- c(x)
+  rect(xx - 0.5, yy - 0.5, xx + 0.5, yy + 0.5, col = col, border = NA, ...)
+  return(invisible(list(x = xx, y = yy, col = col)))
+}
 
-  # PANEL A
-  TOMplot(dissim = abs(dlbcl.cor),
-          dendro = dlbcl.clust,
-          Colors = dlbcl.modules,
-          setLayout = FALSE)
+plotColorkey <- function(breaks, col, add = FALSE, ...) {
+  stopifnot(length(col) + 1 == length(breaks))
+  nb <- length(breaks)
+  if (!add) {
+    plot(breaks, xlim = range(breaks), ylim = c(0,1), type = "n", axes = FALSE,
+         xlab ="", ylab = "")
+  }
+  axis(1)
+  rect(breaks[-nb], 0, breaks[-1], 1, col = col, border = NA, ...)
+}
 
-  # PANEL B
+w <- E(dlbcl.g)$weight
+qan <- quantile(abs(w), prob = 0.95)
+dlbcl_plot <- "figure/dlbcl_plot.png"
+if (!file.exists("figure/dlbcl_plot.png") || recompute) {
+  png(dlbcl_plot, width = 1500*1.1, height = 2200*1.1, res = 200)
+
+  #     LAYOUT
+  lmat <- rbind(c(8,8,5,9), c(8,8,2,0), c(4,1,3,6), 7)
+  lwid <- c(4, 1, 15, 15)
+  lhei <- c(4, 1, 10, 20)
+  layout(lmat, widths = c(4, 1, 15, 15), heights = c(4, 1, 10, 20))
+  op <- par()
+  par(mar = c(0,0,0,0), xaxs = "i", yaxs = "i")
+
+  # PANEL CLASSIFICATIONS
+  o <- dlbcl.clust$order
+  plotColourMat(cbind(dlbcl.modules[o]))
+  plotColourMat(rbind(dlbcl.modules[o]))
+
+  # HEATMAP
+  nc <- ncol(dlbcl.cor)
+  image(dlbcl.cor[o,o][, nc:1], axes = FALSE,
+        breaks = keybreaks, col = keycols)
+
+  # DENDROGRAMS
+  plot(as.dendrogram(dlbcl.clust), leaflab = "none", horiz = TRUE)
+  plot(as.dendrogram(dlbcl.clust), leaflab = "none", axes = FALSE)
+
+  # PANEL GRAPH
   layout.custom <- function(graph,...) {
     l <- layout.circle(graph)
-    layout.fruchterman.reingold(graph, niter = 10000,
+    layout.fruchterman.reingold(graph, niter = 5000,
                                 area = vcount(graph)/2,
                                 maxdelta = vcount(graph),
                                 repulserad = vcount(graph),
-                                weights = E(graph)$weight,
-                                start = l,
-                                ...)
-  }
-  get.size <- function(x) {
-    s <- rowSums(x)
-    return((s - min(s))/max(s))
+                                weights = abs(E(graph)$weight),
+                                start = l, ...)
   }
 
-  topn <- function(x, n = 6) {
-    nms <- names(x)
-    top <- names(tail(sort(x), n = n))
-    ifelse(nms %in% top, nms, "")
-  }
-
-  thresholded <- soft(dlbcl.cor, dlbcl.par$threshold)
-  gr <- plotModuleGraph(abs(thresholded),
-                        labels = "", #map2hugo(topn(rowSums(abs(dlbcl.cor)))),
-                        diff.exprs = 3*get.size(abs(dlbcl.cor)) + 3,
-                        layout = layout.custom,
-                        mark.shape = .5,
-                        ecol = "black",
-                        vcol = dlbcl.modules)
   scaleToLayout <- function(x) {
     return(2*apply(x, 2, function(x) (x - min(x))/max(x - min(x))) - 1)
   }
-  points(scaleToLayout(gr$layout), pch = 16, cex = 0.7)
 
-  # PANEL C
-  plotHierarchicalEdgeBundles(phylo, dlbcl.g, beta = 0.95,
+  tmp.g <- delete.edges(dlbcl.g, which(abs(w) < qan))
+
+  V(tmp.g)$size <- 3
+  E(tmp.g)$width <- 1.5
+  E(tmp.g)$weight
+  l <- layout.custom(tmp.g)
+  plot(tmp.g, layout = l, vertex.label = "")
+
+  # PANEL HEB
+  plotHierarchicalEdgeBundles(phylo, tmp.g, beta = 0.90,
                               cex = 0.7, type = "fan",
                               tip.color = dlbcl.modules,
-                              e.cols = alp(E(dlbcl.g)$color, 0.6))
+                              e.cols = E(tmp.g)$color)
 
-  # Number of genes in modules
+
+  # PANEL COLORKEY
+  par(xaxs = "r", yaxs = "r", mar = c(5.5, 0, 5.5, 0) + 0.5)
+  plotColorkey(keybreaks, keycols)
+
+  # PANEL MODULE OVERVIEW
+  par(xaxs = "i", yaxs = "i", mar = c(0, 0, 0, 0) + 0.1)
   plot(1, type = "n", axes = FALSE, xlab = "", ylab = "")
   tab <- table(dlbcl.modules)
-  legend("left", bty = "n", col = "black", fill = names(tab), cex = 1.2,
+  legend("center", bty = "n", col = "black", fill = names(tab), cex = 1.2,
          title = "Module size",
          legend =  sprintf("n = %-3d (%s)", tab, names(tab)))
+
   dev.off()
 }
 ## ---- end ----
+
 
 
 ## ---- dlbcl_go_analysis ----
@@ -593,6 +650,7 @@ if (!exists("dlbcl.module.genes") || !exists("dlbcl.go.analysis") ||
 
 ## ---- dlbcl_mod_tab ----
 mod.genes <- lapply(dlbcl.module.genes, function(x) paste0(names(x), "_at"))
+
 # Order by rowSums
 dlbcl.exp.sub <- lapply(mod.genes, function(ensg) dlbcl.exp[ensg, ensg])
 dlbcl.exp.sub <- lapply(dlbcl.exp.sub, function(x) {
@@ -717,7 +775,7 @@ for (j in 1:2) {
 
 
   for (i in seq_len(ncol(eg))) {
-    if (col[i] == "orange") {
+    if (col[i] == c(the.module, "tan")[1]) {
       eg.i <- eg[, paste0("ME", col[i])]
       eg.high <- eg.i >= mean(eg.i)
       plot(survfit(meta$OS ~ factor(eg.high)), conf.int = TRUE,
@@ -738,34 +796,34 @@ for (j in 1:2) {
 
 
 
-## ---- dlbcl_orange ----
+## ---- dlbcl_the_module ----
 
-# Refit the model on the orange module only
-orange.genes <- names(which(dlbcl.modules == "orange"))
+# Refit the model on the THE module only
+the.genes <- names(which(dlbcl.modules == the.module))
 
-if (!exists("orange.rcm") || recompute) {
+if (!exists("the.rcm") || recompute) {
 
-  gep.sub <- lapply(gep, function(x) exprs(x)[orange.genes, ])
+  gep.sub <- lapply(gep, function(x) exprs(x)[the.genes, ])
   dlbcl.ns  <- sapply(gep.sub, ncol)
   dlbcl.S   <- lapply(gep.sub, function(x) correlateR::scatter(t(x)))
   nu <- sum(dlbcl.ns) + ncol(dlbcl.S[[1]]) + 1
   psi <- c(nu - ncol(dlbcl.S[[1]]) - 1)*correlateR:::pool(dlbcl.S, dlbcl.ns)
 
-  orange.rcm <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE,
+  the.rcm <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE,
                         Psi.init = psi, nu.init = nu, eps = 0.01,
                         max.ite = 1500)
-  dimnames(orange.rcm$Psi) <- dimnames(dlbcl.S[[1]])
+  dimnames(the.rcm$Psi) <- dimnames(dlbcl.S[[1]])
 
-  resave(orange.rcm, file = "saved.RData")
+  resave(the.rcm, file = "saved.RData")
 }
 
-# Fit model with random genes of the same size a the orange module
+# Fit model with random genes of the same size a the THE module
 set.seed(10)
 if (!exists("rand.rcm") || recompute) {
   rand.rcm <- vector("list", 1000)
 
   for (i in seq_along(rand.rcm)) {
-    rand.genes <- sample(names(var.pool), length(orange.genes))
+    rand.genes <- sample(names(var.pool), length(the.genes))
     gep.sub <- lapply(gep, function(x) exprs(x)[rand.genes, ])
     dlbcl.ns  <- sapply(gep.sub, ncol)
     dlbcl.S   <- lapply(gep.sub, function(x) correlateR::scatter(t(x)))
@@ -788,7 +846,7 @@ if (!exists("rand.rcm") || recompute) {
 set.seed(100)
 if (!exists("homogeneity.rcm") || recompute) {
   homogeneity.rcm <- vector("list", 1000)
-  dat <- do.call(rbind, lapply(gep, function(x) t(exprs(x)[orange.genes, ])))
+  dat <- do.call(rbind, lapply(gep, function(x) t(exprs(x)[the.genes, ])))
   dat <- data.frame(dat)
   class.lab <- rep(names(gep), sapply(gep, ncol))
 

@@ -160,7 +160,7 @@ Hence in the RCM given by \eqref{eq:RCM}, $\vSigma$ can be interpreted as a loca
 The parameter $\nu$ inversely controls the inter-class variation and can thus be considered an inter-class homogeneity parameter of the covariance structure.
 A large $\nu$ corresponds to high study homogeneity and vice versa for small $\nu$.
 This can be further seen as $\vSigma_i$ concentrates around $\vSigma$ for $\nu\to\infty$ which can be interpreted as the inter-study variation goes towards zero for increasing $\nu$.
-Thus, the true underlying covariance matrix $\vSigma$ and the homogeneity parameter $\nu$ are the effects of interest to be estimated in this paper unless stated otherwise.
+Thus, the true underlying covariance matrix $\vSigma$ and the homogeneity parameter $\nu$ are the effects of interest to be estimated in this paper.
 
 These basic properties of the RCM motivates the construction.
 We note that while the reparameterization of \eqref{eq:RCM} has a preferable interpretation, the likelihood is much more complex and often numerically unstable.
@@ -222,14 +222,15 @@ As stated in the following two propositions the likelihood is not log-concave in
   concave in $\vPsi$.
 \end{restatable}
 
+\noindent All proofs have been deferred to Appendix \ref{sec:proofs}.
+
 \begin{restatable}[Concavity in $\nu$]{proposition}{propositionConcavityInNu}
   \label{prop:concavityinnu}
   For fixed positive definite $\vPsi$, the log-likelihood function \eqref{eq:loglik}
   is concave in $\nu$.
 \end{restatable}
 
-\noindent The proofs have been deferred to Appendix \ref{sec:proofs}.
-While the likelihood is not concave in $\vPsi$ we are able to show the existence and uniqueness of a global maximum in $\vPsi$.
+\noindent While the likelihood is not concave in $\vPsi$ we are able to show the existence and uniqueness of a global maximum in $\vPsi$.
 
 \begin{restatable}[Existence and uniqueness]{proposition}{propositionUniqueMax}
 \label{prop:uniquemax}
@@ -269,7 +270,7 @@ for all $j = 1, ..., n_i$ and $i = 1, ..., k$. This suggests the estimators
 \begin{align}
   \label{eq:pooledest}
   \hvPsi_\text{pool}
-  = (\nu - p - 1)\frac{\sum_{i = 1}^k \vS_i}{\sum_{i = 1}^k n_i},
+  = (\nu - p - 1)\frac{\sum_{i = 1}^k \vS_i}{\sum_{i = 1}^k n_i}
   \text{ and }
   \hvSigma_\text{pool}
   = \frac{\sum_{i = 1}^k \vS_i}{\sum_{i = 1}^k n_i}, \qquad \nu > p + 1
@@ -380,12 +381,12 @@ The distribution of $\hat{\nu}$ under the null hypothesis is not tractable.
 However in practice, under $H_0$ or when $\nu$ is extremely large the estimated $\hat{\nu}_\text{obs}$ will be finite as the intra-study variance dominates the total variance.
 We note that the null distribution of $\hat{\nu}$ does not depend on $\vSigma$.
 We propose approximating the distribution of $\hat{\nu}$ under $H_0$ by resampling.
-To do this, the model is simply fitted a large number of times $N$ on datasets re-sampled under $H_0$ with permuted class labels to get $\hat{\nu}_0^{(1)}, ..., \hat{\nu}_0^{(N)}$.
+To do this, the model is simply fitted a large number of times $N$ on datasets re-sampled under $H_0$ mimicked by permuted class labels to get $\hat{\nu}_0^{(1)}, ..., \hat{\nu}_0^{(N)}$.
 As \textit{small} values of $\hat{\nu}$ are critical for $H_0$ approximate acceptance regions can be constructed from $\hat{\nu}_0^{(j)}, j = 1,...,N$. Likewise, an approximation of the $p$~value testing $H_0$ can be obtained by
 \begin{align*}
   P = \frac{1}{N+1}
   \Bigg(
-    1 + \sum_{j=1}^N \bbOne\!\Big[\hat{\nu}_0^{(j)} < \hat{\nu}_\text{obs}\Big]
+    1 + \sum_{j=1}^N \bbOne\!\Big[\hat{\nu}_0^{(j)} < \hat{\nu}_\text{obs}\Big],
   \Bigg)
 \end{align*}
 where $\bbOne[ \,\cdot\, ]$ is the indicator function.
@@ -427,7 +428,7 @@ where the second equality is obtained by $\bbE[S_{ij}|\vSigma] = \Sigma_{ij}$ an
 This equality agrees with the usual ICC as $\bbE[\var(S_{ij}|\Sigma_{ij})]$ can be interpreted as the (expected) within-study variation.
 Using the conditional variance given by $\var(S_{ij}|\vSigma) = \Sigma_{ij}^2 + \Sigma_{ii} \Sigma_{jj}$ the needed quantities can be found.
 To compute an expression for \eqref{eq:ICC} we need to consider the fourth-order moments of the observations.
-From the model, known results of the inverse Wishart distribution, cf.\ \citep{Cook2011, Rosen1988},
+From the model, known results of the inverse Wishart distribution, cf.\ \citep{Cook2011, Rosen1988}, leads to
 \begin{align}
   \label{eq:invwishcovar}
   \cov(\Sigma_{ij}, \Sigma_{kl})
@@ -471,14 +472,6 @@ as should be expected.
 @
 \section{Assessment of the estimation procedures}
 To assess the precision and stability of the estimation procedure we generated data from the hierarchical model \eqref{eq:RCM} for $p = \Sexpr{par.ne[["p"]]}$ variables and $k = \Sexpr{par.ne[["k"]]}$ studies each with an equal number of observations, $n = n_1 = n_2 = n_3$. We chose the parameters $\nu = \Sexpr{par.ne[["nu"]]}$ and $\Psi_{ij} = 1$ for all $i = j$ and $\Psi_{ij} = 0.5$ for all $i \neq j$.
-% \begin{align*}
-% \vPsi =
-%   \begin{bmatrix}
-%      1 & 0.5 & \cdots\\
-%      0.5 & 1 & \cdots\\
-%      \vdots & \vdots & \ddots
-%   \end{bmatrix}.
-% \end{align*}
 The number of observations in each study $n$ was varied in the range $\Sexpr{paste0("[", min(par.ne$n.obs), ",", max(par.ne$n.obs), "]")}$.
 
 We measured the precision of the estimated values against the expected covariance matrix given by \eqref{eq:expcovar}.
@@ -521,7 +514,7 @@ Diffuse large B-cell lymphoma (DLBCL) is an aggressive cancer subtype accounting
 
 \subsubsection*{Data and preprocessing}
 A large amount of DLBCL gene expression datasets are now available online at the NCBI (National Center for Biotechnology Information) Gene Expression Omnibus (GEO) website.
-Ten large-scale DLBCL gene expression studies were downloaded and preprocessed using custom brainarray chip definition files (CDF) \citep{Dai2005} and RMA-normalization using the R-package \texttt{affy} \citep{affy}.
+Ten large-scale DLBCL gene expression studies were downloaded and preprocessed using custom brainarray chip definition files (CDF) \citep{Dai2005} and RMA-normalized using the R-package \texttt{affy} \citep{affy}.
 The corresponding GEO-accession numbers are \Sexpr{grep("XXX", base::unique(studies[,"GSE"]), invert = TRUE, value = TRUE)} based on various microarray platforms.
 The downloaded data together with  a data set from our own laboratory (GSE56315 \citep{DykaerBoegsted2015}) yields a total of \Sexpr{rowSums(dlbcl.dims)["Samples"]} samples with study sizes in the range \Sexpr{paste(range(dlbcl.dims["Samples",]), collapse = "-")}.
 The summarization using brainarray CDFs to Ensembl gene identifiers facilitates cross-platform integration.
@@ -531,7 +524,7 @@ Lastly, the datasets were reduced to \Sexpr{dim(gep[[1]])["Features"]} common ge
 
 
 \subsubsection*{Analysis}
-A co-expression network (or, weighted correlation network) analysis integrating all datasets was considered.
+A coexpression network (or weighted correlation network) analysis integrating all datasets was considered.
 For each dataset the scatter matrix $\vS_i$ of the top \Sexpr{dlbcl.par$top.n} most variable genes (as measured by the pooled variance across all studies) was computed as the sufficient statistics along with the number of samples.
 Hence, we investigate \Sexpr{format(dlbcl.par$top.n*(dlbcl.par$top.n + 1)/2, big.mark = ",")} pairwise interactions.
 
@@ -551,32 +544,32 @@ In any case, the low ICC might suggest high reproducibility of the covariances b
 <<dlbcl_clustering, echo=FALSE, results='hide'>>=
 @
 
-<<dlbcl_plot_2, echo = FALSE, message=FALSE, results='hide'>>=
+<<dlbcl_plot, echo = FALSE, message=FALSE, results='hide'>>=
 @
 
-<<dlbcl_orange, echo = FALSE, message=FALSE, results='hide'>>=
+<<dlbcl_the_module, echo = FALSE, message=FALSE, results='hide'>>=
 @
 
-\fig{\Sexpr{dlbcl_plot_2}}{0.8\textwidth}{Top left: dendrograms of the hierarchical clustering, the identified modules, and the correlation matrix. Top right: the correlation network as laid out by the Fruchterman-Reingold algorithm \citep{Fruchterman1991} using soft-thresholded edge-weights. The nodes are colored after the identified modules with sizes proportional to the node connectivity (defined by row sums of $\hat{\vec{R}}$). The opacity of the edges are drawn as function of the edge weight. Bottom: A Hierarchical edge bundling representation of the network. Negative and positive correlations are colored blue and red, respectively.
+\fig{\Sexpr{dlbcl_plot}}{0.8\textwidth}{Top left: dendrograms of the hierarchical clustering, the identified modules, and the correlation matrix. Top right: the correlation network as laid out by the Fruchterman-Reingold algorithm \citep{Fruchterman1991} using edge-weights. The nodes are colored after the identified modules. The edge colors follow the color key. If the edge weight is numerically less than \Sexpr{round(qan, 3)}, corresponding to the top $95 \%$, the edge is suppressed. Bottom: A Hierarchical edge bundling representation of the network. Edge colors follow the color key. Again, only edges with a weight numerically larger than \Sexpr{round(qan, 3)} are plotted.
 }
 
 Next, we outline one of many possible downstream analysis of the estimated covariance.
 For simplicity we employed standard correlation network analyses to the estimated common correlation matrix $\hat{\vec{R}}$ across all studies.
 To identify clusters with high internal correlation, we used agglomerative hierarchical clustering with \Sexpr{capitalize(dlbcl.clust$method)}-linkage and distance measure defined as 1 minus the absolute value of the correlation.
 The tree was arbitrarily pruned at a height which produce \Sexpr{length(unique(dlbcl.modules))} modules named by colors.
-Figure \ref{\Sexpr{dlbcl_plot_2}} shows these results. A heat-map, the hierarchical tree, and the identified modules are seen at the top left.
+Figure \ref{\Sexpr{dlbcl_plot}} shows these results. A heat-map, the hierarchical tree, and the identified modules are seen at the top left.
 The top-right shows a graphical representation of the matrix better illustrating clusters and their relations.
 The bottom plot shows the graph radially laid out and using hierarchical edge bundling \citep{Holten2006} where the edges are drawn to follow the hierarchical tree.
 Table \ref{tab:dlbcl_mod_tab} shows the top genes within each module.
 As seen e.g.\ in the green module, genes from the same gene family are clustered together.
 
-To further investigate the low ICC, we refitted the RCM on the subset of the \Sexpr{length(orange.genes)} orange genes which yielded an
-$\text{ICC}(\Sexpr{round(orange.rcm$nu, 2)}) = \Sexpr{round(with(orange.rcm, ICC(nu, nrow(Psi))),3)}$.
-Subsequently the model was repeatedly fitted on \Sexpr{length(orange.genes)} randomly chosen genes \Sexpr{length(rand.rcm)} times to gauge the size of the ICC without the selection bias.
+To further investigate the low ICC, we refitted the RCM on the subset of the \Sexpr{length(the.genes)} genes in the \Sexpr{the.module} module which yielded an
+$\text{ICC}(\Sexpr{round(the.rcm$nu, 2)}) = \Sexpr{round(with(the.rcm, ICC(nu, nrow(Psi))),3)}$.
+Subsequently the model was repeatedly fitted on \Sexpr{length(the.genes)} randomly chosen genes \Sexpr{length(rand.rcm)} times to gauge the size of the ICC without the selection bias.
 This resulted in a mean ICC (lower quartile, upper quartile) of \Sexpr{round(mean(sapply(rand.rcm, get.ICC)),3)} (\Sexpr{round(summary(sapply(rand.rcm, get.ICC))[c("1st Qu.", "3rd Qu.")],3)})
 suggesting that, while there is indeed a significant selection bias, there seems to be a high study homogeneity by low ICC under randomly selected genes.
 
-The test for null hypothesis of no study heterogeneity, $\nu = \infty$, is clearly rejected with a $p$~value of \Sexpr{signif(get.TestPValue(homogeneity.rcm, orange.rcm), 2)}.
+The test for null hypothesis of no study heterogeneity, $\nu = \infty$, is clearly rejected with a $p$~value of \Sexpr{signif(get.TestPValue(homogeneity.rcm, the.rcm), 2)}.
 The mean (sd) of the fitted $\hat{\nu}$ on the \Sexpr{length(homogeneity.rcm)} permuted datasets was $\Sexpr{round(mean(sapply(homogeneity.rcm, "[[", "nu")),1)}, (\Sexpr{round(sd(sapply(homogeneity.rcm, "[[", "nu")),2)})$ compared to $\hat{\nu}= \Sexpr{round(orange.rcm$nu, 2)}$ in the observed dataset.
 
 Next, the modules were screened for biological relevance using GO (Gene Ontology) enrichment analysis.
@@ -591,26 +584,24 @@ Next, the modules were screened for biological relevance using GO (Gene Ontology
 Lastly, we checked if the identified modules were prognostic for overall survival (OS) in the CHOP and R-CHOP-treated cohorts of the GSE10846 datasets.
 To do this, the eigengene \cite{Horvath2011} for each module was computed and a multiple Cox proportional hazards model for OS was fitted with the module eigengenes as covariates.
 The module eigengene is simply the first principal of the expression matrix of the module which can thus be represented by a linear combination of the module genes.
-Hence, the module eigengene is a weighted average of the module genes.
 For the most interesting modules, the Kaplan-Meier estimates were computed for groups arising when dichotomizing the values of the corresponding eigengene as above or below the median value.
 These results are seen in Figure \ref{fig:survival_analysis}.
 
-
-<<survival_analysis, echo=FALSE, results='hide', fig.height=1.2*7, fig.width=2*7, fig.pos="tb", fig.scap = "", fig.cap="The top row shows $95\\%$ and $99\\%$ CI for the hazard ratio in the multiple Cox proportional hazards model. The bottom row shows Kaplan-Meier estimates (and $95\\%$ CI) of the orange dichotomized eigengene.">>=
+<<survival_analysis, echo=FALSE, results='hide', fig.height=1.2*7, fig.width=2*7, fig.pos="tb", fig.scap = "", fig.cap=paste("The top row shows $95\\%$ and $99\\%$ CI for the hazard ratio for each eigengene in the multiple Cox proportional hazards model containing all eigengenes. The bottom row shows Kaplan-Meier estimates (and $95\\%$ CI) of the overall survival for patients stratified by the dichotomized", the.module, "eigengene.")>>=
 @
 
-From the survival analysis, the orange module appeared particularly interesting since it marked a gene cluster identifying DLBCL patients with significant improved outcome.
-Therefore a manual screening of the 16 genes within the orange module was performed.
+From the survival analysis, the \Sexpr{the.module} module appeared particularly interesting since it marked a gene cluster identifying DLBCL patients with significantly improved outcome.
+Therefore a manual screening of the \Sexpr{length(the.genes)} genes within the \Sexpr{the.module} module was performed.
 The genes CHI3L1, CHIT1, and LYZ are related to chitin degradation and suggests activated immune system response and inflammation.
 Enzymes related to chitin degradation can possibly originate from macrophages as CHIT1 is expressed by activated macrophages.
-The inflammation and modulated activity of the immune system are further suggested by genes ORM1, PLA2G2D, PLA2G7, IL18, and IGSF6.
-CHIT3L1 (also known as YKL40) has been linked to the AKT anti-apoptotic signaling pathway in glioblastoma \cite{Francescone2011}.
-Some of the remaining, MMP9, ALDH1A1, PTGDS, ADAMDEC1, HSD11B1, APOC1, and CYP27B1 are involved in metalloproteinase degradation and lipid metabolism.
-MMP9 in particular is known to have a central role in proliferation, migration, differentiation, angiogenesis, apoptosis, and host defenses and thus high YKL40 is associated with poor outcome.
+The inflammation and modulated activity of the immune system are further suggested by the genes ORM1, PLA2G2D, PLA2G7, and IL18.
+CHIT3L1 (also known as YKL40) has been linked to the AKT anti-apoptotic signaling pathway in glioblastoma \cite{Francescone2011} and thus high YKL40 is associated with poor outcome,
+Some of the remaining, MMP9, PTGDS, ADAMDEC1, HSD11B1, APOC1, and CYP27B1 are involved in metalloproteinase degradation and lipid metabolism.
+MMP9 in particular is known to have a central role in proliferation, migration, differentiation, angiogenesis, apoptosis, and host defenses.
 Numerous studies have linked altered MMP expression in different human cancers with poor disease prognosis where up-regulation of MMPs are associated with enhanced cancer cell invasion.
-ADAMDEC1 is thought to have a central role in dendrite cell functions and their interactions with germinal center T cells.
+ADAMDEC1 is thought to have a central role in dendrite cell functions and their interactions with germinal center T-cells.
 
-The manual screening and GO-analysis results further corroborates that the identified modules are biologically meaningful and that RCM provides a useful estimate of the covariance.
+The manual screening and GO-analysis results further corroborate that the identified modules are biologically meaningful and that the RCM provides a useful estimate of the covariance.
 
 
 
@@ -622,8 +613,8 @@ The manual screening and GO-analysis results further corroborates that the ident
 \noindent Another application of the RCM is discriminant analysis.
 As seen below, the estimates obtained can be utilized in supervised learning as a intermediate case between linear discriminant analysis (LDA) and quadratic discriminant analysis (QDA).
 
-Suppose $Y$ is a random variable denoting the classes $1, ..., k$ and suppose $\vx$ is a random vector of the explanatory variables.
-Recall that LDA and QDA finds the class $y$ by maximizing
+Suppose $Y$ is a random variable denoting the classes $1$ through $k$ and suppose $\vx$ is a random vector of the explanatory variables.
+Recall that LDA and QDA estimate the class $y$ by maximizing
 \begin{align*}
   P(Y = y | \vX = \vx) =
     \frac{\pi_y f(\vx | Y = y)}
@@ -727,7 +718,7 @@ Therefore, an increased focus should also be appointed to efficiently aggregatin
 As an addition to the discriminant analysis toolbox, we recognize that further and more sophisticated simulation experiments are needed to explore scenarios where HDA should be considered a serious alternative.
 
 \section*{Acknowledgments}
-We thank Martin Raussen and Jon Johnsen for thier assistance on some of the mathematical proofs.
+We thank Martin Raussen and Jon Johnsen for their assistance on some of the mathematical proofs.
 The helpful statistical comments from Steffen Falgreen were much appreciated. The technical assistance from Alexander Schmitz, Julie S.\ B\o{}dker, Ann-Maria Jensen, Louise H. Madsen, and Helle H\o{}holt is also greatly appreciated.
 
 
@@ -850,7 +841,7 @@ which implies
       + \sum_{i = 1}^k \frac{\nu + n_i}{2}\frac{1}{\big(\psi + x_i^2\big)^2}.
 \end{align*}
 \normalsize
-It it easy to find values $\psi$, $n_i$ and $\nu$ for which $\ell''(\psi) > 0$.
+It is straightforward to show there exists a value for $\psi$, $n_i$ and $\nu$ for which $\ell''(\psi) > 0$.
 Since the second derivative is not always negative the log-likelihood $\ell$ is not log-concave.
 \end{proof}
 
@@ -874,11 +865,13 @@ which can be seen to be concave since $n_i \geq 1$ for all $i$ and
 $
   h(x) = \log\!\big(\frac{\Gamma(x + a)}{\Gamma(x)}\big)
 $
-is concave for all $x>0$ and $a > 0$. The concavity of $h$ is easily seen by the fact that
+is concave for all $x>0$ and $a > 0$.
+The concavity of $h$ is easily seen by the fact that
 $
   h''(x) = \psi(x + a) - \psi(x) < 0,
 $
-where $\psi(\cdot)$ is the tri-gamma function which is a well-known monotonically decreasing function.
+where $\psi(\cdot)$ is the tri-gamma function.
+The tri-gamma function is a well-known monotonically decreasing function.
 Hence, the log-likelihood is log-concave in $\nu$.
 \end{proof}
 
@@ -889,7 +882,7 @@ Hence, the log-likelihood is log-concave in $\nu$.
 
 \subsubsection{log-convexity of the multivariate gamma function}
 \label{sec:multigamma}
-The multivariate gamma function $\Gamma_p$ is log-convex as can seen using the following characterization,
+The multivariate gamma function $\Gamma_p$ is log-convex as can be seen using the following characterization,
 \begin{align}
   \label{eq:multigamma}
   \Gamma_p(t) = \pi^{ \frac{1}{2} \binom{p}{2} }
@@ -914,7 +907,7 @@ Hence $\Gamma_p$ is also log-convex.
 \label{sec:negativedefinite}
 This section proves Lemmas \ref{lem:elltominusinfty} and \ref{lem:negativesdefinite} which imply Proposition \ref{prop:uniquemax}.
 
-Before we restate the lemmas and proposition and their proofs, we see that the reparameterisation of the RCM is irrelevant.
+Before we state the lemmas, the proposition, and their proofs, we see that the reparameterisation of the RCM is irrelevant.
 Consider the log-likelihood in \eqref{eq:loglik} assuming $\nu$ fixed.
 The log-likelihood obey
 \begin{align}
@@ -955,9 +948,10 @@ Define the basin of attraction
      \lim_{t \to \infty} \vPsi(t) = \vPsi_i
   \big\},
 \end{align*}
-associated to each stationary point $\vPsi_i$ which is open when $\vPsi_i$ is a maximum\citep[Lemma 4.1]{Khalil2002}.
+associated to each stationary point $\vPsi_i$.
+The basin of attraction is open if $\vPsi_i$ is a maximum \citep[Lemma 4.1]{Khalil2002}.
 By Lemma \ref{lem:negativesdefinite}, $\vPsi_i$ is a always a maximum and hence all $A_i$ are open sets in the set of all positive semi-definite matrices $\calS_+$.
-This partitions the space $\calS_+$ into $N$ disjoint, open sets.
+This partitions the space $\calS_+$ into $N$ disjoint, non-empty, open sets.
 However, this is only possible if $A_i = A_j = \calS_+$ for all $i$ and $j$ and thus there is only a single basin of attraction and maximum of $\ell$.
 \end{proof}
 
