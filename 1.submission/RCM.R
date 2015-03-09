@@ -26,10 +26,13 @@ library("foreach")
 library("doMC") #library("doParallel") # Use this package on windows
 registerDoMC(detectCores())
 
-num2col <- c("indianred", "steelblue", "tan", "coral", "slategrey")
+num2col <- c("gray32", "darkolivegreen3", "mediumorchid3",
+             "lightskyblue3", "coral3")
+cleanName <- function(x) {
+  return(gsub("[0-9]+|dark|medium|light", "", x))
+}
 #c("#C55F4B", "#98BE53", "#A463B5", "#94B9B5", "#614051")
 #names(num2col) <- c("Coral", "Pistachio", "Orchid", "Viridian", "Eggplant")
-
 
 ## ---- auxiliary_functions ----
 
@@ -320,7 +323,6 @@ misclass.df <-
   mutate(is.min = mean==min(mean), is.max = mean==max(mean))
 misclass.df <- as.data.frame(misclass.df)
 
-
 misclass.wide <-
   reshape(misclass.df,
           idvar = c("method", "spherical", "equal"),
@@ -411,7 +413,7 @@ dev.off()
 
 
 ## ---- dlbcl_analysis ----
-the.module <- "indianred"
+the.module <- num2col[3] # = "mediumorchid3"
 
 load("studies.RData")
 load("gep.ensg.RData")
@@ -426,7 +428,7 @@ dlbcl.par <- list(top.n = 300,
                   go.alpha.level = 0.01,
                   ontology = "MF",
                   minModuleSize = 20,
-                  threshold = 0.4)
+                  threshold = NA)
 
 vars      <- sapply(gep, function(x) rowSds(exprs(x))*(ncol(x) - 1))
 var.pool  <- rowSums(vars)/(sum(sapply(gep, ncol)) - length(gep))
@@ -437,7 +439,7 @@ if (!exists("dlbcl.rcm") || !exists("var.pool") || recompute) {
   dlbcl.ns  <- sapply(gep.sub, ncol)
   dlbcl.S   <- lapply(gep.sub, function(x) correlateR::scatter(t(x)))
   nu <- sum(dlbcl.ns) + ncol(dlbcl.S[[1]]) + 1
-  psi <- c(nu - ncol(dlbcl.S[[1]]) - 1)*correlateR:::pool(dlbcl.S, dlbcl.ns)
+  psi <- nu*correlateR:::pool(dlbcl.S, dlbcl.ns)
   dlbcl.rcm <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE,
                        Psi.init = psi, nu.init = nu, eps = 0.01,
                        max.ite = 1500)
@@ -448,7 +450,6 @@ if (!exists("dlbcl.rcm") || !exists("var.pool") || recompute) {
 # Expected covariance matrix
 dlbcl.exp <- with(dlbcl.rcm, Psi2Sigma(Psi, nu))
 dlbcl.cor <- cov2cor(dlbcl.exp)
-
 
 
 ## ---- dlbcl_mappings ----
@@ -463,6 +464,7 @@ if (!exists("gene.info") || recompute) {
                      values = all.genes, mart = mart)
   resave(gene.info, file = "saved.RData")
 }
+
 
 # Mappings between ENSG and GO id
 gid2go <- split(gene.info$go_id, gene.info$ensembl_gene_id)
@@ -481,6 +483,7 @@ map2hugo <- function(ensg) {
 
 
 ## ---- dlbcl_clustering ----
+
 n.col <- 256
 keybreaks <- seq(min(dlbcl.cor), max(dlbcl.cor), length.out = n.col)
 
@@ -498,15 +501,14 @@ dlbcl.cut <- cutree(dlbcl.clust, k = 5)
 dlbcl.modules <- num2col[dlbcl.cut]
 names(dlbcl.modules) <- dlbcl.clust$labels
 
+
 # Construct graph
 dlbcl.g <- graph.adjacency(dlbcl.cor, mode = "undirected",
                            weighted = TRUE, diag = FALSE)
 
-
-V(dlbcl.g)$name <- map2hugo(V(dlbcl.g)$name)
+V(dlbcl.g)$name  <- map2hugo(V(dlbcl.g)$name)
 V(dlbcl.g)$color <- dlbcl.modules
 E(dlbcl.g)$color <- keycols[cut(E(dlbcl.g)$weight, keybreaks)]
-
 
 # Phylo / dendrogram
 phylo <- as.phylo(dlbcl.clust)
@@ -514,9 +516,7 @@ phylo$tip.label <- map2hugo(phylo$tip.label)
 ## ---- end ----
 
 
-
 ## ---- dlbcl_plot ----
-
 plotColourMat <- function(x, add = FALSE, ...) {
   if (missing(x)) x <- matrix(sample(colors())[1:(6*10)], 6, 10)
   nr <- nrow(x)
@@ -539,23 +539,22 @@ plotColorkey <- function(breaks, col, add = FALSE, ...) {
     plot(breaks, xlim = range(breaks), ylim = c(0,1), type = "n", axes = FALSE,
          xlab ="", ylab = "")
   }
-  axis(1)
   rect(breaks[-nb], 0, breaks[-1], 1, col = col, border = NA, ...)
 }
 
 w <- E(dlbcl.g)$weight
-qan <- quantile(abs(w), prob = 0.95)
+dlbcl.par$threshold <- quantile(abs(w), prob = 0.95)
 dlbcl_plot <- "figure/dlbcl_plot.png"
-if (!file.exists("figure/dlbcl_plot.png") || recompute) {
-  png(dlbcl_plot, width = 1500*1.1, height = 2200*1.1, res = 200)
+if (!file.exists("figure/dlbcl_plot.png") || recompute || TRUE) {
+  png(dlbcl_plot, width = 1800, height = 2640, res = 200)
 
-  #     LAYOUT
+  # LAYOUT
   lmat <- rbind(c(8,8,5,9), c(8,8,2,0), c(4,1,3,6), 7)
   lwid <- c(4, 1, 15, 15)
   lhei <- c(4, 1, 10, 20)
   layout(lmat, widths = c(4, 1, 15, 15), heights = c(4, 1, 10, 20))
   op <- par()
-  par(mar = c(0,0,0,0), xaxs = "i", yaxs = "i")
+  par(mar = c(0,0,0,0)+0.1, xaxs = "i", yaxs = "i")
 
   # PANEL CLASSIFICATIONS
   o <- dlbcl.clust$order
@@ -568,16 +567,18 @@ if (!file.exists("figure/dlbcl_plot.png") || recompute) {
         breaks = keybreaks, col = keycols)
 
   # DENDROGRAMS
-  plot(as.dendrogram(dlbcl.clust), leaflab = "none", horiz = TRUE)
-  plot(as.dendrogram(dlbcl.clust), leaflab = "none", axes = FALSE)
+  tmp.dend <- as.dendrogram(dlbcl.clust)
+  plot(rev(tmp.dend), leaflab = "none", horiz = TRUE)
+  abline(v = 5.5, col = "grey", lty = 2)
+  plot(tmp.dend, leaflab = "none", axes = FALSE)
+  abline(h = 5.5, col = "grey", lty = 2)
 
   # PANEL GRAPH
   layout.custom <- function(graph,...) {
     l <- layout.circle(graph)
     layout.fruchterman.reingold(graph, niter = 5000,
                                 area = vcount(graph)/2,
-                                maxdelta = vcount(graph),
-                                repulserad = vcount(graph),
+                                repulserad = vcount(graph)/2,
                                 weights = abs(E(graph)$weight),
                                 start = l, ...)
   }
@@ -586,32 +587,41 @@ if (!file.exists("figure/dlbcl_plot.png") || recompute) {
     return(2*apply(x, 2, function(x) (x - min(x))/max(x - min(x))) - 1)
   }
 
-  tmp.g <- delete.edges(dlbcl.g, which(abs(w) < qan))
-
+  tmp.g <- delete.edges(dlbcl.g, which(abs(w) < dlbcl.par$threshold))
   V(tmp.g)$size <- 3
-  E(tmp.g)$width <- 1.5
-  E(tmp.g)$weight
+  E(tmp.g)$width <- 1.3
+  V(tmp.g)$frame.color <- V(tmp.g)$color
   l <- layout.custom(tmp.g)
   plot(tmp.g, layout = l, vertex.label = "")
+  points(scaleToLayout(l), pch = 16, cex = 0.3)
+
 
   # PANEL HEB
-  plotHierarchicalEdgeBundles(phylo, tmp.g, beta = 0.90,
-                              cex = 0.7, type = "fan",
-                              tip.color = dlbcl.modules,
-                              e.cols = E(tmp.g)$color)
+  # http://github.com/AEBilgrau/HierarchicalEdgeBundles
+  # devtools::install_github("AEBilgrau/HierarchicalEdgeBundles")
+  library("HierarchicalEdgeBundles")
+  E(tmp.g)$width <- 1
+  plotHEB(tmp.g, phylo, beta = 0.85,
+          cex = 0.7, type = "fan",
+          tip.color = dlbcl.modules,
+          e.cols = E(tmp.g)$color)
 
 
   # PANEL COLORKEY
   par(xaxs = "r", yaxs = "r", mar = c(5.5, 0, 5.5, 0) + 0.5)
-  plotColorkey(keybreaks, keycols)
+  plotColorkey(keybreaks, keycols )
+  rect(ybottom = par("usr")[3], xleft = -dlbcl.par$threshold,
+       xright = dlbcl.par$threshold, ytop = par("usr")[4], lwd = 0.5)
+  axis(1, labels = FALSE)
+  axis(3)
 
-  # PANEL MODULE OVERVIEW
+   # PANEL MODULE OVERVIEW
   par(xaxs = "i", yaxs = "i", mar = c(0, 0, 0, 0) + 0.1)
   plot(1, type = "n", axes = FALSE, xlab = "", ylab = "")
   tab <- table(dlbcl.modules)
   legend("center", bty = "n", col = "black", fill = names(tab), cex = 1.2,
          title = "Module size",
-         legend =  sprintf("n = %-3d (%s)", tab, names(tab)))
+         legend =  sprintf("n = %-3d (%s)", tab, cleanName(names(tab))))
 
   dev.off()
 }
@@ -646,8 +656,6 @@ if (!exists("dlbcl.module.genes") || !exists("dlbcl.go.analysis") ||
 
 
 
-
-
 ## ---- dlbcl_mod_tab ----
 mod.genes <- lapply(dlbcl.module.genes, function(x) paste0(names(x), "_at"))
 
@@ -665,8 +673,8 @@ dlbcl.mod.tab.genes <-
   sapply(tmp, function(x) unname(c(map2hugo(x), rep(NA, m - length(x)))))
 
 # First letter capitalized
-cgroup <- gsub("(^|[[:space:]])([[:alpha:]])",
-               "\\1\\U\\2", names(dlbcl.module.genes), perl = TRUE)
+cgroup <- cleanName(names(dlbcl.module.genes))
+cgroup <- gsub("(^|[[:space:]])([[:alpha:]])", "\\1\\U\\2", cgroup, perl = TRUE)
 colnames(dlbcl.mod.tab.genes) <- # Number of gens in each module
   paste0("n = ", colSums(!is.na(dlbcl.mod.tab.genes)))
 
@@ -695,7 +703,9 @@ write.table(dlbcl.mod.tab.genes, file = "SuppB_module_genes.txt",
 
 
 ## ---- GO_tabs ----
-go.table <- do.call(rbind, dlbcl.go.analysis)
+tmp <- dlbcl.go.analysis
+names(tmp) <- cleanName(names(tmp))
+go.table <- do.call(rbind, tmp)
 write.table(go.table, file = "SuppB_go_table.txt", quote = FALSE, sep = "\t")
 go.col <- gsub("(^|[[:space:]])([[:alpha:]])",
                "\\1\\U\\2", gsub("\\.[0-9]+$", "", rownames(go.table)),
@@ -742,7 +752,7 @@ plot.cis <- function(coxph,...) {
   rect(ci95[,3], 1:nrow(ci95) - h, ci95[,4], 1:nrow(ci95) + h)
   segments(x0 = 1, y0 = 0, y1 = 6, col = "darkgrey", lty = 2)
   axis(1, at = axTicks(3), label = formatC(axTicks(3)))
-  axis(2, at = 1:nrow(ci), label = col,
+  axis(2, at = 1:nrow(ci), label = cleanName(col),
        las = 2, tick = FALSE, pos = min(ci99[,3]))
 }
 
@@ -755,7 +765,6 @@ par(mar = c(4, 4, 1, 0) + 0.1, oma = c(0,0,0,0), xpd = TRUE, cex = 1.2,
 layout(cbind(1:2,3:4), heights = c(1,2))
 
 for (j in 1:2) {
-
   meta <- switch(j, metadataLLMPPCHOP, metadataLLMPPRCHOP)
   rownames(meta) <- as.character(meta$GEO.ID)
   expr <- switch(j,
@@ -775,7 +784,7 @@ for (j in 1:2) {
 
 
   for (i in seq_len(ncol(eg))) {
-    if (col[i] == c(the.module, "tan")[1]) {
+    if (col[i] == the.module) {
       eg.i <- eg[, paste0("ME", col[i])]
       eg.high <- eg.i >= mean(eg.i)
       plot(survfit(meta$OS ~ factor(eg.high)), conf.int = TRUE,
@@ -786,8 +795,8 @@ for (j in 1:2) {
       legend("bottom", bty = "n", lwd = 2,
              legend = c("High eigengene", "Low eigengene"),
              col = c(col[i], "black"), horiz = TRUE)
-      legend("topright", legend = paste(col[i], "eigengene"), bty = "n",
-             text.col = col[i])
+      legend("topright", legend = paste(cleanName(col[i]), "eigengene"),
+             bty = "n", text.col = col[i])
     }
   }
   title(switch(j, "GSE10846 CHOP", "GSE10846 R-CHOP"), xpd = TRUE)
@@ -820,7 +829,7 @@ if (!exists("the.rcm") || recompute) {
 # Fit model with random genes of the same size a the THE module
 set.seed(10)
 if (!exists("rand.rcm") || recompute) {
-  rand.rcm <- vector("list", 1000)
+  rand.rcm <- vector("list", 500)
 
   for (i in seq_along(rand.rcm)) {
     rand.genes <- sample(names(var.pool), length(the.genes))
@@ -828,7 +837,7 @@ if (!exists("rand.rcm") || recompute) {
     dlbcl.ns  <- sapply(gep.sub, ncol)
     dlbcl.S   <- lapply(gep.sub, function(x) correlateR::scatter(t(x)))
     nu <- sum(dlbcl.ns) + ncol(dlbcl.S[[1]]) + 1
-    psi <- c(nu - ncol(dlbcl.S[[1]]) - 1)*correlateR:::pool(dlbcl.S, dlbcl.ns)
+    psi <- nu*correlateR:::pool(dlbcl.S, dlbcl.ns)
 
     rand.rcm.i <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE,
                           Psi.init = psi, nu.init = nu, eps = 0.01,
@@ -845,7 +854,7 @@ if (!exists("rand.rcm") || recompute) {
 # Do the test for homogeneitiy
 set.seed(100)
 if (!exists("homogeneity.rcm") || recompute) {
-  homogeneity.rcm <- vector("list", 1000)
+  homogeneity.rcm <- vector("list", 500)
   dat <- do.call(rbind, lapply(gep, function(x) t(exprs(x)[the.genes, ])))
   dat <- data.frame(dat)
   class.lab <- rep(names(gep), sapply(gep, ncol))
@@ -857,8 +866,7 @@ if (!exists("homogeneity.rcm") || recompute) {
     dlbcl.ns  <- sapply(gep.sub, nrow)
     dlbcl.S   <- lapply(gep.sub, scatter)
     nu <- sum(dlbcl.ns) + ncol(dlbcl.S[[1]]) + 1
-    psi <- c(nu - ncol(dlbcl.S[[1]]) - 1)*correlateR:::pool(dlbcl.S, dlbcl.ns)
-
+    psi <- nu*correlateR:::pool(dlbcl.S, dlbcl.ns)
     rand.rcm.i <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE,
                           Psi.init = psi, nu.init = nu, eps = 0.01,
                           max.ite = 1500)

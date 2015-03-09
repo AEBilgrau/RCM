@@ -25,7 +25,8 @@
 \begin{document}
 
 \begin{frontmatter}
-\title{Estimation of a common covariance matrix for multiple classes with applications in meta- and discriminant analysis\thanksref{T1}}
+\title{Estimation of a common covariance matrix for multiple classes with
+       applications in meta- and discriminant analysis\thanksref{T1}}
 \runtitle{Estimation of a common covariance matrix}
 \thankstext{T1}{Supported by MSCNET, EU FP6, CHEPRE, the Danish Agency for Science, Technology, and Innovation as well as Karen Elise Jensen Fonden.}
 
@@ -550,27 +551,36 @@ In any case, the low ICC might suggest high reproducibility of the covariances b
 <<dlbcl_the_module, echo = FALSE, message=FALSE, results='hide'>>=
 @
 
-\fig{\Sexpr{dlbcl_plot}}{0.8\textwidth}{Top left: dendrograms of the hierarchical clustering, the identified modules, and the correlation matrix. Top right: the correlation network as laid out by the Fruchterman-Reingold algorithm \citep{Fruchterman1991} using edge-weights. The nodes are colored after the identified modules. The edge colors follow the color key. If the edge weight is numerically less than \Sexpr{round(qan, 3)}, corresponding to the top $95 \%$, the edge is suppressed. Bottom: A Hierarchical edge bundling representation of the network. Edge colors follow the color key. Again, only edges with a weight numerically larger than \Sexpr{round(qan, 3)} are plotted.
+\fig{\Sexpr{dlbcl_plot}}{0.8\textwidth}{
+Top left: dendrograms of the hierarchical clustering, the identified modules, and a heatmap of the correlation matrix.
+Top right: the correlation network as laid out by the Fruchterman-Reingold algorithm \citep{Fruchterman1991}. The nodes are colored after the identified modules. The edge colors follow the color key of the heatmap. If the edge weight is numerically less than \Sexpr{round(dlbcl.par$threshold, 3)}, corresponding to the $95 \%$ largest values, the edge is suppressed.
+Bottom: A Hierarchical edge bundling representation of the network \citep{Holten2006} where edges loosly follow the dendrogram. Edge colors follow the color key. Again, only edges with a weight numerically larger than \Sexpr{round(dlbcl.par$threshold, 3)} are plotted.
 }
 
 Next, we outline one of many possible downstream analysis of the estimated covariance.
 For simplicity we employed standard correlation network analyses to the estimated common correlation matrix $\hat{\vec{R}}$ across all studies.
 To identify clusters with high internal correlation, we used agglomerative hierarchical clustering with \Sexpr{capitalize(dlbcl.clust$method)}-linkage and distance measure defined as 1 minus the absolute value of the correlation.
-The tree was arbitrarily pruned at a height which produce \Sexpr{length(unique(dlbcl.modules))} modules named by colors.
+The tree was arbitrarily pruned at a height which produces \Sexpr{length(unique(dlbcl.modules))} modules named by colors.
 Figure \ref{\Sexpr{dlbcl_plot}} shows these results. A heat-map, the hierarchical tree, and the identified modules are seen at the top left.
-The top-right shows a graphical representation of the matrix better illustrating clusters and their relations.
-The bottom plot shows the graph radially laid out and using hierarchical edge bundling \citep{Holten2006} where the edges are drawn to follow the hierarchical tree.
+The top-right shows a graphical representation of the matrix which better illustrates the clusters and their relations.
+The bottom plot shows the graph radially laid out and using hierarchical edge bundling \citep{Holten2006} where the edges are guided by the hierarchical tree.
 Table \ref{tab:dlbcl_mod_tab} shows the top genes within each module.
-As seen e.g.\ in the green module, genes from the same gene family are clustered together.
+As seen e.g.\ in the \Sexpr{cleanName(num2col[2])} module, genes from the same gene family are clustered together.
 
-To further investigate the low ICC, we refitted the RCM on the subset of the \Sexpr{length(the.genes)} genes in the \Sexpr{the.module} module which yielded an
+To further investigate the low ICC, we refitted the RCM on the subset of the \Sexpr{length(the.genes)} genes in the \Sexpr{cleanName(the.module)} module for reasons clear later.
+This yielded an
 $\text{ICC}(\Sexpr{round(the.rcm$nu, 2)}) = \Sexpr{round(with(the.rcm, ICC(nu, nrow(Psi))),3)}$.
 Subsequently the model was repeatedly fitted on \Sexpr{length(the.genes)} randomly chosen genes \Sexpr{length(rand.rcm)} times to gauge the size of the ICC without the selection bias.
-This resulted in a mean ICC (lower quartile, upper quartile) of \Sexpr{round(mean(sapply(rand.rcm, get.ICC)),3)} (\Sexpr{round(summary(sapply(rand.rcm, get.ICC))[c("1st Qu.", "3rd Qu.")],3)})
-suggesting that, while there is indeed a significant selection bias, there seems to be a high study homogeneity by low ICC under randomly selected genes.
+This resulted in a mean ICC (lower quartile, upper quartile) of
+$\Sexpr{round(mean(sapply(rand.rcm, get.ICC)),3)}$
+ $(\Sexpr{round(summary(sapply(rand.rcm, get.ICC))[c("1st Qu.", "3rd Qu.")],3)})$
+ suggesting that there is a high study homogeneity under randomly selected genes.
 
-The test for null hypothesis of no study heterogeneity, $\nu = \infty$, is clearly rejected with a $p$~value of \Sexpr{signif(get.TestPValue(homogeneity.rcm, the.rcm), 2)}.
-The mean (sd) of the fitted $\hat{\nu}$ on the \Sexpr{length(homogeneity.rcm)} permuted datasets was $\Sexpr{round(mean(sapply(homogeneity.rcm, "[[", "nu")),1)}, (\Sexpr{round(sd(sapply(homogeneity.rcm, "[[", "nu")),2)})$ compared to $\hat{\nu}= \Sexpr{round(orange.rcm$nu, 2)}$ in the observed dataset.
+The test for the null hypothesis of no study heterogeneity, $\nu = \infty$, is clearly rejected with a $p$~value of \Sexpr{signif(get.TestPValue(homogeneity.rcm, the.rcm), 2)}.
+The mean (sd) of the fitted $\hat{\nu}$ on \Sexpr{length(homogeneity.rcm)} permuted datasets was
+$\Sexpr{round(mean(sapply(homogeneity.rcm, "[[", "nu")),1)}$
+$(\Sexpr{round(sd(sapply(homogeneity.rcm, "[[", "nu")),2)})$
+compared to $\hat{\nu} = \Sexpr{round(the.rcm$nu, 2)}$ in the observed dataset.
 
 Next, the modules were screened for biological relevance using GO (Gene Ontology) enrichment analysis.
 \ref{suppB} shows the significant GO-terms at significance level \Sexpr{dlbcl.par$go.alpha.level} for each module in which the most GO-terms appear highly relevant to the pathology of DLBCL.
@@ -584,14 +594,14 @@ Next, the modules were screened for biological relevance using GO (Gene Ontology
 Lastly, we checked if the identified modules were prognostic for overall survival (OS) in the CHOP and R-CHOP-treated cohorts of the GSE10846 datasets.
 To do this, the eigengene \cite{Horvath2011} for each module was computed and a multiple Cox proportional hazards model for OS was fitted with the module eigengenes as covariates.
 The module eigengene is simply the first principal of the expression matrix of the module which can thus be represented by a linear combination of the module genes.
-For the most interesting modules, the Kaplan-Meier estimates were computed for groups arising when dichotomizing the values of the corresponding eigengene as above or below the median value.
+For the prognostic interesting \Sexpr{cleanName(the.module)} module, the Kaplan-Meier estimates were computed for groups arising when dichotomizing the values of the corresponding eigengene as above or below the median value.
 These results are seen in Figure \ref{fig:survival_analysis}.
 
-<<survival_analysis, echo=FALSE, results='hide', fig.height=1.2*7, fig.width=2*7, fig.pos="tb", fig.scap = "", fig.cap=paste("The top row shows $95\\%$ and $99\\%$ CI for the hazard ratio for each eigengene in the multiple Cox proportional hazards model containing all eigengenes. The bottom row shows Kaplan-Meier estimates (and $95\\%$ CI) of the overall survival for patients stratified by the dichotomized", the.module, "eigengene.")>>=
+<<survival_analysis, echo=FALSE, results='hide', fig.height=1.2*7, fig.width=2*7, fig.pos="tb", fig.scap = "", fig.cap=paste("The top row shows $95\\%$ and $99\\%$ CI for the hazard ratio for each eigengene in the multiple Cox proportional hazards model containing all eigengenes. The bottom row shows Kaplan-Meier estimates (and $95\\%$ CI) of the overall survival for patients stratified by the dichotomized", cleanName(the.module), "eigengene.")>>=
 @
 
-From the survival analysis, the \Sexpr{the.module} module appeared particularly interesting since it marked a gene cluster identifying DLBCL patients with significantly improved outcome.
-Therefore a manual screening of the \Sexpr{length(the.genes)} genes within the \Sexpr{the.module} module was performed.
+From the survival analysis, the \Sexpr{cleanName(the.module)} module appeared particularly interesting since it marked a gene cluster identifying DLBCL patients with significantly improved outcome.
+Therefore a manual screening of the \Sexpr{length(the.genes)} genes within the \Sexpr{cleanName(the.module)} module was performed.
 The genes CHI3L1, CHIT1, and LYZ are related to chitin degradation and suggests activated immune system response and inflammation.
 Enzymes related to chitin degradation can possibly originate from macrophages as CHIT1 is expressed by activated macrophages.
 The inflammation and modulated activity of the immune system are further suggested by the genes ORM1, PLA2G2D, PLA2G7, and IL18.
@@ -975,19 +985,19 @@ If $\lambda_t \to \infty$ then
 This proves the first case where the largest eigenvalue diverge to infinity.
 Suppose $\lambda_t \to 0$ and let
 $
-  C = \sum_{i = 1}^k \frac{(\nu + n_i)}{2} = \frac{k\nu}{2} + \frac{n_\bullet}{2},
+  C = \sum_{i = 1}^k \frac{\nu + n_i}{2} = \frac{k\nu}{2} + \frac{n_\bullet}{2},
 $
 then \eqref{eq:loglik2} can be expressed as
 \begin{align*}
   \ell(\vPsi_t)
   = \frac{k\nu}{2}\log|\vPsi_t| -
-    C \sum_{i = 1}^k \frac{(\nu + n_i)}{2C} \log |\vPsi_t+\vS_i|.
+    C \sum_{i = 1}^k \frac{\nu + n_i}{2C} \log |\vPsi_t+\vS_i|.
 \end{align*}
 Since $\log|\cdot|$ is concave and the above sum is a convex combination, we have
 \begin{align*}
   \ell(\vPsi_t)
   \leq \frac{k\nu}{2}\log|\vPsi_t| -
-     C \log\left| \vPsi_t + \sum_{i = 1}^k \frac{(\nu + n_i)}{2C}\vS_i\right|.
+     C \log\left| \vPsi_t + \sum_{i = 1}^k \frac{\nu + n_i}{2C}\vS_i\right|.
 \end{align*}
 Clearly, the first term goes to $-\infty$ whenever an eigenvalue $\lambda_t \to 0$.
 The matrix in the second term is almost surely positive definite when $n_\bullet = \sum_{a=1}^k x_a \geq p$ and the log determinant will converge to some constant.
@@ -1046,8 +1056,8 @@ The second order derivative is a $\binom{p+1}{2} \times \binom{p+1}{2}$-dimensio
 
 \textbf{Negative definiteness of stationary points.}
 With the above expressions we now show that the Hessian matrix is negative definite in all stationary points.
-Let $\vY = \sum_{(i,j)} y_{ij}E_{ij}$ be a symmetric matrix in the vector space where $\vY \neq \vec{0}$.
-The analog to $\vec{y}^\top \vec{A}\vec{y} = \sum_{ij} A_{ij} y_i y_j < 0$ in our vector space then becomes
+Let $\vY = \sum_{(i,j)} y_{ij}\vE^{ij}$ be a symmetric matrix in the vector space where $\vY \neq \vec{0}$.
+In our vector space we need to show that
 \begin{align*}
   \sum_{i\leq j, k\leq j}
     Y_{ij}
@@ -1055,7 +1065,8 @@ The analog to $\vec{y}^\top \vec{A}\vec{y} = \sum_{ij} A_{ij} y_i y_j < 0$ in ou
     Y_{kl}
     < 0
 \end{align*}
-which amounts to showing that
+holds in every stationary point analogous to $\vec{z}^\top \vec{A}\vec{z} = \sum_{ij} A_{ij} z_i z_j < 0$.
+From the second derivative, this amounts to showing in that every stationary point,
 \small
 \begin{align}
 - k\nu\tr\!\left( \vY\vPsi^{-1} \vY\vPsi^{-1} \right)
@@ -1073,11 +1084,12 @@ Now, by the positive-definiteness of $\vPsi$, let
   \vY &:= \vPsi^{-\frac{1}{2}} \vY \vPsi^{-\frac{1}{2}} \text{ and } \\
   \vS_a &:= \vPsi^{-\frac{1}{2}} \vS_a  \vPsi^{-\frac{1}{2}},
 \end{align*}
-and without loss of generality assume that $\vPsi = \vI$. Hence, the likelihood equation \eqref{eq:loglik2} equated to zero, becomes
+and thus without loss of generality we can assume that $\vPsi = \vI$.
+Hence, the derivative of the likelihood \eqref{eq:dloglik} equated to zero, becomes
 \begin{align*}
   k\nu\vI = \sum_a(n_a + \nu)(\vI + \vS_a)^{-1}
 \end{align*}
-which implies (by multiplication by $\vY$ on each side) that
+which implies (by multiplication by $\vY$ on each side) that every stationary point obey
 \begin{align}
   k\nu\tr(\vY^2)
   %&= \sum_a (n_a + \nu)\tr\!\left(\vY^2(\vI + \vS_a)\right) \notag\\
@@ -1090,7 +1102,7 @@ We substitute \eqref{eq:loglikequation} into \eqref{eq:negativedefinte} to get
   \tr\!\Big(\vY (\vI + \vS_a)^{-1} \vY (\vI + \vS_a)^{-1} - \vY (\vI + \vS_a)^{-1} \vY \Big) \\
   &=  \sum_a (n_a + \nu)
   \tr\!\Big( \vY (\vI + \vS_a)^{-1} \vY \big[ (\vI + \vS_a)^{-1}  - \vI \big]\Big)
-  < 0
+  < 0.
 \end{align*}
 We note that $\vS_a = \vX_a\vX_a^\top$ and
 \begin{align*}
@@ -1110,45 +1122,6 @@ Since $(\vI + \vX_a\vX_a^\top)^{-1}\succ 0$ we obtain that
 \end{align*}
 Again by $(\vI + \vX_a\vX_a^\top)^{-1}\succ 0$ we conclude that $\vY\vX_a = 0$ for all $a = 1,...,k$, i.e.\
 $\vY(\vX_1, ..., \vX_k) = 0$. If $n_\bullet\geq p$ then almost surely $(\vX_1, ..., \vX_k)$ has rank $p$ whereby $\vY=0$.
-
-% Since $n_a + \nu \geq 1$ and $\vI + \vX_a\vX_a^\top \succeq \vI$, it is enough to shown
-% \begin{align*}
-%   \sum_a \tr\!\Big(
-%     \vY\vY\vX_a\big(\vI + \vX_a^\top\vX_a\big)^{-1}\vX_a^\top
-%   \Big)
-%   > 0.
-% \end{align*}
-% Let $\lambda_a$ be the maximum eigenvalue of
-% $\vX_a^\top\vX_a$
-% and let
-% $\lambda_M = \max_a \lambda_a$.
-% Then
-% $\big(\vI + \vX_a\vX_a^\top\big)^{-1} \succeq (1 + \lambda_M)^{-1}\vI$
-% and we need to show
-% \begin{align}
-%   \label{eq:lasteq}
-%   (1 + \lambda_M)^{-1} \sum_a \tr\!\Big( \vY\vY\vX_a\vX_a^\top \Big)
-%   \geq
-%   \tr\!\left( \vY\vY \sum_a \vX_a\vX_a^\top \right),
-%   > 0
-% \end{align}
-% However, as we assume that
-% $\sum_a \vX_a\vX_a^\top \succ 0$,
-% then \eqref{eq:lasteq} holds and the proof is complete.
-
-% Since $\vS_a$ is positive semi-definite, it can be diagonalized $\vS_a = \vU_a \vD_a \vU_a^\top$ by the spectral theorem where the diagonal matrix $\vD_a \succeq 0$ (all non-zero entries are positive) and $\vU_a$ is orthonormal (i.e.\ $\vU_a\vU_a^\top = \vU_a^\top\vU_a = \vI$). Using the diagonalization,
-% \begin{align}
-%   \sum_a (n_a + \nu)\tr\!\Big(
-%     \underbrace{\vU^\top \vY (\vI + \vS_a)^{-1} \vY \vU}_{\succeq 0}
-%     \big[ (\vI + \vD_a)^{-1}  - \vI \big]
-%   \Big)
-%   \leq 0
-%   \label{eq:loglikequation2}
-% \end{align}
-% where the underbraced matrix is positive semi-definite and hence have non-negative diagonal elements.
-% Furthermore, since $\vD_a$ is diagonal also with non-negative elements, the diagonal matrix $(\vI + \vD_a)^{-1}  - \vI$ clearly have non-positive entries and is thus negative semi-definite.
-%
-% Since the trace of a matrix product is the sum of the element-wise products, the trace (and thus the sum) will always be non-positive and hence \eqref{eq:loglikequation2} will always hold.
 \end{proof}
 
 
