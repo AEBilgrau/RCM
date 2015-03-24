@@ -27,7 +27,7 @@ library("doMC") #library("doParallel") # Use this package on windows
 registerDoMC(detectCores())
 
 num2col <- c("gray32", "darkolivegreen3", "mediumorchid3",
-             "lightskyblue3", "coral3")
+             "lightskyblue3", "coral3", "tan")
 cleanName <- function(x) {
   return(gsub("[0-9]+|dark|medium|light", "", x))
 }
@@ -406,11 +406,11 @@ dev.off()
 
 
 
-
+################################################################################
 #
 # DLBCL analysis
 #
-
+################################################################################
 
 ## ---- dlbcl_analysis ----
 the.module <- num2col[3] # = "mediumorchid3"
@@ -420,14 +420,13 @@ load("gep.ensg.RData")
 studies <- studies[studies$Study != "Celllines", ]
 gep <- gep[grep("Celllines", names(gep), invert = TRUE)]
 
-
-dlbcl.dims <- sapply(rev(gep)[-1], dim)
-
+dlbcl.dims <- sapply(gep, dim)
 dlbcl.par <- list(top.n = 300,
                   linkage = "ward",
                   go.alpha.level = 0.01,
                   ontology = "MF",
                   minModuleSize = 20,
+                  n.modules = 5,
                   threshold = NA)
 
 vars      <- sapply(gep, function(x) rowSds(exprs(x))*(ncol(x) - 1))
@@ -450,6 +449,8 @@ if (!exists("dlbcl.rcm") || !exists("var.pool") || recompute) {
 # Expected covariance matrix
 dlbcl.exp <- with(dlbcl.rcm, Psi2Sigma(Psi, nu))
 dlbcl.cor <- cov2cor(dlbcl.exp)
+
+
 
 
 ## ---- dlbcl_mappings ----
@@ -497,7 +498,7 @@ keycols[(neg+2):(neg+pos+1)] <- colorRampPalette(c("White", "Red"))(pos)
 # Clustering and tree cut
 dlbcl.clust <- flashClust(as.dist(1 - abs(dlbcl.cor)),
                           method = dlbcl.par$linkage)
-dlbcl.cut <- cutree(dlbcl.clust, k = 5)
+dlbcl.cut <- cutree(dlbcl.clust, k = dlbcl.par$n.modules)
 dlbcl.modules <- num2col[dlbcl.cut]
 names(dlbcl.modules) <- dlbcl.clust$labels
 
@@ -545,7 +546,7 @@ plotColorkey <- function(breaks, col, add = FALSE, ...) {
 w <- E(dlbcl.g)$weight
 dlbcl.par$threshold <- quantile(abs(w), prob = 0.95)
 dlbcl_plot <- "figure/dlbcl_plot.png"
-if (!file.exists("figure/dlbcl_plot.png") || recompute || TRUE) {
+if (!file.exists("figure/dlbcl_plot.png") || recompute) {
   png(dlbcl_plot, width = 1800, height = 2640, res = 200)
 
   # LAYOUT
@@ -728,33 +729,42 @@ latex(go.table[, -c(1, 3)],
 ## ---- end ----
 
 
-## ---- survival_analysis ----
-plot.cis <- function(coxph,...) {
-  x95 <- summary(cph.fit, conf.int = c(0.95))
-  x99 <- summary(cph.fit, conf.int = c(0.99))
-  ci95 <- x95$conf.int
-  ci99 <- x99$conf.int
-  rng <- range(ci99)
 
-  plot(1, type = "n", xlim = rng, ylim = c(0, nrow(ci99)+1),
+
+
+## ---- survival_analysis ----
+get.cis <- function(coxph) {
+  x95 <- summary(coxph, conf.int = c(0.95))
+  x99 <- summary(coxph, conf.int = c(0.99))
+
+  return(data.frame("x95" = x95$conf.int, "x99" = x99$conf.int))
+}
+
+
+plot.cis <- function(dat, ...) {
+
+  plot(1, type = "n",
+       xlim = range(dat),
+       ylim = c(0, nrow(dat) + 1),
        xlab = "", ylab = "", axes = FALSE, log = "x",
        xaxs = "r", ...)
-  h <- 0.2
-  col <- gsub("^ME", "", rownames(ci95))
-  for (ci in  list(ci95, ci99)) {
-    rect(ci[,3], 1:nrow(ci) - h, ci[,4], 1:nrow(ci) + h,
-         col = alp(col, 0.5), border = NA)
 
-    segments(x0 = ci[,1], y0 = 1:nrow(ci) - 1.5*h, y1 = 1:nrow(ci) + 1.5*h,
-             lwd = 2)
-  }
-  rect(ci99[,3], 1:nrow(ci99) - h, ci99[,4], 1:nrow(ci99) + h)
-  rect(ci95[,3], 1:nrow(ci95) - h, ci95[,4], 1:nrow(ci95) + h)
-  segments(x0 = 1, y0 = 0, y1 = 6, col = "darkgrey", lty = 2)
+  h <- 0.2
+  col <- gsub("^ME", "", rownames(dat))
   axis(1, at = axTicks(3), label = formatC(axTicks(3)))
-  axis(2, at = 1:nrow(ci), label = cleanName(col),
-       las = 2, tick = FALSE, pos = min(ci99[,3]))
+  axis(2, at = seq_along(col), label = cleanName(col), las = 2, tick = FALSE,
+       pos = min(dat))
+
+
+  n.seq <- 1:nrow(dat)
+  rect(dat[,5], n.seq - h, dat[,6], n.seq + h, col = alp(col, 0.5), border = NA)
+  rect(dat[,2], n.seq - h, dat[,3], n.seq + h)
+  rect(dat[,5], n.seq - h, dat[,6], n.seq + h)
+  segments(x0 = dat[,1], y0 = n.seq- 1.5*h, y1 = n.seq + 1.5*h, lwd = 2)
+  segments(x0 = 1, y0 = 0, y1 = 6, col = "darkgrey", lty = 2)
+
 }
+
 
 load("metadata.RData")
 library("WGCNA")
@@ -765,6 +775,7 @@ par(mar = c(4, 4, 1, 0) + 0.1, oma = c(0,0,0,0), xpd = TRUE, cex = 1.2,
 layout(cbind(1:2,3:4), heights = c(1,2))
 
 for (j in 1:2) {
+
   meta <- switch(j, metadataLLMPPCHOP, metadataLLMPPRCHOP)
   rownames(meta) <- as.character(meta$GEO.ID)
   expr <- switch(j,
@@ -774,14 +785,23 @@ for (j in 1:2) {
 
   # Check order
   stopifnot(rownames(meta) == colnames(expr))
+
   res <- moduleEigengenes(t(expr), dlbcl.modules)
   eg <- res$eigengenes
   col <- gsub("^ME", "", colnames(eg))
   eg <- as.data.frame(lapply(eg, function(x) x/sd(x))) # Standardize
 
-  cph.fit <- coxph(meta$OS ~ ., data = eg, x = TRUE, y = TRUE)
-  plot.cis(cph.fit)
+#   # Multivariate
+  cph.fits <- coxph(meta$OS ~ ., data = eg, x = TRUE, y = TRUE)
+  dats <- get.cis(cph.fits)
+  dats <- dats[, -c(2,6)]
+  plot.cis(dats)
 
+  # Univariate
+#   cph.fits <- lapply(eg, function(x) coxph(meta$OS ~ x, x = TRUE, y = TRUE))
+#   dats <- do.call(rbind, lapply(cph.fits, get.cis))
+#   dats <- dats[, -c(2,6)]
+#   plot.cis(dats)
 
   for (i in seq_len(ncol(eg))) {
     if (col[i] == the.module) {
@@ -869,7 +889,7 @@ if (!exists("homogeneity.rcm") || recompute) {
     psi <- nu*correlateR:::pool(dlbcl.S, dlbcl.ns)
     rand.rcm.i <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE,
                           Psi.init = psi, nu.init = nu, eps = 0.01,
-                          max.ite = 1500)
+                          max.ite = 2500)
     dimnames(rand.rcm.i$Psi) <- dimnames(dlbcl.S[[1]])
     homogeneity.rcm[[i]] <- rand.rcm.i
     cat(i, "\n"); flush.console()
