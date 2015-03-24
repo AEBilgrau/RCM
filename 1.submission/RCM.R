@@ -27,7 +27,15 @@ library("doMC") #library("doParallel") # Use this package on windows
 registerDoMC(detectCores())
 
 num2col <- c("gray32", "darkolivegreen3", "mediumorchid3",
-             "lightskyblue3", "coral3", "tan")
+             "lightskyblue3", "coral3")
+
+num2names <- c("Antigen & receptor binding",
+               "Fatty acid binding & peptidase activity",
+               "Inflamation & immuneresponse. Lipid metabolisme.",
+               "Extracellular matrix structure & Growthfactor.",
+               "Cytoskeleton organization")
+names(num2names) <- num2col
+
 cleanName <- function(x) {
   return(gsub("[0-9]+|dark|medium|light", "", x))
 }
@@ -593,6 +601,7 @@ if (!file.exists("figure/dlbcl_plot.png") || recompute) {
   E(tmp.g)$width <- 1.3
   V(tmp.g)$frame.color <- V(tmp.g)$color
   l <- layout.custom(tmp.g)
+#   plot(1)
   plot(tmp.g, layout = l, vertex.label = "")
   points(scaleToLayout(l), pch = 16, cex = 0.3)
 
@@ -602,6 +611,7 @@ if (!file.exists("figure/dlbcl_plot.png") || recompute) {
   # devtools::install_github("AEBilgrau/HierarchicalEdgeBundles")
   library("HierarchicalEdgeBundles")
   E(tmp.g)$width <- 1
+#   plot(1)
   plotHEB(tmp.g, phylo, beta = 0.85,
           cex = 0.7, type = "fan",
           tip.color = dlbcl.modules,
@@ -617,12 +627,23 @@ if (!file.exists("figure/dlbcl_plot.png") || recompute) {
   axis(3)
 
    # PANEL MODULE OVERVIEW
+  tab <- table(dlbcl.modules)
+  go.func <- num2names[match(names(tab), names(num2names))]
+  stopifnot(names(tab) == names(go.func))
+
   par(xaxs = "i", yaxs = "i", mar = c(0, 0, 0, 0) + 0.1)
   plot(1, type = "n", axes = FALSE, xlab = "", ylab = "")
-  tab <- table(dlbcl.modules)
-  legend("center", bty = "n", col = "black", fill = names(tab), cex = 1.2,
-         title = "Module size",
-         legend =  sprintf("n = %-3d (%s)", tab, cleanName(names(tab))))
+  legend(0.7, 1, bty = "n", col = "black", pt.bg = names(tab),
+         cex = 1.2, pch = 22, pt.cex = 3,
+         title = "Modules", legend = capitalize(cleanName(names(tab))),
+         xjust = 0.5, yjust = 0.5)
+  legend(.8, 1, bty = "n", col = "black", cex = 1.2, xjust = 0.5, yjust = 0.5,
+         title = "Size", legend =  sprintf("(%d)", tab))
+  legend(1, 1, bty = "n", col = "black", cex = 1.2, xjust = 0.5, yjust = 0.5,
+         title = "GO function", legend =  rep("", 5))
+  legend(1.12, 1, bty = "n", col = "black", cex = 1.0,
+         title = "", xjust = 0.5, yjust = 0.5,
+         legend =  go.func, y.intersp = 1.25)
 
   dev.off()
 }
@@ -660,11 +681,13 @@ if (!exists("dlbcl.module.genes") || !exists("dlbcl.go.analysis") ||
 ## ---- dlbcl_mod_tab ----
 mod.genes <- lapply(dlbcl.module.genes, function(x) paste0(names(x), "_at"))
 
+stopifnot(all(names(mod.genes) == names(num2names)))
+
 # Order by rowSums
 dlbcl.exp.sub <- lapply(mod.genes, function(ensg) dlbcl.exp[ensg, ensg])
 dlbcl.exp.sub <- lapply(dlbcl.exp.sub, function(x) {
   o <- order(rowSums(x), decreasing = TRUE)
-  x[o,o]
+  return(x[o,o])
 })
 tmp <- lapply(dlbcl.exp.sub, rownames)
 m <- max(table(dlbcl.modules))  # Get largest module
@@ -674,8 +697,9 @@ dlbcl.mod.tab.genes <-
   sapply(tmp, function(x) unname(c(map2hugo(x), rep(NA, m - length(x)))))
 
 # First letter capitalized
-cgroup <- cleanName(names(dlbcl.module.genes))
-cgroup <- gsub("(^|[[:space:]])([[:alpha:]])", "\\1\\U\\2", cgroup, perl = TRUE)
+cgroup <- capitalize(cleanName(names(dlbcl.module.genes)))
+# cgroup <- paste0(cgroup, num2names)
+
 colnames(dlbcl.mod.tab.genes) <- # Number of gens in each module
   paste0("n = ", colSums(!is.na(dlbcl.mod.tab.genes)))
 

@@ -31,13 +31,18 @@
 \thankstext{T1}{Supported by MSCNET, EU FP6, CHEPRE, the Danish Agency for Science, Technology, and Innovation as well as Karen Elise Jensen Fonden.}
 
 \begin{aug}
-\author{\fnms{Anders Ellern} \snm{Bilgrau}\thanksref{m1,m2}
-\ead[label=e1]{abilgrau@math.aau.dk}},
-\author{\fnms{Poul Svante} \snm{Eriksen}\thanksref{m1}
-\ead[label=e2]{svante@math.aau.dk}}
+\author{\fnms{Anders Ellern} \snm{Bilgrau}\thanksref{m1,m2},
+\ead[label=e1]{abilgrau@math.aau.dk}
+}
+\author{\fnms{Poul Svante} \snm{Eriksen}\thanksref{m1},
+\ead[label=e2]{svante@math.aau.dk}
+}
+\author{\fnms{Karen}~\snm{Dybk\ae{}r}\thanksref{m2},
+\ead[label=e3]{k.dybkaer@rn.dk}
+}
 \and
 \author{\fnms{Martin} \snm{B\o{}gsted}\thanksref{m1,m2}
-\ead[label=e3]{mboegsted@dcm.aau.dk}
+\ead[label=e4]{mboegsted@dcm.aau.dk}
 }
 \runauthor{A.\ Bilgrau et al.}
 
@@ -48,22 +53,26 @@ Department of Haematology\\
 Sdr.\ Skovvej 15\\
 DK-9000 Aalborg\\
 \printead{e1}\\
-\phantom{E-mail:}
-\printead*{e3}}
+\phantom{E-mail: }\printead*{e4}\\
+\phantom{E-mail: }\printead*{e3}
+}
 
 \address{
 Department of Mathematical Sciences\\
 Fredrik Bajers Vej 7G\\
 DK-9220 Aalborg \O{}\\
 \printead{e1}\\
-\phantom{E-mail:}
-\printead*{e2}}
+\phantom{E-mail: }\printead*{e2}
+}
 
 \address{
 Department of Clinical Medicine\\
 Sdr.\ Skovvej 15\\
 DK-9000 Aalborg \O{}\\
-\printead{e3}}
+\printead{e4}\\
+\phantom{E-mail: }\printead*{e3}
+}
+
 \end{aug}
 
 \begin{abstract}
@@ -549,10 +558,10 @@ In any case, the low ICC might suggest high reproducibility of the covariances b
 <<dlbcl_clustering, echo=FALSE, results='hide'>>=
 @
 
-<<dlbcl_plot, echo = FALSE, message=FALSE, results='hide'>>=
+<<dlbcl_plot, echo=FALSE, message=FALSE, results='hide'>>=
 @
 
-<<dlbcl_the_module, echo = FALSE, message=FALSE, results='hide'>>=
+<<dlbcl_the_module, echo=FALSE, message=FALSE, results='hide'>>=
 @
 
 \fig{\Sexpr{dlbcl_plot}}{0.8\textwidth}{
@@ -587,6 +596,7 @@ $(\Sexpr{round(sd(sapply(homogeneity.rcm, "[[", "nu")),2)})$
 compared to $\hat{\nu} = \Sexpr{round(the.rcm$nu, 2)}$ in the observed dataset.
 
 Next, the modules were screened for biological relevance using GO (Gene Ontology) enrichment analysis.
+The upper right of Figure~\ref{fig:dlbcl_plot} shows suggested functions of the modules primarily based on the GO analysis.
 \ref{suppB} shows the significant GO-terms at significance level \Sexpr{dlbcl.par$go.alpha.level} for each module in which the most GO-terms appear highly relevant to the pathology of DLBCL.
 
 <<dlbcl_go_analysis, echo=FALSE, results='hide'>>=
@@ -1209,7 +1219,7 @@ This implies
    \vPsi^{-1}\sum_{i=1}^k (\nu + n_i) \vS_i
     = n_\bullet \vec{I}
 \end{align*}
-which suggest the estimators
+which suggests the estimators
 \begin{align}
   \hat{\vPsi}_\text{MLE}
   = \frac{\sum_{i=1}^k (\nu + n_i) \vec{S}_i}{n_\bullet}
