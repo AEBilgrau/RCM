@@ -596,7 +596,7 @@ $(\Sexpr{round(sd(sapply(homogeneity.rcm, "[[", "nu")),2)})$
 compared to $\hat{\nu} = \Sexpr{round(the.rcm$nu, 2)}$ in the observed dataset.
 
 Next, the modules were screened for biological relevance using GO (Gene Ontology) enrichment analysis.
-The upper right of Figure~\ref{fig:dlbcl_plot} shows suggested functions of the modules primarily based on the GO analysis.
+The upper right of Figure~\ref{\Sexpr{dlbcl_plot}} shows suggested functions of the modules primarily based on the GO analysis.
 \ref{suppB} shows the significant GO-terms at significance level \Sexpr{dlbcl.par$go.alpha.level} for each module in which the most GO-terms appear highly relevant to the pathology of DLBCL.
 
 <<dlbcl_go_analysis, echo=FALSE, results='hide'>>=

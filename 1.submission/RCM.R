@@ -26,8 +26,11 @@ library("foreach")
 library("doMC") #library("doParallel") # Use this package on windows
 registerDoMC(detectCores())
 
-num2col <- c("gray32", "darkolivegreen3", "mediumorchid3",
-             "lightskyblue3", "coral3")
+num2col <- c("gray32",
+             "darkolivegreen3",
+             "mediumorchid3",
+             "lightskyblue3",
+             "coral3")
 
 num2names <- c("Antigen & receptor binding",
                "Fatty acid binding & peptidase activity",
@@ -639,8 +642,8 @@ if (!file.exists("figure/dlbcl_plot.png") || recompute) {
          xjust = 0.5, yjust = 0.5)
   legend(.8, 1, bty = "n", col = "black", cex = 1.2, xjust = 0.5, yjust = 0.5,
          title = "Size", legend =  sprintf("(%d)", tab))
-  legend(1, 1, bty = "n", col = "black", cex = 1.2, xjust = 0.5, yjust = 0.5,
-         title = "GO function", legend =  rep("", 5))
+  legend(1.07, 1, bty = "n", col = "black", cex = 1.2, xjust = 0.5, yjust = 0.5,
+         title = "Suggested GO function", legend =  rep("", 5))
   legend(1.12, 1, bty = "n", col = "black", cex = 1.0,
          title = "", xjust = 0.5, yjust = 0.5,
          legend =  go.func, y.intersp = 1.25)
