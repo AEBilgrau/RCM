@@ -214,7 +214,7 @@ Although this work was motivated by gene-gene interaction networks in DLBCL, whe
 \section{A random effects model for the covariance matrix}
 The model below was motivated by ordinary meta-analysis.
 Meta-analysis comes in various flavors corresponding to the assumption on the nature of the inter-study treatment effect.
-Random-effects models (REM) in meta-analysis model the inter-study effects as random variables \cite{DerSimonian1986, Choi2003}.
+Random-effects models (REM) in meta-analysis model the inter-study effects as random variables \citep{DerSimonian1986, Choi2003}.
 In a vein similar to the ordinary meta-analysis approach, we think of the different studies as related but perturbed experiments and propose the following simple random covariance model (RCM) of the observations.
 Let $p$ be the number of features and $k$ the number of classes.
 We model an observation $\vx$ from the $i$'th study as a $p$-dimensional zero-mean multivariate gaussian vector with covariance matrix realized from an inverse Wishart distribution, i.e.\ $\vx$ follows the hierarchical model
@@ -588,7 +588,7 @@ We see that the EM estimation is superior to that of the approximate MLE and mom
 
 
 \subsection{Implementation and availability}
-Algorithm \ref{alg:RCM} and the different estimators are implemented in the statistical programming language R \cite{R} with core functions in \texttt{C++} using packages Rcpp and RcppArmadillo \citep{Eddelbuettel2011, RcppArmadillo}.
+Algorithm \ref{alg:RCM} and the different estimators are implemented in the statistical programming language R \citep{R} with core functions in \texttt{C++} using packages Rcpp and RcppArmadillo \citep{Eddelbuettel2011, RcppArmadillo}.
 They are incorporated in the open-source R-package \texttt{correlateR} freely available for forking and editing at \url{http://github.com/AEBilgrau/correlateR}.
 We refer to the information here for further details and installation instructions.
 This document was prepared with \texttt{knitr} \citep{Xie2013} and LaTeX.
@@ -689,7 +689,7 @@ The upper right of Figure~\ref{\Sexpr{dlbcl_plot}} shows suggested functions of 
 @
 
 Lastly, we checked if the identified modules were prognostic for overall survival (OS) in the CHOP and R-CHOP-treated cohorts of the GSE10846 datasets.
-To do this, the eigengene \cite{Horvath2011} for each module was computed and a multiple Cox proportional hazards model for OS was fitted with the module eigengenes as covariates.
+To do this, the eigengene \citep{Horvath2011} for each module was computed and a multiple Cox proportional hazards model for OS was fitted with the module eigengenes as covariates.
 The module eigengene is simply the first principal of the expression matrix of the module which can thus be represented by a linear combination of the module genes.
 For the prognostic interesting \Sexpr{cleanName(the.module)} module, the Kaplan-Meier estimates were computed for groups arising when dichotomizing the values of the corresponding eigengene as above or below the median value.
 These results are seen in Figure \ref{fig:survival_analysis}.
@@ -702,7 +702,7 @@ Therefore a manual screening of the \Sexpr{length(the.genes)} genes within the \
 The genes CHI3L1, CHIT1, and LYZ are related to chitin degradation and suggests activated immune system response and inflammation.
 Enzymes related to chitin degradation can possibly originate from macrophages as CHIT1 is expressed by activated macrophages.
 The inflammation and modulated activity of the immune system are further suggested by the genes ORM1, PLA2G2D, PLA2G7, and IL18.
-CHIT3L1 (also known as YKL40) has been linked to the AKT anti-apoptotic signaling pathway in glioblastoma \cite{Francescone2011} and thus high YKL40 is associated with poor outcome,
+CHIT3L1 (also known as YKL40) has been linked to the AKT anti-apoptotic signaling pathway in glioblastoma \citep{Francescone2011} and thus high YKL40 is associated with poor outcome,
 Some of the remaining, MMP9, PTGDS, ADAMDEC1, HSD11B1, APOC1, and CYP27B1 are involved in metalloproteinase degradation and lipid metabolism.
 MMP9 in particular is known to have a central role in proliferation, migration, differentiation, angiogenesis, apoptosis, and host defenses.
 Numerous studies have linked altered MMP expression in different human cancers with poor disease prognosis where up-regulation of MMPs are associated with enhanced cancer cell invasion.
@@ -833,7 +833,7 @@ The helpful statistical comments from Steffen Falgreen were much appreciated. Th
 \sname{Supplement A}\label{suppA}
 \stitle{Documents for reproducibility}
 \slink[url]{http://people.math.aau.dk/\~{}abilgrau/RCM/SuppA/}
-\sdescription{The documents and other needed files to perform the analyses to reproduce this article. See the \texttt{README} file.}
+\sdescription{The documents and other needed files to perform the analyses to reproduce this article. See the \texttt{README} file herein.}
 \end{supplement}
 
 \begin{supplement}
@@ -843,6 +843,7 @@ The helpful statistical comments from Steffen Falgreen were much appreciated. Th
 \sdescription{Tables of gene module memberships, auxiliary information, and the significant GO-terms for each identified module.}
 \end{supplement}
 
+% Generate supplement B
 <<GO_tabs, echo=FALSE, results='hide'>>=
 @
 
