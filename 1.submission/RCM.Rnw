@@ -11,7 +11,7 @@
 %\issue{0}
 %\firstpage{1}
 %\lastpage{8}
-\arxiv{arXiv:0000.0000}
+% \arxiv{arXiv:0000.0000}
 
 \startlocaldefs
 \numberwithin{equation}{section}
