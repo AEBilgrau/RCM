@@ -29,15 +29,11 @@
 \usepackage{dsfont}   % For \mathds{1} blackboard bold 1
 \usepackage{hyperref} % For urls and hyperlinks
 
-% For colors
-% \usepackage{color}
-
 % For algorihmns
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 
 % For theorem/props/lemmas
-\usepackage{amsthm}
 \theoremstyle{plain}
 \newtheorem{proposition}{Proposition}
 \newtheorem{lemma}{Lemma}
