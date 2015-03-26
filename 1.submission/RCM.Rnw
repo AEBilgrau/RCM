@@ -180,6 +180,7 @@ Simple inference and interpretation of the introduced parameter measuring the in
 library("knitr")
 options(width = 80)
 opts_chunk$set(size = "footnotesize", fig.align = "center")
+opts_knit$set(stop_on_error = 2L)
 read_chunk("RCM.R")
 @
 
@@ -199,7 +200,7 @@ Beside the many standard statistical methods such as principal component analysi
 Among this expanding list of applications is also an increasing number of high-dimensional applications and datasets publicly available at online repositories.
 
 In high-dimensional datasets the number of features $p$ often far exceed the number of samples $n$.
-Since the number of parameters increases quadratically in $p$ and the sample covariance matrix becomes singular when $p > n$ a plethora of shrinkage and regularization estimators have been proposed to combat the accompanying problems by effectively increasing the degrees of freedom. These examples include the graphical LASSO and ridge estimation of the precision matrix \citep{Friedman2008, VanWieringen2014}.
+Since the number of parameters increases quadratically in $p$ and the sample covariance matrix becomes singular when $p > n$ a plethora of shrinkage and regularization estimators have been proposed to combat the accompanying problems by effectively increasing the degrees of freedom. These examples include the graphical LASSO and ridge estimation of the precision matrix \citep{Friedman2008, vanWieringen2014}.
 Instead of attempting to derive still more sophisticated estimators we attempt to alleviate the problem from a different angle by using more available data and thus effectively increasing $n$.
 While the high-dimensional extension to $p > n$ is important it is out of scope in this paper.
 We restrict ourselves to the case where the total number of samples exceed $p$.
@@ -576,10 +577,14 @@ We benchmark the proposed estimators against the known truth. The benchmarking m
  \var(\Psi_{ij}) = n(\Sigma_{ij}^2 + \Sigma_{ii}\Sigma_{jj}).
 \end{align*}
 
-For each $n = \Sexpr{min(par.ne$n.obs)}, \ldots, \Sexpr{max(par.ne$n.obs)}$, the weighted sum of squared errors for each estimator, $\text{SSE}(\hvSigma)$, were computed for $\Sexpr{par.ne[["n.sims"]]}$ datasets and the median of these values are seen in Figure \ref{fig:numerical_experiment_plot} as function of the number of samples in each dataset $n_i$.
-
-<<numerical_experiment_plot, echo=FALSE, results='markup', fig.pos="tb", fig.height=7/2, fig.width=7, out.width = ".8\\linewidth", fig.scap = "", fig.cap=paste0("The median SSE of ", par.ne$n.sims, " simulations as a function of the number of samples $n_i$ in each of the ", par.ne$k, " studies.")>>=
+<<numerical_experiment_plot, echo=FALSE, results='hide'>>=
 @
+
+For each $n = \Sexpr{min(par.ne$n.obs)}, \ldots, \Sexpr{max(par.ne$n.obs)}$, the weighted sum of squared errors for each estimator, $\text{SSE}(\hvSigma)$, were computed for $\Sexpr{par.ne[["n.sims"]]}$ datasets and the median of these values are seen in Figure \ref{\Sexpr{figure1}} as function of the number of samples in each dataset $n_i$.
+
+\fig{\Sexpr{figure1}}{0.8\textwidth}{
+The median SSE of \Sexpr{par.ne$n.sims} simulations as a function of the number of samples $n_i$ in each of the \Sexpr{par.ne$k} studies.
+}
 
 We see that the EM estimation is superior to that of the approximate MLE and moment estimators.
 
@@ -602,7 +607,7 @@ To reproduce this document see \ref{suppA}.
 @
 
 \subsection{DLBCL meta-analysis}
-Diffuse large B-cell lymphoma (DLBCL) is an aggressive cancer subtype accounting for approximately $30\%-58\%$ of all non-Hodgkin's lymphomas (NHL) \citep{Project1997} which itself constitutes about $90 \%$ of all lymphomas.
+Diffuse large B-cell lymphoma (DLBCL) is an aggressive cancer subtype accounting for $30\%-58\%$ of all non-Hodgkin's lymphomas (NHL) which itself constitutes about $90 \%$ of all lymphomas \citep{Project1997}.
 
 
 \subsubsection*{Data and preprocessing}
@@ -613,7 +618,7 @@ The corresponding GEO-accession numbers are
 and
 \Sexpr{grep("XXX", base::unique(studies[,"GSE"]), invert = TRUE, value = TRUE)[1]}
 based on various microarray platforms.
-The downloaded data together with  a data set from our own laboratory (GSE56315 \citep{DykaerBoegsted2015}) yields a total of \Sexpr{rowSums(dlbcl.dims)["Samples"]} samples with study sizes in the range \Sexpr{paste(range(dlbcl.dims["Samples",]), collapse = "-")}.
+The downloaded data together with  a data set from our own laboratory (GSE56315, \cite{DykaerBoegsted2015}) yields a total of \Sexpr{rowSums(dlbcl.dims)["Samples"]} samples with study sizes in the range \Sexpr{paste(range(dlbcl.dims["Samples",]), collapse = "-")}.
 The summarization using brainarray CDFs to Ensembl gene identifiers facilitates cross-platform integration.
 
 After RMA normalization and summarization, the data were brought to a common scale by quantile normalizing all data to the common cumulative distribution function of all arrays.
@@ -650,7 +655,7 @@ In any case, the low ICC might suggest high reproducibility of the covariances b
 \fig{\Sexpr{dlbcl_plot}}{0.8\textwidth}{
 Top left: dendrograms of the hierarchical clustering, the identified modules, and a heatmap of the correlation matrix.
 Top right: the correlation network as laid out by the Fruchterman-Reingold algorithm \citep{Fruchterman1991}. The nodes are colored after the identified modules. The edge colors follow the color key of the heatmap. If the edge weight is numerically less than \Sexpr{round(dlbcl.par$threshold, 3)}, corresponding to the $95 \%$ largest values, the edge is suppressed.
-Bottom: A Hierarchical edge bundling representation of the network \citep{Holten2006} where edges loosly follow the dendrogram. Edge colors follow the color key. Again, only edges with a weight numerically larger than \Sexpr{round(dlbcl.par$threshold, 3)} are plotted.
+Bottom: A Hierarchical edge bundling representation of the network \citep{Holten2006} where edges loosly follow the dendrogram. Edge colors follow the color key. Only edges with a weight numerically larger than \Sexpr{round(dlbcl.par$threshold, 3)} are plotted.
 }
 
 Next, we outline one of many possible downstream analysis of the estimated covariance.
@@ -688,14 +693,18 @@ The upper right of Figure~\ref{\Sexpr{dlbcl_plot}} shows suggested functions of 
 <<dlbcl_mod_tab, echo=FALSE, results='asis'>>=
 @
 
+<<survival_analysis, echo=FALSE, results='hide'>>=
+@
+
 Lastly, we checked if the identified modules were prognostic for overall survival (OS) in the CHOP and R-CHOP-treated cohorts of the GSE10846 datasets.
 To do this, the eigengene \citep{Horvath2011} for each module was computed and a multiple Cox proportional hazards model for OS was fitted with the module eigengenes as covariates.
 The module eigengene is simply the first principal of the expression matrix of the module which can thus be represented by a linear combination of the module genes.
 For the prognostic interesting \Sexpr{cleanName(the.module)} module, the Kaplan-Meier estimates were computed for groups arising when dichotomizing the values of the corresponding eigengene as above or below the median value.
-These results are seen in Figure \ref{fig:survival_analysis}.
+These results are seen in Figure \ref{\Sexpr{figure3}}.
 
-<<survival_analysis, echo=FALSE, results='hide', fig.height=1.2*7, fig.width=2*7, fig.pos="tb", fig.scap = "", fig.cap=paste("The top row shows $95\\%$ and $99\\%$ CI for the hazard ratio for each eigengene in the multiple Cox proportional hazards model containing all eigengenes. The bottom row shows Kaplan-Meier estimates (and $95\\%$ CI) of the overall survival for patients stratified by the dichotomized", cleanName(the.module), "eigengene.")>>=
-@
+\fig{\Sexpr{figure3}}{\textwidth}{
+The top row shows $95\%$ and $99\%$ CI for the hazard ratio for each eigengene in the multiple Cox proportional hazards model containing all eigengenes. The bottom row shows Kaplan-Meier estimates (and $95\%$ CI) of the overall survival for patients stratified by the dichotomized \Sexpr{cleanName(the.module)} eigengene.
+}
 
 From the survival analysis, the \Sexpr{cleanName(the.module)} module appeared particularly interesting since it marked a gene cluster identifying DLBCL patients with significantly improved outcome.
 Therefore a manual screening of the \Sexpr{length(the.genes)} genes within the \Sexpr{cleanName(the.module)} module was performed.

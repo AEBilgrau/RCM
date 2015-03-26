@@ -194,28 +194,33 @@ if (!exists("df.numerical") || recompute) {
 df <- aggregate(cbind(SSE.rcm.em, SSE.rcm.mle, SSE.rcm.pool) ~
                   n + nu + k + p, median, data = df.numerical)
 
-plot(df$n, df$SSE.rcm.em, col = num2col[3], type = "b", axes = FALSE,
-     xlab = expression(n = n[i]),
-     ylim = range(df[,5]),
-     ylab = "median SSE", pch = 15, lty = 1,
-     main = "")
+figure1 <- "figure1.jpg"
+jpeg(figure1, height=7/2, width=7, units = "in", res = 200)
+{
+  plot(df$n, df$SSE.rcm.em, col = num2col[3], type = "b", axes = FALSE,
+       xlab = expression(n = n[i]),
+       ylim = range(df[,5]),
+       ylab = "median SSE", pch = 15, lty = 1,
+       main = "")
 
-legend_expressions <-
-  sapply(1:3, function(i) {
-    as.expression(substitute(x == y, list(x = as.name(c("k", "nu", "p")[i]),
-                                          y = unique(c(df$k, df$nu, df$p))[i])))
-  })
-legend("bottomleft", inset = 0.01, bty = "n", horiz = TRUE,
-       legend = legend_expressions)
-axis(1)
-axis(2)
-grid()
+  legend_expressions <-
+    sapply(1:3, function(i) {
+      as.expression(substitute(x == y, list(x = as.name(c("k", "nu", "p")[i]),
+                                            y = unique(c(df$k, df$nu, df$p))[i])))
+    })
+  legend("bottomleft", inset = 0.01, bty = "n", horiz = TRUE,
+         legend = legend_expressions)
+  axis(1)
+  axis(2)
+  grid()
 
-lines(df$n, df$SSE.rcm.pool, col = num2col[4], type = "b", pch=16, lty=2, lwd=2)
-lines(df$n, df$SSE.rcm.mle, col = num2col[5], type = "b", pch=17, lty=3, lwd=2)
-legend("topright", legend = c("EM", "pool", "Approx. MLE"),
-       lty = 1:4, pch = c(15, 16, 17), lwd = 2, bty = "n",
-       col = num2col[c(3,4,5)])
+  lines(df$n, df$SSE.rcm.pool, col = num2col[4], type = "b", pch=16, lty=2, lwd=2)
+  lines(df$n, df$SSE.rcm.mle, col = num2col[5], type = "b", pch=17, lty=3, lwd=2)
+  legend("topright", legend = c("EM", "pool", "Approx. MLE"),
+         lty = 1:4, pch = c(15, 16, 17), lwd = 2, bty = "n",
+         col = num2col[c(3,4,5)])
+}
+dev.off()
 ## ---- end ----
 
 
@@ -382,38 +387,38 @@ rm(cm, csd, tmp, df.rownames)
 ## ---- end ----
 
 
-## ---- one_dimensional_loglik ----
-l <- function(psi, k = 1, nu = 3, ni = 1, xi = 1) {
-  k*nu/2*log(psi) - (nu + ni)/2*log(psi + xi^2)
-}
-dl <- function(psi, k = 1, nu = 3, ni = 1, xi = 1)  {
-  k*nu/(2*psi) - (nu + ni)/2 * 1/(psi + xi^2)
-}
-ddl <- function(psi, k = 1, nu = 3, ni = 1, xi = 1)  {
-  - k*nu/(2*psi^2) + (nu + ni)/2 * 1/(psi + xi^2)^2
-}
-par(mfrow = c(1,3), mar = c(2, 2, 2, 0) + 0.2)
-psi <- seq(.9, 10, by = 0.05)
-plot(psi, l(psi),   type = "l", col = "red", lwd = 2, main = "log-likelihood")
-plot(psi, dl(psi),  type = "l", col = "red", lwd = 2, main = "1. derivative")
-plot(psi, ddl(psi), type = "l", col = "red", lwd = 2, main = "2. derivative",
-     ylim = c(-0.01, 0.01))
-abline(h = 0, col = "grey", lty = 2, lwd = 2)
-## ---- end ----
-dev.off()
-
-## ---- log_gamma_ratio ----
-logGammaRatio <- function(x, a) {
-  lgamma(x + a) - lgamma(x) #= log(gamma(x + a)/gamma(x))
-}
-xs <- seq(0.01, 2, by = 0.01)
-par(mfrow = c(1,2), mar = c(2, 2, 0, 0)+ 0.5)
-plot(xs, logGammaRatio(xs, a = 2),    type = "l", xlab = "", ylab = "",
-     col = "red", lwd = 2)
-plot(xs, logGammaRatio(xs, a = 1e-3), type = "l", xlab = "", ylab = "",
-     col = "red", lwd = 2)
-## ---- end ----
-dev.off()
+# ## ---- one_dimensional_loglik ----
+# l <- function(psi, k = 1, nu = 3, ni = 1, xi = 1) {
+#   k*nu/2*log(psi) - (nu + ni)/2*log(psi + xi^2)
+# }
+# dl <- function(psi, k = 1, nu = 3, ni = 1, xi = 1)  {
+#   k*nu/(2*psi) - (nu + ni)/2 * 1/(psi + xi^2)
+# }
+# ddl <- function(psi, k = 1, nu = 3, ni = 1, xi = 1)  {
+#   - k*nu/(2*psi^2) + (nu + ni)/2 * 1/(psi + xi^2)^2
+# }
+# par(mfrow = c(1,3), mar = c(2, 2, 2, 0) + 0.2)
+# psi <- seq(.9, 10, by = 0.05)
+# plot(psi, l(psi),   type = "l", col = "red", lwd = 2, main = "log-likelihood")
+# plot(psi, dl(psi),  type = "l", col = "red", lwd = 2, main = "1. derivative")
+# plot(psi, ddl(psi), type = "l", col = "red", lwd = 2, main = "2. derivative",
+#      ylim = c(-0.01, 0.01))
+# abline(h = 0, col = "grey", lty = 2, lwd = 2)
+# ## ---- end ----
+# dev.off()
+#
+# ## ---- log_gamma_ratio ----
+# logGammaRatio <- function(x, a) {
+#   lgamma(x + a) - lgamma(x) #= log(gamma(x + a)/gamma(x))
+# }
+# xs <- seq(0.01, 2, by = 0.01)
+# par(mfrow = c(1,2), mar = c(2, 2, 0, 0)+ 0.5)
+# plot(xs, logGammaRatio(xs, a = 2),    type = "l", xlab = "", ylab = "",
+#      col = "red", lwd = 2)
+# plot(xs, logGammaRatio(xs, a = 1e-3), type = "l", xlab = "", ylab = "",
+#      col = "red", lwd = 2)
+# ## ---- end ----
+# dev.off()
 
 
 
@@ -556,9 +561,9 @@ plotColorkey <- function(breaks, col, add = FALSE, ...) {
 
 w <- E(dlbcl.g)$weight
 dlbcl.par$threshold <- quantile(abs(w), prob = 0.95)
-dlbcl_plot <- "figure/dlbcl_plot.png"
-if (!file.exists("figure/dlbcl_plot.png") || recompute) {
-  png(dlbcl_plot, width = 1800, height = 2640, res = 200)
+dlbcl_plot <- "figure2.jpg"
+if (!file.exists(dlbcl_plot) || recompute) {
+  jpeg(dlbcl_plot, width = 1800, height = 2640, res = 200)
 
   # LAYOUT
   lmat <- rbind(c(8,8,5,9), c(8,8,2,0), c(4,1,3,6), 7)
@@ -797,57 +802,62 @@ load("metadata.RData")
 library("WGCNA")
 library("survival")
 
-par(mar = c(4, 4, 1, 0) + 0.1, oma = c(0,0,0,0), xpd = TRUE, cex = 1.2,
-    mgp = c(3, 1, 0)*0.75)
-layout(cbind(1:2,3:4), heights = c(1,2))
+figure3 <- "figure3.jpg"
+jpeg(figure3, height = 1.2*7, width = 2*7, units = "in", res = 200)
+{
+  par(mar = c(4, 4, 1, 0) + 0.1, oma = c(0,0,0,0), xpd = TRUE, cex = 1.2,
+      mgp = c(3, 1, 0)*0.75)
+  layout(cbind(1:2,3:4), heights = c(1,2))
 
-for (j in 1:2) {
+  for (j in 1:2) {
 
-  meta <- switch(j, metadataLLMPPCHOP, metadataLLMPPRCHOP)
-  rownames(meta) <- as.character(meta$GEO.ID)
-  expr <- switch(j,
-                 (gep.sub$GEPLLMPPCHOP.ensg)[names(dlbcl.modules), ],
-                 (gep.sub$GEPLLMPPRCHOP.ensg)[names(dlbcl.modules), ])
-  meta <- meta[colnames(expr), ] # Reorder
+    meta <- switch(j, metadataLLMPPCHOP, metadataLLMPPRCHOP)
+    rownames(meta) <- as.character(meta$GEO.ID)
+    expr <- switch(j,
+                   (gep.sub$GEPLLMPPCHOP.ensg)[names(dlbcl.modules), ],
+                   (gep.sub$GEPLLMPPRCHOP.ensg)[names(dlbcl.modules), ])
+    meta <- meta[colnames(expr), ] # Reorder
 
-  # Check order
-  stopifnot(rownames(meta) == colnames(expr))
+    # Check order
+    stopifnot(rownames(meta) == colnames(expr))
 
-  res <- moduleEigengenes(t(expr), dlbcl.modules)
-  eg <- res$eigengenes
-  col <- gsub("^ME", "", colnames(eg))
-  eg <- as.data.frame(lapply(eg, function(x) x/sd(x))) # Standardize
+    res <- moduleEigengenes(t(expr), dlbcl.modules)
+    eg <- res$eigengenes
+    col <- gsub("^ME", "", colnames(eg))
+    eg <- as.data.frame(lapply(eg, function(x) x/sd(x))) # Standardize
 
-#   # Multivariate
-  cph.fits <- coxph(meta$OS ~ ., data = eg, x = TRUE, y = TRUE)
-  dats <- get.cis(cph.fits)
-  dats <- dats[, -c(2,6)]
-  plot.cis(dats)
+    #   # Multivariate
+    cph.fits <- coxph(meta$OS ~ ., data = eg, x = TRUE, y = TRUE)
+    dats <- get.cis(cph.fits)
+    dats <- dats[, -c(2,6)]
+    plot.cis(dats)
 
-  # Univariate
-#   cph.fits <- lapply(eg, function(x) coxph(meta$OS ~ x, x = TRUE, y = TRUE))
-#   dats <- do.call(rbind, lapply(cph.fits, get.cis))
-#   dats <- dats[, -c(2,6)]
-#   plot.cis(dats)
+    # Univariate
+    # cph.fits <- lapply(eg, function(x) coxph(meta$OS ~ x, x = TRUE, y = TRUE))
+    # dats <- do.call(rbind, lapply(cph.fits, get.cis))
+    # dats <- dats[, -c(2,6)]
+    # plot.cis(dats)
 
-  for (i in seq_len(ncol(eg))) {
-    if (col[i] == the.module) {
-      eg.i <- eg[, paste0("ME", col[i])]
-      eg.high <- eg.i >= mean(eg.i)
-      plot(survfit(meta$OS ~ factor(eg.high)), conf.int = TRUE,
-           main = "", col = c(col[i], "black"), lwd = 2,
-           axes = FALSE,
-           xlab = "years", ylab = "Survival proportion")
-      axis(1); axis(2)
-      legend("bottom", bty = "n", lwd = 2,
-             legend = c("High eigengene", "Low eigengene"),
-             col = c(col[i], "black"), horiz = TRUE)
-      legend("topright", legend = paste(cleanName(col[i]), "eigengene"),
-             bty = "n", text.col = col[i])
+    for (i in seq_len(ncol(eg))) {
+      if (col[i] == the.module) {
+        eg.i <- eg[, paste0("ME", col[i])]
+        eg.high <- eg.i >= mean(eg.i)
+        plot(survfit(meta$OS ~ factor(eg.high)), conf.int = TRUE,
+             main = "", col = c(col[i], "black"), lwd = 2,
+             axes = FALSE,
+             xlab = "years", ylab = "Survival proportion")
+        axis(1); axis(2)
+        legend("bottom", bty = "n", lwd = 2,
+               legend = c("High eigengene", "Low eigengene"),
+               col = c(col[i], "black"), horiz = TRUE)
+        legend("topright", legend = paste(cleanName(col[i]), "eigengene"),
+               bty = "n", text.col = col[i])
+      }
     }
+    title(switch(j, "GSE10846 CHOP", "GSE10846 R-CHOP"), xpd = TRUE)
   }
-  title(switch(j, "GSE10846 CHOP", "GSE10846 R-CHOP"), xpd = TRUE)
 }
+dev.off()
 ## ---- end ----
 
 
