@@ -1292,7 +1292,7 @@ which can be rewritten as
 by the Neumann series
 $\left((\vI + \vec{A})^{-1} = \sum_{l = 0}^\infty \vec{A}^l\right)$
 provided that
-$\lim_{l \to \infty} (I - \vPsi^{-1}\vS_i)^l = \vec{0}$
+$\lim_{l \to \infty} (\vI - \vPsi^{-1}\vS_i)^l = \vec{0}$
 for all $i$.
 This holds if the eigenvalues of $\vPsi^{-1}\vS_i$ are less than $1$.
 We approximate by the first order expansion $(l = 1)$, and
