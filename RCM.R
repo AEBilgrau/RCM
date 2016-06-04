@@ -1,4 +1,4 @@
-setwd("~/Documents/PhD/paper-RCM/1.submission//")
+setwd("~/Documents/PhD/paper-RCM/")
 
 ## ---- initialize_script ----
 rm(list = ls())
