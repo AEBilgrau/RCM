@@ -15,6 +15,7 @@
 *.RData
 knitr/prof.R
 knitr/*
+RCM-feedback/*
 *RCM.tex
 *.png
 0.drafting*
