@@ -11,7 +11,7 @@ Encoding: UTF-8
 
 RnwWeave: knitr
 LaTeX: pdfLaTeX
-RootDocument: 1.submission/RCM.Rnw
+RootDocument: RCM.Rnw
 
 AutoAppendNewline: Yes
 StripTrailingWhitespace: Yes
