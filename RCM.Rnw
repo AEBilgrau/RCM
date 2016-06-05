@@ -104,8 +104,8 @@
 \begin{document}
 
 \begin{frontmatter}
-\title{Estimation of a common covariance matrix for multiple classes with
-       applications in meta analysis\thanksref{T1}}
+\title{Estimation of a common covariance matrix for multiple classes
+       applied as network meta analysis in diffuse large B-cell lymphoma\thanksref{T1}}
 \runtitle{Estimation of a common covariance matrix}
 \thankstext{T1}{Supported by MSCNET, EU FP6, CHEPRE, the Danish Agency for Science, Technology, and Innovation as well as Karen Elise Jensen Fonden.}
 
