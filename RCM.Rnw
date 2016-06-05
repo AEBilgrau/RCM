@@ -111,7 +111,7 @@
 
 \begin{aug}
 \author{\fnms{Anders Ellern} \snm{Bilgrau}\thanksref{m1,m2},
-\ead[label=e1]{abilgrau@math.aau.dk}
+\ead[label=e1]{anders.ellern.bilgrau@gmail.com}
 }
 \author{\fnms{Poul Svante} \snm{Eriksen}\thanksref{m1},
 \ead[label=e2]{svante@math.aau.dk}
