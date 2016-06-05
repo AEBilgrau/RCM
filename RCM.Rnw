@@ -155,12 +155,13 @@ DK-9000 Aalborg \O{}\\
 \end{aug}
 
 \begin{abstract}
-We propose a hierarchical random effects model for a common covariance matrix in cases where multiple classes are present.
-It is applicable where the classes are believed to share a common covariance matrix of interest obscured by class-dependent noise.
-As such, it provides a basis for integrative or meta-analysis of covariance matrices where the classes are formed by datasets.
-Our approach is inspired by traditional meta-analysis using random effects models.
-We derive basic properties and estimators of the model and compare their properties.
-Simple inference and interpretation of the introduced parameter measuring the inter-class homogeneity is suggested.
+We present a hierarchical random covariance model applied as a meta analysis of gene networks across multiple large-scale gene expression studies of diffuse large B-cell lymphoma (DLBCL).
+The model was motivated by the need for improving the inherently unstable covariance estimation methods compounded by noisy gene expression data.
+We identify seemingly biologically meaningful DLBCL gene networks of prognostic value.
+The methods are generally applicable where multiple classes are present and believed to share a common covariance matrix of interest that is obscured by class-dependent noise.
+As such, it provides a basis for meta- or integrative analysis of covariance matrices where the classes are formed by datasets.
+The approach was inspired by traditional meta-analysis using random effects models and we derive and compare basic properties and estimators of the model.
+Simple inference and interpretation of an introduced parameter measuring the inter-class homogeneity is suggested.
 \end{abstract}
 
 \begin{keyword}
@@ -207,7 +208,7 @@ Although this work was motivated by gene-gene interaction networks in DLBCL, whe
 
 
 
-\section{A random effects model for the covariance matrix}
+\section{A hierarchical model for the covariance matrix}
 The model below was motivated by ordinary meta-analysis.
 Meta-analysis comes in various flavors corresponding to the assumption on the nature of the inter-study treatment effect.
 Random-effects models (REM) in meta-analysis model the inter-study effects as random variables \citep{DerSimonian1986, Choi2003}.
@@ -709,7 +710,7 @@ The manual screening and GO-analysis results further corroborate that the identi
 \section{Concluding remarks}
 This article provides a basic framework for modeling a common covariance structure across multiple classes or datasets.
 The straight-forward approaches of using the mean or pooled covariance matrix are seen as moment estimators of the model and the estimate using the EM algorithm is shown to be superior to these simple alternatives.
-While the improvements are modest, the article demonstrates a potentially advantageous way of modelling the inter-study variability by a hierarchical random effects model.
+While the improvements are modest, the article demonstrates a potentially advantageous way of modelling the inter-study variability by a hierarchical random covariance model.
 However, the virtue of such a model is not from improvement in accuracy alone.
 Also desirable is the explicit and interpretable quantification of the inter-study variance.
 If $\hat{\nu}$ is estimated to be large, the studies exhibit a largely common covariance structure, and vice-versa when $\hat{\nu}$ is small.
