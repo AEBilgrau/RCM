@@ -555,16 +555,15 @@ To reproduce this document see \ref{suppA}.
 
 
 
-\section{Application}
+\section{DLBCL meta-analysis}
 
 <<dlbcl_analysis, echo=FALSE, results='hide', message=FALSE>>=
 @
 
-\subsection{DLBCL meta-analysis}
 Diffuse large B-cell lymphoma (DLBCL) is an aggressive cancer subtype accounting for $30\%-58\%$ of all non-Hodgkin's lymphomas (NHL) which itself constitutes about $90 \%$ of all lymphomas \citep{Project1997}.
 
 
-\subsubsection*{Data and preprocessing}
+\subsection{Data and preprocessing}
 A large amount of DLBCL gene expression datasets are now available online at the NCBI (National Center for Biotechnology Information) Gene Expression Omnibus (GEO) website.
 Ten large-scale DLBCL gene expression studies were downloaded and preprocessed using custom brainarray chip definition files (CDF) \citep{Dai2005} and RMA-normalized using the R-package \texttt{affy} \citep{affy}.
 The corresponding GEO-accession numbers are
@@ -579,7 +578,7 @@ After RMA normalization and summarization, the data were brought to a common sca
 Lastly, the datasets were reduced to \Sexpr{dim(gep[[1]])["Features"]} common genes represented in all studies and array platforms.
 
 
-\subsubsection*{Analysis}
+\subsection{Analysis}
 A coexpression network (or weighted correlation network) ana\-ly\-sis integrating all datasets was carried out.
 For each dataset the scatter matrix $\vS_i$ of the top \Sexpr{dlbcl.par$top.n} most variable genes (as measured by the pooled variance across all studies) was computed as the sufficient statistics along with the number of samples.
 Hence, we investigate \Sexpr{format(dlbcl.par$top.n*(dlbcl.par$top.n + 1)/2, big.mark = ",")} pairwise interactions.
