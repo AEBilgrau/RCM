@@ -478,7 +478,7 @@ For the RCM, the ICC be given by
   = \frac{1}{\nu-p}.
   \label{eq:ICCexprs}
 \end{align}
-This follows from the definition of the ICC which is the ratio of the between-study variation $\var(\Sigma_{ij})$ and the total variation $\var(S_{ij})$ of a single pair of any variables.
+This follows from the definition of the ICC which is the ratio of the between-study variation $\var(\Sigma_{ij})$ and the total variation $\var(S_{ij})$ of any single pair of variables.
 Consider observations from \eqref{eq:RCM}.
 We temporarily abuse our notation and let
 \begin{align*}
