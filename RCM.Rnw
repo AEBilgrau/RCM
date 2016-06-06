@@ -544,35 +544,6 @@ as should be expected.
 
 
 
-<<numerical_experiment, echo=FALSE, results='hide'>>=
-@
-\section{Assessment of the estimation procedures}
-To assess the precision and stability of the estimation procedure we generated data from the hierarchical model \eqref{eq:RCM} for $p = \Sexpr{par.ne[["p"]]}$ variables and $k = \Sexpr{par.ne[["k"]]}$ studies each with an equal number of observations, $n = n_1 = n_2 = n_3$. We chose the parameters $\nu = \Sexpr{par.ne[["nu"]]}$ and $\Psi_{ij} = 1$ for all $i = j$ and $\Psi_{ij} = 0.5$ for all $i \neq j$.
-The number of observations in each study $n$ was varied in the range $\Sexpr{paste0("[", min(par.ne$n.obs), ",", max(par.ne$n.obs), "]")}$.
-
-We measured the precision of the estimated values against the expected covariance matrix given by \eqref{eq:expcovar}.
-Let $\hvPsi$ and $\hat{\nu}$ be the estimates obtained using the moment, EM, or approximate MLE (defined in Appendix \ref{sec:amle}) approaches as described.
-We benchmark the proposed estimators against the known truth.
-The benchmarking measure used is the following weighted sum of squared errors,
-\begin{align*}
-  \text{SSE}(\hvSigma) = \sum_{i \leq j} \frac{(\hat{\Sigma}_{ij}- \Sigma_{ij})^2}{\var(\Sigma{ij})}
-  \quad \text{ where } \quad
- \var(\Psi_{ij}) = n(\Sigma_{ij}^2 + \Sigma_{ii}\Sigma_{jj}).
-\end{align*}
-
-<<numerical_experiment_plot, echo=FALSE, results='hide'>>=
-@
-
-For each $n = \Sexpr{min(par.ne$n.obs)}, \ldots, \Sexpr{max(par.ne$n.obs)}$, the weighted sum of squared errors for each estimator, $\text{SSE}(\hvSigma)$, was computed for $\Sexpr{par.ne[["n.sims"]]}$ datasets and the median of these values are seen in Figure \ref{\Sexpr{figure1}} as function of the number of samples in each dataset $n_i$.
-
-\fig{\Sexpr{figure1}}{0.8\textwidth}{
-The median SSE of \Sexpr{par.ne$n.sims} simulations as a function of the number of samples $n_i$ in each of the \Sexpr{par.ne$k} studies.
-}
-
-We see that the EM estimation is superior to that of the approximate MLE and moment estimators.
-
-
-
 
 
 \subsection{Implementation and availability}
@@ -584,7 +555,7 @@ To reproduce this document see \ref{suppA}.
 
 
 
-\section{Applications}
+\section{Application}
 
 <<dlbcl_analysis, echo=FALSE, results='hide', message=FALSE>>=
 @
@@ -703,6 +674,34 @@ ADAMDEC1 is thought to have a central role in dendrite cell functions and their 
 The manual screening and GO-analysis results further corroborate that the identified modules are biologically meaningful and that the RCM provides a useful estimate of the covariance.
 
 
+
+
+<<numerical_experiment, echo=FALSE, results='hide'>>=
+@
+\section{Assessment of the estimation procedures}
+To assess the precision and stability of the estimation procedure we generated data from the hierarchical model \eqref{eq:RCM} for $p = \Sexpr{par.ne[["p"]]}$ variables and $k = \Sexpr{par.ne[["k"]]}$ studies each with an equal number of observations, $n = n_1 = n_2 = n_3$. We chose the parameters $\nu = \Sexpr{par.ne[["nu"]]}$ and $\Psi_{ij} = 1$ for all $i = j$ and $\Psi_{ij} = 0.5$ for all $i \neq j$.
+The number of observations in each study $n$ was varied in the range $\Sexpr{paste0("[", min(par.ne$n.obs), ",", max(par.ne$n.obs), "]")}$.
+
+We measured the precision of the estimated values against the expected covariance matrix given by \eqref{eq:expcovar}.
+Let $\hvPsi$ and $\hat{\nu}$ be the estimates obtained using the moment, EM, or approximate MLE (defined in Appendix \ref{sec:amle}) approaches as described.
+We benchmark the proposed estimators against the known truth.
+The benchmarking measure used is the following weighted sum of squared errors,
+\begin{align*}
+  \text{SSE}(\hvSigma) = \sum_{i \leq j} \frac{(\hat{\Sigma}_{ij}- \Sigma_{ij})^2}{\var(\Sigma{ij})}
+  \quad \text{ where } \quad
+ \var(\Psi_{ij}) = n(\Sigma_{ij}^2 + \Sigma_{ii}\Sigma_{jj}).
+\end{align*}
+
+<<numerical_experiment_plot, echo=FALSE, results='hide'>>=
+@
+
+For each $n = \Sexpr{min(par.ne$n.obs)}, \ldots, \Sexpr{max(par.ne$n.obs)}$, the weighted sum of squared errors for each estimator, $\text{SSE}(\hvSigma)$, was computed for $\Sexpr{par.ne[["n.sims"]]}$ datasets and the median of these values are seen in Figure \ref{\Sexpr{figure1}} as function of the number of samples in each dataset $n_i$.
+
+\fig{\Sexpr{figure1}}{0.8\textwidth}{
+The median SSE of \Sexpr{par.ne$n.sims} simulations as a function of the number of samples $n_i$ in each of the \Sexpr{par.ne$k} studies.
+}
+
+We see that the EM estimation is superior to that of the approximate MLE and moment estimators.
 
 
 
