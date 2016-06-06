@@ -279,9 +279,9 @@ Since the inverse Wishart distribution is conjugate to the multivariate gaussian
           \Gamma_p\!\left(\frac{\nu}{2}\right)}          \notag\\
   &= \sum_{i=1}^k \!\bigg[
        \frac{\nu}{2}  \log\big|\vPsi\big|
-       %+ \log\Gamma_p\!\left(\frac{\nu + n_i}{2}\right)
        - \frac{\nu + n_i}{2}\log\big| \vPsi +\vX_i^\top\vX_i \big|
-       - \log\frac{\Gamma_p\!\left(\frac{\nu + n_i}{2}\right)}{\Gamma_p\!\left(\frac{\nu}{2}\right)}
+       + \log\frac{\Gamma_p\!\left(\frac{\nu + n_i}{2}\right)}
+                  {\Gamma_p\!\left(\frac{\nu}{2}\right)}
        \!\bigg]\!,
     \label{eq:loglik}
 \end{align}
