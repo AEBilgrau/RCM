@@ -188,6 +188,16 @@ read_chunk("RCM.R")
 
 
 \section{Introduction}
+Genes and their products carry out their functions in concerted effort in intricate networks.
+Network analysis of genomic data has consequently been an inescapable success in elucidating gene interactions through many different approaches.
+For the same reasons, we wished to apply network reconstruction to gene expression data from diffuse large B-cell lymphoma samples from our own lab \citet{DybkaerBoegsted2015}.
+However, current methods has one or more of several shortcomings.
+
+Crudely, many network analysis methods---such as relevance or correlation networks \citep{Horvath2011}, Gaussian graphical models \citep{}, and Bayesian networks \citep{}---can be categorized according to their use of marginal, partial, or semi-partial correlations.
+The underlying assumption of all is that correlation hints at causation.
+Different correlation measures then separate the methods in the attempt to remove the influence of other genes.
+See \citep{Markowetz2007a} for an overview.
+
 The fundamental problem in statistics of accurately and precisely estimating the covariance matrix (or its inverse) is notoriously difficult.
 The usual bias-corrected maximum likelihood estimator (MLE), the sample covariance matrix, has long been known to perform poorly in general due to high variability \citep{Dempster1972}.
 The sample covariance becomes increasingly ill-conditioned as the number of variables $p$ approaches the sample size $n$ and singular when $p$ exceeds $n$.
@@ -205,6 +215,7 @@ Hence, if $k$ classes or datasets are available with sample sizes $n_1, \ldots, 
 As with all major groups of cancer, a large number of diffuse large B-cell lymphoma (DLBCL) genomic datasets are now publicly available online.
 We wanted to use these studies in combination with data from our own laboratory to arrive at a good estimate of the covariance matrix whilst accounting for and assessing inter-study variation.
 Although this work was motivated by gene-gene interaction networks in DLBCL, where the covariance matrix is assumed to contain all information about the conditional dependencies of the genes, the methods are general and not limited to such genomic data.
+
 
 
 
@@ -571,7 +582,7 @@ The corresponding GEO-accession numbers are
 and
 \Sexpr{grep("XXX", base::unique(studies[,"GSE"]), invert = TRUE, value = TRUE)[1]}
 based on various microarray platforms.
-The downloaded data together with  a data set from our own laboratory (GSE56315, \cite{DykaerBoegsted2015}) yields a total of \Sexpr{rowSums(dlbcl.dims)["Samples"]} samples with study sizes in the range \Sexpr{paste(range(dlbcl.dims["Samples",]), collapse = "-")}.
+The downloaded data together with  a data set from our own laboratory (GSE56315, \cite{DybkaerBoegsted2015}) yields a total of \Sexpr{rowSums(dlbcl.dims)["Samples"]} samples with study sizes in the range \Sexpr{paste(range(dlbcl.dims["Samples",]), collapse = "-")}.
 The summarization using brainarray CDFs to Ensembl gene identifiers facilitates cross-platform integration.
 
 After RMA normalization and summarization, the data were brought to a common scale by quantile normalizing all data to the common cumulative distribution function of all arrays.
@@ -737,8 +748,9 @@ Therefore, an increased focus should also be appointed to efficiently aggregatin
 
 
 \section*{Acknowledgments}
-We thank Martin Raussen and Jon Johnsen for their assistance on some of the mathematical proofs.
-The helpful statistical comments from Steffen Falgreen were much appreciated. The technical assistance from Alexander Schmitz, Julie S.\ B\o{}dker, Ann-Maria Jensen, Louise H. Madsen, and Helle H\o{}holt is also greatly appreciated.
+We thank Martin Raussen, Jon Johnsen, as well as Niels Richard Hansen for their assistance on some of the mathematical proofs.
+The helpful statistical comments from Steffen Falgreen were also much appreciated.
+The technical assistance from Alexander Schmitz, Julie S.\ B\o{}dker, Ann-Maria Jensen, Louise H.\ Madsen, and Helle H\o{}holt is also greatly appreciated.
 
 
 \begin{supplement}
