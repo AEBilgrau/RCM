@@ -188,31 +188,31 @@ read_chunk("RCM.R")
 
 
 \section{Introduction}
-Genes and their products carry out their functions in concerted effort in intricate networks.
-Network analysis of genomic data has consequently been an inescapable success in elucidating gene interactions through many different approaches.
-For the same reasons, we wished to apply network reconstruction to gene expression data from diffuse large B-cell lymphoma samples from our own lab \citet{DybkaerBoegsted2015}.
-However, current methods has one or more of several shortcomings.
+Genes and their products carry out their functions in concerted effort via intricate networks.
+Network analysis of genomic data has consequently been an inescapable success by elucidating gene functions and interactions through many different approaches.
+For that reason, we wished to apply and learn from network reconstruction to gene expression data from diffuse large B-cell lymphoma samples from our own lab \citep{DybkaerBoegsted2015}.
+However, the current methods has one or more of several shortcomings.
 
-Crudely, many network analysis methods---such as relevance or correlation networks \citep{Horvath2011}, Gaussian graphical models \citep{}, and Bayesian networks \citep{}---can be categorized according to their use of marginal, partial, or semi-partial correlations.
-The underlying assumption of all is that correlation hints at causation.
-Different correlation measures then separate the methods in the attempt to remove the influence of other genes.
-See \citep{Markowetz2007a} for an overview.
-
-The fundamental problem in statistics of accurately and precisely estimating the covariance matrix (or its inverse) is notoriously difficult.
+Crudely, many network analysis methods---such as relevance or correlation networks \citep{Horvath2011}, Gaussian graphical models \citep{Lauritzen1996}, and Bayesian networks---can be categorized according to their use of marginal, partial, or semi-partial correlations.
+The underlying assumption of them all is that correlation hints at causation.
+The different correlation measures separate the methods by different attempts to remove the influence of remaining other genes.
+See \citep{Markowetz2007a} for an brief overview.
+As the covariance matrix and its inverse holds this information, its estimation is a central topic to network analysis.
+However, this fundamental problem of accurately and precisely estimating the covariance matrix (or its inverse) is notoriously difficult.
 The usual bias-corrected maximum likelihood estimator (MLE), the sample covariance matrix, has long been known to perform poorly in general due to high variability \citep{Dempster1972}.
 The sample covariance becomes increasingly ill-conditioned as the number of variables $p$ approaches the sample size $n$ and singular when $p$ exceeds $n$.
 Because of its central statistical role the list of statistical methods and applications utilizing the estimated covariance matrix is exceedingly long.
-Beside the many standard statistical methods such as principal component analysis (PCA), linear discriminant analysis (LDA), and quadratic discriminant analysis (QDA), examples of direct applications include gene and protein network analysis \citep{Butte2000}, spectroscopic imaging \citep{Lin2007}, functional magnetic resonance imaging (fMRI), financial forecasting, and many more.
+Beside the many standard statistical methods such as principal component analysis (PCA) and discriminant analysis, examples of direct applications include gene and protein network analysis \citep{Butte2000}, spectroscopic imaging \citep{Lin2007}, functional magnetic resonance imaging (fMRI), financial forecasting, and many more.
 Among this expanding list of applications is also an increasing number of high-dimensional applications and datasets publicly available at online repositories.
 
-In high-dimensional datasets the number of features $p$ often far exceeds the number of samples $n$.
-Since the number of parameters increases quadratically in $p$ and the sample covariance matrix becomes singular when $p > n$ many shrinkage and regularization estimators have been proposed to combat the accompanying problems by effectively increasing the degrees of freedom. These examples include the graphical LASSO and ridge estimation of the precision matrix \citep{Friedman2008, vanWieringen2014}.
+In high-dimensional genomic datasets the number of features $p$ often far exceeds the number of samples $n$.
+Since the number of parameters increases quadratically in $p$ and the sample covariance matrix becomes singular when $p > n$ many shrinkage and regularization estimators have been proposed to combat the accompanying problems by effectively increasing the degrees of freedom. These examples include the graphical LASSO and ridge estimation of the precision matrix \citep{Meinshausen2006, Friedman2008, vanWieringen2014}.
 Instead of attempting to derive still more sophisticated estimators we attempt to alleviate the problem from a different angle by using more available data and thus effectively increasing $n$.
-While the high-dimensional extension to $p > n$ is important it is out of scope in this paper.
+While the high-dimensional extension to $p > n$ is important, it is out of scope in this paper.
 We restrict ourselves to the case where the total number of samples exceeds $p$.
 Hence, if $k$ classes or datasets are available with sample sizes $n_1, \ldots, n_k$, we consider the case where $p < \sum_{i=1}^k n_i$ while allowing $p$ to exceed $n_i$ for each individual class $i$.
 
-As with all major groups of cancer, a large number of diffuse large B-cell lymphoma (DLBCL) genomic datasets are now publicly available online.
+As with all major groups of cancer, a large number of DLBCL genomic datasets are now publicly available online.
 We wanted to use these studies in combination with data from our own laboratory to arrive at a good estimate of the covariance matrix whilst accounting for and assessing inter-study variation.
 Although this work was motivated by gene-gene interaction networks in DLBCL, where the covariance matrix is assumed to contain all information about the conditional dependencies of the genes, the methods are general and not limited to such genomic data.
 
