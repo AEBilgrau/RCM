@@ -724,6 +724,7 @@ We see that the EM estimation is superior to that of the approximate MLE and mom
 
 
 \section{Concluding remarks}
+\label{sec:conclusion}
 This article provides a basic framework for modeling a common covariance structure across multiple classes or datasets.
 The straight-forward approaches of using the mean or pooled covariance matrix are seen as moment estimators of the model and the estimate using the EM algorithm is shown to be superior to these simple alternatives.
 While the improvements are modest, the article demonstrates a potentially advantageous way of modelling the inter-study variability by a hierarchical random covariance model.
