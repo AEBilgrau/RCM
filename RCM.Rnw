@@ -996,6 +996,7 @@ Without loss of generality we can therefore consider \eqref{eq:loglik2} in the f
 
 \begin{proof}[\textbf{Proof of Proposition \ref{prop:uniquemax}}]
 We first prove existence of the maximum.
+Note, that we may consider $\ell$ as a function on a vector space by letting $\vPsi = \exp(\vX)$ where $\vX$ is a symmetric matrix.
 By Lemma \ref{lem:elltominusinfty} and the continuity of $\ell$, the set
 $
   \big\{  \vPsi \big| \ell(\vPsi) \geq \ell(\vPsi^*)  \big\}
@@ -1005,7 +1006,7 @@ The existence of a maximum follows from the extreme value theorem by the continu
 A stationary point exists due to Rolle's theorem and the differentiability of $\ell$.
 
 Next, we show the uniqueness of the maximum.
-Suppose there exists countably many stationary points $\vPsi_1, \vPsi_2, ...$.
+Suppose there exists more than one stationary points $\vPsi_1, \vPsi_2, ...$.
 By Lemma \ref{lem:elltominusinfty}, $\ell(\vPsi)$ has a finite upper bound given by the value of the log-likelihood in those points.
 All gradient curves (that is, solution curves to $\dot{\vPsi}(t) = \nabla \ell(\vPsi(t))$) must then converge toward exactly one of the stationary points where $\ell$ monotonically increases along each curve.
 Define the basin of attraction
@@ -1101,7 +1102,7 @@ If $n_\bullet \geq p$ and $\nu$ is fixed then the Hessian of the log-likelihood 
 \begin{proof}[\textbf{Proof of Lemma \ref{lem:negativesdefinite}}]
 We show the conclusion of the Lemma directly by differentiation of $\ell$ w.r.t.\ $\vPsi$.
 To do so, the matrix cookbook by \citet{Petersen2008} is a useful reference.
-In particular, see equations (41, p.\ 8) and (59, p.\ 9) and pages 14 and 52-53.
+In particular, see equations (41, p.\ 8) and (59, p.\ 9) and pages 14 and 52--53.
 We first compute expressions for the first and second order derivatives.
 
 \textbf{First order derivatives.}
@@ -1197,7 +1198,8 @@ by the matrix inversion lemma whereby we need to show that
   \Big)
   > 0.
 \end{align*}
-Since $(\vI + \vX_a\vX_a^\top)^{-1}\succ 0$ we obtain that
+Assume that the sum is actually zero.
+Since $(\vI + \vX_a\vX_a^\top)^{-1}\succ 0$ we then obtain that
 \begin{align*}
   \vY\vX_a(\vI + \vX_a\vX_a^\top)^{-1}\vX_a^\top \vY = 0
   \quad\text{ for } a = 1, ...., k.
