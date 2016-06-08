@@ -1018,9 +1018,9 @@ Define the basin of attraction
 \end{align*}
 associated to each stationary point $\vPsi_i$.
 The basin of attraction is open if $\vPsi_i$ is a maximum \citep[Lemma 4.1]{Khalil2002}.
-By Lemma \ref{lem:negativesdefinite}, $\vPsi_i$ is a always a maximum and hence all $A_i$ are open sets in the set of all positive semi-definite matrices $\calS_+$.
+By Lemma \ref{lem:negativesdefinite}, $\vPsi_i$ is a always a maximum and hence all $A_i$ are open sets in the set of all positive definite matrices $\calS_+$.
 This partitions the space $\calS_+$ into $N$ disjoint, non-empty, open sets.
-However, this is only possible if $A_i = A_j = \calS_+$ for all $i$ and $j$ and thus there is only a single basin of attraction and maximum of $\ell$.
+Since $\calS_+$ is connected, this is only possible if $A_i = A_j = \calS_+$ for all $i$ and $j$ and thus there is only a single basin of attraction and maximum of $\ell$.
 \end{proof}
 
 
@@ -1032,20 +1032,20 @@ If there exists an eigenvalue $\lambda_t$ of $\vPsi_t$ such that $\lambda_t \to 
 
 
 \begin{proof}[\textbf{Proof of Lemma \ref{lem:elltominusinfty}}]
-Assume the hypothesis of the lemma and consider the expression given in \eqref{eq:loglik2}.
-If $\lambda_t \to \infty$ then
+Assume the hypothesis of the lemma and consider the expression given in \eqref{eq:loglik2} up to the addition of a constant.
+The likelihood obey the following two upper bounds.
+First,
 \begin{align*}
   \ell(\vPsi_t)
   &= \frac{k\nu}{2}\log\big|\vPsi_t\big| - \sum_{i = 1}^k \frac{\nu + n_i}{2} \log |\vPsi_t+\vS_i| \\
   &\leq \frac{k\nu}{2}\log|\vPsi_t| - \sum_{i = 1}^k \frac{\nu + n_i}{2} \log |\vPsi_t|
-  =  - \frac{n_\bullet}{2} \log |\vPsi_t| \to -\infty.
+  =  - \frac{n_\bullet}{2} \log |\vPsi_t|
 \end{align*}
-This proves the first case where the largest eigenvalue diverge to infinity.
-Suppose $\lambda_t \to 0$ and let
+Secondly, let
 $
   C = \sum_{i = 1}^k \frac{\nu + n_i}{2} = \frac{k\nu}{2} + \frac{n_\bullet}{2},
 $
-then \eqref{eq:loglik2} can be expressed as
+whereby \eqref{eq:loglik2} can be expressed as
 \begin{align*}
   \ell(\vPsi_t)
   = \frac{k\nu}{2}\log|\vPsi_t| -
@@ -1057,11 +1057,35 @@ Since $\log|\cdot|$ is concave and the above sum is a convex combination, we hav
   \leq \frac{k\nu}{2}\log|\vPsi_t| -
      C \log\left| \vPsi_t + \sum_{i = 1}^k \frac{\nu + n_i}{2C}\vS_i\right|.
 \end{align*}
-Clearly, the first term goes to $-\infty$ whenever an eigenvalue $\lambda_t \to 0$.
-The matrix in the second term is almost surely positive definite when $n_\bullet = \sum_{a=1}^k x_a \geq p$ and the log determinant will converge to some constant.
-Hence, if $\lambda_t \to 0$ then
+Hence,
 \begin{align*}
-  \ell(\vPsi_t) \leq \frac{k\nu}{2}\log|\vPsi_t| + C_2 \to -\infty,
+  \ell(\vPsi_t)
+  \leq \min\Bigl\{
+    - \frac{n_\bullet}{2} a(t) , \;
+      \frac{k\nu}{2} a(t)  - C \log\left| \vPsi_t + \vS\right|
+  \Bigr\}
+\end{align*}
+where $a(t) = \log|\vPsi_t|$ and $\vS = \sum_i \frac{\nu+n_i}{2C}\vS_i$.
+Three cases now exists:
+1) If $a(t) \to \infty$, then
+\begin{align*}
+  \ell(\vPsi_t)
+  \leq - \frac{n_\bullet}{2} a(t) \to -\infty.
+\end{align*}
+2) If $a(t) \to -\infty$, then
+\begin{align*}
+  \ell(\vPsi_t)
+  \leq \frac{k\nu}{2} a(t) - C \log\left| \vPsi_t + \vS\right|
+  \leq \frac{k\nu}{2} a(t) - C \log\left| \vS \right| \to -\infty
+\end{align*}
+as the matrix in the second term is almost surely positive definite when $n_\bullet = \sum_{a=1}^k x_a \geq p$ and the log determinant will converge to some constant.
+3) If $a(t)$ is bounded and the largest eigenvalue $\lambda_\text{max}(\vPsi_t) \to \infty$ (and hence $\lambda_\text{min}(\vPsi_t)  \to -\infty)$, then
+$\lambda_\text{max}(\vPsi_t+\vS) \to \infty$
+and
+$\lambda_\text{min}(\vPsi_t+\vS)$ is bounded away from zero.
+Therefore,
+\begin{align*}
+  \ell(\vPsi_t) \leq \frac{k\nu}{2}a(t) - C\log|\vPsi_t + \vS| \to -\infty,
 \end{align*}
 which completes the proof.
 \end{proof}
