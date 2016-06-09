@@ -218,9 +218,10 @@ We note, that while the high-dimensional extension to $p > n$ is important, it i
 We restrict ourselves to the case where the total number of samples exceeds $p$.
 Hence, if $k$ classes or datasets are available with sample sizes $n_1, \ldots, n_k$, we consider the case where $p < \sum_{i=1}^k n_i$ while allowing $p$ to exceed $n_i$ for each individual class $i$.
 
-In section \ref{sec:RCMmodel}, we propose the model for a common covariance matrix across multiple studies, derive estimators hereof, and propose an inter-study homogeneity measure to aid in assessing the variation between studies.
-Next, we apply the model in section \ref{sec:DLBCL}.
-Before concluding the manuscript in section \ref{sec:conclusion}, we assess the proposed model estimators via synthetic data.
+The remainder of this paper is structured as follows.
+In Section \ref{sec:RCMmodel}, we propose the model for a common covariance matrix across multiple studies, derive estimators hereof, and propose an inter-study homogeneity measure to aid in assessing the variation between studies.
+Next, we apply the model in Section \ref{sec:DLBCL}.
+Before concluding the manuscript in Section \ref{sec:conclusion}, we assess the proposed model estimators via synthetic data.
 
 Although this work was motivated by gene-gene interaction networks in DLBCL, where the covariance matrix is assumed to contain all information about the conditional dependencies of the genes, the methods are general and not limited to such genomic data.
 
@@ -537,7 +538,7 @@ implying that
   = \frac{(\nu-p+1)\Psi_{ij}^2 + (\nu-p-1)\Psi_{ii}\Psi_{jj}}
           {(\nu-p)(\nu-p-1)^2(\nu-p-3)}.
 \end{align}
-We continue with the conditional variance of $S_{ij} | \vSigma$ in the denominator of \eqref{eq:ICC},
+Continuing with the expected conditional variance of $S_{ij} | \vSigma$ in the denominator of \eqref{eq:ICC},
 \small
 \begin{align}
   \bbE\big[\var(S_{ij}|\Sigma_{ij})\big]
