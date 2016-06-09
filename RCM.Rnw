@@ -77,10 +77,8 @@
 \newcommand{\vx}{{\vec{x}}}
 \newcommand{\vY}{{\vec{Y}}}
 \newcommand{\vS}{{\vec{S}}}
-\newcommand{\vU}{{\vec{U}}}
 \newcommand{\vD}{{\vec{D}}}
 \newcommand{\vI}{{\vec{I}}}
-\newcommand{\vJ}{{\vec{J}}}
 \newcommand{\vE}{{\vec{E}}}
 
 % FIGURE MACRO
@@ -305,7 +303,7 @@ Since the inverse Wishart distribution is conjugate to the multivariate Gaussian
 \end{align}
 \normalsize
 up to an additive constant.
-As should be expected, the scatter matrix $\vec{S}_i =\vX_i^\top\vX_i$ and study sample size $n_i$ are sufficient statistics for each study.
+As should be expected, the scatter matrix $\vS_i =\vX_i^\top\vX_i$ and study sample size $n_i$ are sufficient statistics for each study.
 Note that $\vS_i$ is conditionally Wishart distributed, $\vS_i|\vSigma_i \sim \calW(\vSigma_i, n_i)$, by construction.
 
 As stated in the following two propositions the likelihood is not log-concave in general. However, it is log-concave as a function of $\nu$.
@@ -800,10 +798,10 @@ The technical assistance from Alexander Schmitz, Julie S.\ B\o{}dker, Ann-Maria 
 \section{Marginalization of the covariance}
 \label{sec:marginalization}
 This section shows the marginalization over $\vSigma$ in \eqref{eq:loglik}.
-Recall the model \eqref{eq:RCM} where $\calN_p(\vec{\mu},\vSigma_i)$ denotes a $p$-dimensional multivariate gaussian distribution with mean $\vec{\mu}$ and positive definite (p.d.) covariance matrix $\vSigma_i$ with probability density function (pdf)
+Recall the model \eqref{eq:RCM} where $\calN_p(\vec{\mu},\vSigma_i)$ denotes a $p$-dimensional multivariate Gaussian distribution with mean $\vec{\mu}$ and positive definite (p.d.) covariance matrix $\vSigma_i$ with probability density function (pdf)
 \begin{align}
   \label{eq:normalpdf}
-  f(\vec{x}| \vec{\mu}, \vSigma_i) =
+  f(\vx| \vec{\mu}, \vSigma_i) =
   (2\pi)^{-\frac{p}{2}} |\vSigma_i|^{-\frac{1}{2}}
   \exp\!\left( -\frac{1}{2} (\vx - \vec{\mu})^\top \vSigma_i^{-1}(\vx - \vec{\mu}) \right),
 \end{align}
@@ -1249,23 +1247,23 @@ Equating to zero yields
   \vec{0}
   &= \frac{k\nu}{2} \vPsi^{-1}
     - \sum_{i=1}^k \frac{\nu + n_i}{2}
-      (\vPsi + \vec{S}_i')^{-1}
+      (\vPsi + \vS_i')^{-1}
   \label{eq:firstordderivloglik} \\
   &= \frac{k\nu}{2} \vPsi^{-1}
     - \sum_{i=1}^k \frac{\nu + n_i}{2}
-      \left(\vec{I} + \vPsi^{-1}\vS_i\right)^{-1}\vPsi^{-1}.
+      \left(\vI + \vPsi^{-1}\vS_i\right)^{-1}\vPsi^{-1}.
       \notag
 \end{align}
 This implies
 $ %\begin{align*}
-  k\nu \vec{I}
+  k\nu \vI
     - \sum_{i=1}^k (\nu + n_i)
-      \left(\vec{I} - (-\vPsi^{-1}\vS_i)\right)^{-1}
+      \left(\vI - (-\vPsi^{-1}\vS_i)\right)^{-1}
    = \vec{0}
 $ %\end{align*}
 which can be rewritten as
 \begin{align*}
-    k\nu \vec{I}
+    k\nu \vI
     - \sum_{i=1}^k      (\nu + n_i)
       \sum_{l=0}^\infty \left(-\vPsi^{-1}\vS_i\right)^{l}
    = \vec{0},
@@ -1279,24 +1277,24 @@ This holds if the eigenvalues of $\vPsi^{-1}\vS_i$ are less than $1$.
 We approximate by the first order expansion $(l = 1)$, and
 \begin{align*}
   \vec{0}
-  = k\nu\vec{I} - \sum_{i=1}^k (\nu + n_i)(\vec{I} - \vPsi^{-1}\vS_i)
-  = - n_\bullet\vec{I}
+  = k\nu\vI - \sum_{i=1}^k (\nu + n_i)(\vI - \vPsi^{-1}\vS_i)
+  = - n_\bullet\vI
      + \vPsi^{-1}\sum_{i=1}^k (\nu + n_i) \vS_i
 \end{align*}
 where $n_\bullet = \sum_{i=1}^k n_i$ is the total number of observations.
 This implies
 \begin{align*}
    \vPsi^{-1}\sum_{i=1}^k (\nu + n_i) \vS_i
-    = n_\bullet \vec{I}
+    = n_\bullet \vI
 \end{align*}
 which suggests the estimators
 \begin{align}
   \hat{\vPsi}_\text{MLE}
-  = \frac{\sum_{i=1}^k (\nu + n_i) \vec{S}_i}{n_\bullet}
+  = \frac{\sum_{i=1}^k (\nu + n_i) \vS_i}{n_\bullet}
   \label{eq:mle}
   \quad \text{ and } \quad
   \hat{\vSigma}_\text{MLE}
-  = \frac{\sum_{i=1}^k (\nu + n_i) \vec{S}_i}{(\nu-p-1)n_\bullet}.
+  = \frac{\sum_{i=1}^k (\nu + n_i) \vS_i}{(\nu-p-1)n_\bullet}.
 \end{align}
 These estimates are seen to correspond to a weighted sum of the scatter matrices.
 
