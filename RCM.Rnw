@@ -453,7 +453,10 @@ That is, equations \eqref{eq:pooledest}, \eqref{eq:em}, or \eqref{eq:mle} define
 
 The procedure using the EM step utilizes the results about the RCM log-likelihood and thus provides a guarantee of convergence along with the advantage of a very simple implementation.
 Both the EM step and the $\nu$ update will always yield an increase in the likelihood.
-However, the obvious disadvantage is that the identified maxima might be a saddle-point when considering the log-likelihood function jointly in $(\vPsi, \nu)$.
+The disadvantage is that the identified stationary point might be a
+saddle-point, when considering the log-likelihood function jointly in
+$(\vPsi, \nu)$. This probably happens with zero probability, but it
+cannot be excluded that the maximum found is not global.
 
 
 
