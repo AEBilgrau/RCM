@@ -1019,7 +1019,7 @@ Define for $\vPsi_s in \cal{ST}$ the basin of attraction
 \end{align*}
 The basin of attraction is open if $\vPsi_s$ is a maximum \citep[Lemma 4.1]{Khalil2002}.
 By Lemma \ref{lem:negativesdefinite}, $\vPsi_s$ is always a maximum and hence all $A_s$ are open sets in the set of all positive definite matrices $\calS_+$.
-This partitions the space $\calS_+$ into $N$ disjoint, non-empty, open sets.
+This partitions the space $\calS_+$ into disjoint, non-empty, open sets.
 Since $\calS_+$ is connected, this is only possible if $A_s = \calS_+$ and thus there is only a single basin of attraction and maximum of $\ell$.
 \end{proof}
 
