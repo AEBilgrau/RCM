@@ -1006,22 +1006,21 @@ The existence of a maximum follows from the extreme value theorem by the continu
 A stationary point exists due to Rolle's theorem and the differentiability of $\ell$.
 
 Next, we show the uniqueness of the maximum.
-Suppose there exists more than one stationary points $\vPsi_1, \vPsi_2, ...$.
-By Lemma \ref{lem:elltominusinfty}, $\ell(\vPsi)$ has a finite upper bound given by the value of the log-likelihood in those points.
+Let $\cal(ST)$ denote the set of stationary points, which is nonempty.
+By Lemma \ref{lem:elltominusinfty}, $\ell(\vPsi)$ has a finite upper bound given by the maximum of the log-likelihood in those points.
 All gradient curves (that is, solution curves to $\dot{\vPsi}(t) = \nabla \ell(\vPsi(t))$) must then converge toward exactly one of the stationary points where $\ell$ monotonically increases along each curve.
-Define the basin of attraction
+Define for $\vPsi_s in \cal{ST}$ the basin of attraction
 \begin{align*}
-   A_i = \big\{
+   A_s = \big\{
      \vPsi_0 \in \calS_+ \big|
      \vPsi(0) = \vPsi_0, \;
-     \lim_{t \to \infty} \vPsi(t) = \vPsi_i
+     \lim_{t \to \infty} \vPsi(t) = \vPsi_s
   \big\},
 \end{align*}
-associated to each stationary point $\vPsi_i$.
-The basin of attraction is open if $\vPsi_i$ is a maximum \citep[Lemma 4.1]{Khalil2002}.
-By Lemma \ref{lem:negativesdefinite}, $\vPsi_i$ is a always a maximum and hence all $A_i$ are open sets in the set of all positive definite matrices $\calS_+$.
+The basin of attraction is open if $\vPsi_s$ is a maximum \citep[Lemma 4.1]{Khalil2002}.
+By Lemma \ref{lem:negativesdefinite}, $\vPsi_s$ is always a maximum and hence all $A_s$ are open sets in the set of all positive definite matrices $\calS_+$.
 This partitions the space $\calS_+$ into $N$ disjoint, non-empty, open sets.
-Since $\calS_+$ is connected, this is only possible if $A_i = A_j = \calS_+$ for all $i$ and $j$ and thus there is only a single basin of attraction and maximum of $\ell$.
+Since $\calS_+$ is connected, this is only possible if $A_s = \calS_+$ and thus there is only a single basin of attraction and maximum of $\ell$.
 \end{proof}
 
 
