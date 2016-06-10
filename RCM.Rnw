@@ -941,7 +941,7 @@ $
 $
 where $\psi(\cdot)$ is the tri-gamma function.
 The tri-gamma function is a well-known monotonically decreasing function.
-Hence, the log-likelihood is log-concave in $\nu$.
+Hence, the likelihood is log-concave in $\nu$.
 \end{proof}
 
 
@@ -1079,7 +1079,7 @@ Three cases now exists:
   \leq \frac{k\nu}{2} a(t) - C \log\left| \vPsi_t + \vS\right|
   \leq \frac{k\nu}{2} a(t) - C \log\left| \vS \right| \to -\infty
 \end{align*}
-as the matrix in the second term is almost surely positive definite when $n_\bullet = \sum_{a=1}^k x_a \geq p$ and the log determinant will converge to some constant.
+as the matrix in the second term is almost surely positive definite when $n_\bullet = \sum_{i=1}^k n_a \geq p$ and the log determinant is some constant.
 3) If $a(t)$ is bounded and the largest eigenvalue $\lambda_\text{max}(\vPsi_t) \to \infty$ (and hence $\lambda_\text{min}(\vPsi_t)  \to -\infty)$, then
 $\lambda_\text{max}(\vPsi_t+\vS) \to \infty$
 and
@@ -1142,7 +1142,7 @@ With the above expressions we now show that the Hessian matrix is negative defin
 Let $\vY = \sum_{(i,j)} y_{ij}\vE^{ij}$ be an arbitrary symmetric matrix in the vector space where $\vY \neq \vec{0}$.
 In our vector space we need to show that
 \begin{align*}
-  \sum_{i\leq j, k\leq j}
+  \sum_{i\leq j, k\leq l}
     Y_{ij}
     \left(\nabla^2_\vPsi 2\ell(\vPsi)\right)_{(i,j),(k,l)}
     Y_{kl}
