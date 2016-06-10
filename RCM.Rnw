@@ -491,7 +491,7 @@ This is approximately the fraction of $\hat{\nu}^{(j)}_0$'s smaller than $\hat{\
 
 \subsubsection*{Intra-class correlation coefficient}
 We now introduce a descriptive statistic analogous to the intra-class correlation coefficient (ICC) \citep{Shrout1979} well known from ordinary meta-analysis to better determine what constitute large values of $\nu$.
-For the RCM, the ICC be given by
+For the RCM, the ICC is given by
 \begin{align}
   \text{ICC}(\nu)
   = \frac{1}{\nu-p}.
@@ -628,7 +628,7 @@ In any case, the low ICC might suggest high reproducibility of the covariances b
 \fig{\Sexpr{dlbcl_plot}}{0.8\textwidth}{
 Top left: dendrograms of the hierarchical clustering, the identified modules, and a heatmap of the correlation matrix.
 Top right: the correlation network as laid out by the Fruchterman-Reingold algorithm \citep{Fruchterman1991}. The nodes are colored after the identified modules. The edge colors follow the color key of the heatmap. If the edge weight is numerically less than \Sexpr{round(dlbcl.par$threshold, 3)}, corresponding to the $95 \%$ largest values, the edge is suppressed.
-Bottom: A Hierarchical edge bundling representation of the network \citep{Holten2006} where edges loosly follow the dendrogram. Edge colors follow the color key. Only edges with a weight numerically larger than \Sexpr{round(dlbcl.par$threshold, 3)} are plotted.
+Bottom: A Hierarchical edge bundling representation of the network \citep{Holten2006} where edges loosely follow the dendrogram. Edge colors follow the color key. Only edges with a weight numerically larger than \Sexpr{round(dlbcl.par$threshold, 3)} are plotted.
 }
 
 Next, we outline one of many possible downstream analysis of the estimated covariance.
