@@ -714,7 +714,7 @@ The benchmarking measure used is the following weighted sum of squared errors,
 <<numerical_experiment_plot, echo=FALSE, results='hide'>>=
 @
 
-For each $n = \Sexpr{min(par.ne$n.obs)}, \ldots, \Sexpr{max(par.ne$n.obs)}$, the weighted sum of squared errors for each estimator, $\text{SSE}(\hvSigma)$, was computed for $\Sexpr{par.ne[["n.sims"]]}$ datasets and the median of these values are seen in Figure \ref{\Sexpr{figure1}} as function of the number of samples in each dataset $n_i$.
+For each $n = \Sexpr{min(par.ne$n.obs)}, \ldots, \Sexpr{max(par.ne$n.obs)}$, the weighted sum of squared errors for each estimator, $\text{SSE}(\hvSigma)$, was computed for $\Sexpr{par.ne[["n.sims"]]}$ datasets and the mean and 95\% confidence interval of these values are seen in Figure \ref{\Sexpr{figure1}} as function of the number of samples in each dataset $n_i$.
 
 \fig{\Sexpr{figure1}}{0.8\textwidth}{
 The median SSE of \Sexpr{par.ne$n.sims} simulations as a function of the number of samples $n_i$ in each of the \Sexpr{par.ne$k} studies.

@@ -167,10 +167,10 @@ hda.predict <- function(hda.fit, newdata) {
 
 ## ---- numerical_experiment ----
 par.ne <- list(k = 3,
-               nu = 15,
-               p = 10,
-               n.sims = 2500,
-               n.obs = seq(5, 11, by = 1))
+               nu = 30,
+               p = 20,
+               n.sims = 1000,
+               n.obs = ceil(seq(7, 40, length.out = 8)))
 
 if (!exists("df.numerical") || recompute) {
   set.seed(987654321)
@@ -191,34 +191,48 @@ if (!exists("df.numerical") || recompute) {
 
 
 ## ---- numerical_experiment_plot ----
+ci <- function(x) 1.96*sd(x)/sqrt(length(x))
 df <- aggregate(cbind(SSE.rcm.em, SSE.rcm.mle, SSE.rcm.pool) ~
-                  n + nu + k + p, median, data = df.numerical)
+                  n + nu + k + p, FUN = mean, data = df.numerical)
+df.mad <- aggregate(cbind(SSE.rcm.em, SSE.rcm.mle, SSE.rcm.pool) ~
+                      n + nu + k + p, FUN = ci,
+                    data = df.numerical)
 
 figure1 <- "figure1.jpg"
 jpeg(figure1, height=7/2, width=7, units = "in", res = 200)
 {
-  plot(df$n, df$SSE.rcm.em, col = num2col[3], type = "b", axes = FALSE,
+  plot(df$n, df$SSE.rcm.em, col = num2col[3], type = "l", axes = FALSE,
        xlab = expression(n = n[i]),
-       ylim = range(df[,5]),
-       ylab = "median SSE", pch = 15, lty = 1,
+       ylim = range(df[,5:7]),
+       ylab = "mean SSE", pch = 15, lty = 1,
        main = "")
 
   legend_expressions <-
     sapply(1:3, function(i) {
-      as.expression(substitute(x == y, list(x = as.name(c("k", "nu", "p")[i]),
-                                            y = unique(c(df$k, df$nu, df$p))[i])))
+      as.expression(substitute(x == y,list(x = as.name(c("k", "nu", "p")[i]),
+                                    y = unique(c(df$k, df$nu, df$p))[i])))
     })
   legend("bottomleft", inset = 0.01, bty = "n", horiz = TRUE,
          legend = legend_expressions)
-  axis(1)
+  axis(1, at = par.ne$n.obs)
   axis(2)
   grid()
 
-  lines(df$n, df$SSE.rcm.pool, col = num2col[4], type = "b", pch=16, lty=2, lwd=2)
-  lines(df$n, df$SSE.rcm.mle, col = num2col[5], type = "b", pch=17, lty=3, lwd=2)
+  lines(df$n+0.2, df$SSE.rcm.pool, col = num2col[4], type = "l", pch=16, lty=2, lwd=2)
+  lines(df$n+0.4, df$SSE.rcm.mle, col = num2col[5], type = "l", pch=17, lty=3, lwd=2)
   legend("topright", legend = c("EM", "pool", "Approx. MLE"),
          lty = 1:4, pch = c(15, 16, 17), lwd = 2, bty = "n",
          col = num2col[c(3,4,5)])
+
+  arrows(df$n, df$SSE.rcm.em-df.mad$SSE.rcm.em,
+         df$n, df$SSE.rcm.em+df.mad$SSE.rcm.em,
+         length=0.05, angle=90, code=3, col = num2col[3])
+  arrows(df$n+0.2, df$SSE.rcm.pool-df.mad$SSE.rcm.pool,
+         df$n+0.2, df$SSE.rcm.pool+df.mad$SSE.rcm.pool,
+         length=0.05, angle=90, code=3, col = num2col[4])
+  arrows(df$n+0.4, df$SSE.rcm.mle-df.mad$SSE.rcm.mle,
+         df$n+0.4, df$SSE.rcm.mle+df.mad$SSE.rcm.mle,
+         length=0.05, angle=90, code=3, col = num2col[5])
 }
 dev.off()
 ## ---- end ----
