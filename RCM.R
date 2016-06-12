@@ -1,4 +1,5 @@
-setwd("~/Documents/PhD/paper-RCM/")
+# setwd("~/Documents/PhD/paper-RCM/")
+# setwd("~/GitHub/RCM/")
 
 ## ---- initialize_script ----
 rm(list = ls())
@@ -23,8 +24,11 @@ if (file.exists("saved.RData")) load("saved.RData")
 
 # Multicore support
 library("foreach")
-library("doMC") #library("doParallel") # Use this package on windows
+library("doMC")
 registerDoMC(detectCores())
+# library("doParallel") # Use this package on windows
+# registerDoMC(detectCores())
+registerDoParallel(detectCores())
 
 num2col <- c("gray32",
              "darkolivegreen3",
@@ -166,18 +170,19 @@ hda.predict <- function(hda.fit, newdata) {
 
 
 ## ---- numerical_experiment ----
+# As a function of n_i
 par.ne <- list(k = 3,
                nu = 30,
                p = 20,
                n.sims = 1000,
-               n.obs = ceil(seq(7, 40, length.out = 8)))
+               n.obs = ceil(c(7, seq(10, 40, length.out = 7))))
 
 if (!exists("df.numerical") || recompute) {
   set.seed(987654321)
   st <- proc.time()
   res <- list()
   for (i in seq_along(par.ne$n.obs)) {
-    tmp <- foreach(j = seq_len(par.ne$n.sims)) %dopar% {
+    tmp <- foreach(j = seq_len(par.ne$n.sims)) %do% {
       with(par.ne, test.rcm(k = k, n = n.obs[i], p = p, nu = nu))
     }
     res <- c(res, tmp)
@@ -189,6 +194,55 @@ if (!exists("df.numerical") || recompute) {
   resave(df.numerical, file = "saved.RData")
 }
 
+# As a function of p
+par.ne2 <- list(k = 3,
+                nu = 150,
+                p = ceil(seq(5, 40, length.out = 8)),
+                n.sims = 1000,
+                n.obs = 40)
+
+if (!exists("df.numerical2") || recompute) {
+  set.seed(1234567890)
+  st <- proc.time()
+  res <- list()
+  for (i in seq_along(par.ne2$p)) {
+    tmp <- foreach(j = seq_len(par.ne2$n.sims)) %dopar% {
+      with(par.ne2, test.rcm(k = k, n = n.obs, p = p[i], nu = nu))
+    }
+    res <- c(res, tmp)
+    cat("loop =", i, "of", length(par.ne2$p), "done after",
+        (proc.time()-st)[3] %/% 60, "mins.\n")
+  }
+  df.numerical2 <- as.data.frame(t(sapply(res, SSEs)))
+  rm(tmp)
+  resave(df.numerical2, file = "saved.RData")
+}
+
+# Time pr fit
+par.ne3 <- list(k = 3,
+                nu = 300,
+                p = c(100, 150, 200, 250),
+                n.sims = 10,
+                n.obs = 210)
+
+if (!exists("df.numerical3") || recompute) {
+  set.seed(3842856)
+  st <- proc.time()
+  res <- list()
+  for (i in seq_along(par.ne3$p)) {
+    tmp <- foreach(j = seq_len(par.ne3$n.sims)) %do% {
+      with(par.ne3, test.rcm(k = k, n = n.obs, p = p[i], nu = nu))
+    }
+    res <- c(res, tmp)
+    cat("loop =", i, "of", length(par.ne3$p), "done after",
+        (proc.time()-st)[3] %/% 60, "mins.\n")
+  }
+  df.numerical3 <- as.data.frame(t(sapply(res, SSEs)))
+  resave(df.numerical3, file = "saved.RData")
+}
+
+## ---- end ----
+
 
 ## ---- numerical_experiment_plot ----
 ci <- function(x) 1.96*sd(x)/sqrt(length(x))
@@ -197,14 +251,24 @@ df <- aggregate(cbind(SSE.rcm.em, SSE.rcm.mle, SSE.rcm.pool) ~
 df.mad <- aggregate(cbind(SSE.rcm.em, SSE.rcm.mle, SSE.rcm.pool) ~
                       n + nu + k + p, FUN = ci,
                     data = df.numerical)
+tm.elapsed <-
+  aggregate(cbind(time.em.elapsed,  time.pool.elapsed, time.mle.elapsed) ~
+              n + nu + k + p, FUN = mean,
+            data = df.numerical3)
 
 figure1 <- "figure1.jpg"
 jpeg(figure1, height=7/2, width=7, units = "in", res = 200)
 {
-  plot(df$n, df$SSE.rcm.em, col = num2col[3], type = "l", axes = FALSE,
+  par(mfrow = c(1,2))
+  plot(df$n, df$SSE.rcm.em,
+       col = num2col[3],
+       type = "b",
+       axes = FALSE,
        xlab = expression(n = n[i]),
        ylim = range(df[,5:7]),
-       ylab = "mean SSE", pch = 15, lty = 1,
+       ylab = "mean SSE",
+       pch = 15,
+       lty = 1,
        main = "")
 
   legend_expressions <-
@@ -214,15 +278,15 @@ jpeg(figure1, height=7/2, width=7, units = "in", res = 200)
     })
   legend("bottomleft", inset = 0.01, bty = "n", horiz = TRUE,
          legend = legend_expressions)
-  axis(1, at = par.ne$n.obs)
+  axis(1)
   axis(2)
   grid()
 
-  lines(df$n+0.2, df$SSE.rcm.pool, col = num2col[4], type = "l", pch=16, lty=2, lwd=2)
-  lines(df$n+0.4, df$SSE.rcm.mle, col = num2col[5], type = "l", pch=17, lty=3, lwd=2)
+  lines(df$n+0.2, df$SSE.rcm.pool, col = num2col[4], type = "b", pch=16, lty=2, lwd=2)
+  lines(df$n+0.4, df$SSE.rcm.mle, col = num2col[5], type = "b", pch=17, lty=3, lwd=2)
   legend("topright", legend = c("EM", "pool", "Approx. MLE"),
          lty = 1:4, pch = c(15, 16, 17), lwd = 2, bty = "n",
-         col = num2col[c(3,4,5)])
+         col = num2col[c(3,4,5)], inset = 0.05)
 
   arrows(df$n, df$SSE.rcm.em-df.mad$SSE.rcm.em,
          df$n, df$SSE.rcm.em+df.mad$SSE.rcm.em,
@@ -233,9 +297,6 @@ jpeg(figure1, height=7/2, width=7, units = "in", res = 200)
   arrows(df$n+0.4, df$SSE.rcm.mle-df.mad$SSE.rcm.mle,
          df$n+0.4, df$SSE.rcm.mle+df.mad$SSE.rcm.mle,
          length=0.05, angle=90, code=3, col = num2col[5])
-}
-dev.off()
-## ---- end ----
 
 
 #
@@ -247,7 +308,28 @@ e <- function(i, p) { # ith standard basis vector of length p
   vec <- rep(0, p)
   vec[i] <- 1
   return(vec)
+  # Panel 2
+  plot(tm.elapsed$p, tm.elapsed$time.em.elapsed,
+       type = "b",
+       col = num2col[3],
+       xlim =c(100, 250),
+       ylab = "Computation time (s)",
+       xlab = "p",
+       axes = FALSE,
+       pch = 16)
+  grid()
+  axis(1)
+  axis(2)
+  lines(tm.elapsed$p, tm.elapsed$time.pool.elapsed, type = "b",
+        col = num2col[4], pch = 16)
+  lines(tm.elapsed$p, tm.elapsed$time.mle.elapsed, type = "b",
+        col = num2col[5], pch = 16)
+
+  legend("topleft", legend = c("EM", "pool", "Approx. MLE"),
+         lty = 1:4, pch = c(15, 16, 17), lwd = 2, bty = "n",
+         col = num2col[c(3,4,5)], inset = 0.05)
 }
+dev.off()
 
 par.xda <- list(K = 3,
                 n.obs = 40,
@@ -330,6 +412,7 @@ if (!exists("misclassification.risks") || recompute) {
 
     }
   }
+## ---- end ----
 
   resave(misclassification.risks, file = "saved.RData")
 }
