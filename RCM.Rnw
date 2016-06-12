@@ -102,9 +102,9 @@
 \begin{document}
 
 \begin{frontmatter}
-\title{Estimation of a common covariance matrix for multiple classes
-       applied as network meta analysis in diffuse large B-cell lymphoma\thanksref{T1}}
-\runtitle{Estimation of a common covariance matrix}
+\title{Estimating a common covariance matrix for network meta analysis of
+gene expression data sets in diffuse large B-cell lymphoma\thanksref{T1}}
+\runtitle{Estimating a common covariance matrix}
 \thankstext{T1}{Supported by MSCNET, EU FP6, CHEPRE, the Danish Agency for Science, Technology, and Innovation as well as Karen Elise Jensen Fonden.}
 
 \begin{aug}
@@ -153,8 +153,8 @@ DK-9000 Aalborg \O{}\\
 \end{aug}
 
 \begin{abstract}
-We present a hierarchical random covariance model applied as a meta analysis of gene networks across multiple large-scale gene expression studies of diffuse large B-cell lymphoma (DLBCL).
-The model was motivated by the need for improving the inherently unstable covariance estimation methods compounded by noisy gene expression data.
+Estimating gene expression networks based on data of diseased tissue is one of the major challenges of cancer systems biology as it allows us to improve our understanding of disease pathology and eventually identify new drug targets.
+Motivated by the need for improving the inherently unstable covariance estimation methods compounded by noisy gene expression data across multiple large-scale gene expression studies of diffuse large B-cell lymphoma (DLBCL) we present a hierarchical random covariance model applied as a meta analysis of gene networks.
 We identify seemingly biologically meaningful DLBCL gene networks of prognostic value.
 The methods are generally applicable where multiple classes are present and believed to share a common covariance matrix of interest that is obscured by class-dependent noise.
 As such, it provides a basis for meta- or integrative analysis of covariance matrices where the classes are formed by datasets.
