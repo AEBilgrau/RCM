@@ -252,7 +252,7 @@ Hence, in the RCM given by \eqref{eq:RCM}, $\vSigma$ can be interpreted as a loc
 The parameter $\nu$ inversely controls the inter-class variation and can thus be considered an inter-class homogeneity parameter of the covariance structure.
 A large $\nu$ corresponds to high study homogeneity and vice versa for small $\nu$.
 This can be further seen as $\vSigma_i$ concentrates around $\vSigma$ for $\nu\to\infty$ which can be interpreted as the inter-study variation goes towards zero for increasing $\nu$.
-This fact is seen directly from variance and covariance expressions for the inverse Wishart (see \eqref{eq:invwishvar} and \eqref{eq:invwishvar}) where the 4th order denominator grows much faster than the 1st order nominator as polynomials in $\nu$ and causing the variance to vanish for $\nu\to\infty$.
+This fact is seen directly from variance and covariance expressions for the inverse Wishart (see \eqref{eq:invwishcovar} and \eqref{eq:invwishvar}) where the 4th order denominator grows much faster than the 1st order nominator as polynomials in $\nu$ and causing the variance to vanish for $\nu\to\infty$.
 Thus, the true underlying covariance matrix $\vSigma$ and the homogeneity parameter $\nu$ are the effects of interest to be estimated in this paper.
 These basic properties of the RCM motivates the construction.
 % We note that while the reparameterization of \eqref{eq:RCM} has a preferable interpretation, the likelihood is much more complex and often numerically unstable.
@@ -453,7 +453,7 @@ That is, equations \eqref{eq:pooledest}, \eqref{eq:em}, or \eqref{eq:mle} define
 
 The procedure using the EM step utilizes the results about the RCM log-likelihood and thus provides a guarantee of convergence along with the advantage of a very simple implementation.
 Both the EM step and the $\nu$ update will always yield an increase in the likelihood.
-However, the obvious disadvantage is that the identified maxima might be a saddle-point when considering the log-likelihood function jointly in $(\vPsi, \nu)$.
+However, the obvious disadvantage is that the identified maxima might be a local maximum or saddle-point when considering the log-likelihood function jointly in $(\vPsi, \nu)$.
 
 
 
