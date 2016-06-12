@@ -1,4 +1,5 @@
-setwd("~/Documents/PhD/paper-RCM/")
+# setwd("~/Documents/PhD/paper-RCM/")
+# setwd("~/GitHub/RCM/")
 
 ## ---- initialize_script ----
 rm(list = ls())
@@ -23,8 +24,11 @@ if (file.exists("saved.RData")) load("saved.RData")
 
 # Multicore support
 library("foreach")
-library("doMC") #library("doParallel") # Use this package on windows
+library("doMC")
 registerDoMC(detectCores())
+# library("doParallel") # Use this package on windows
+# registerDoMC(detectCores())
+registerDoParallel(detectCores())
 
 num2col <- c("gray32",
              "darkolivegreen3",
@@ -126,58 +130,21 @@ accuracy <- function(x) {
   return(sum(diag(x))/sum(x))
 }
 
-#
-# HDA
-#
-
-hda.fit <- function(classes, vars, ...) {
-  p <- ncol(vars) # Dimensionality
-  counts <- table(classes) # Count observations in each class
-  split.data <- split(vars, f = classes) # Split vars object by classes
-  means <- t(sapply(split.data, colMeans))  # Compute means in each class
-  # Compute the scatter matrix in each dataset
-  S <- lapply(split.data, function(x)
-    cov(as.matrix(x, nrow = nrow(x)), method = "ML")*nrow(x))
-  Psi.init <- Reduce("+", S)/(nrow(vars) - length(S))
-
-  # Find "common" covariance
-  res <- fit.rcm(Psi.init = Psi.init, nu.init = p, S = S, ns = counts, ...)
-  sigma <- with(res, Psi2Sigma(Psi, nu))
-
-  return(list(counts = counts, means = means, sigma = sigma,
-              Psi = res$Psi, nu = res$nu))
-}
-
-hda.predict <- function(hda.fit, newdata) {
-  K <- length(hda.fit$counts)
-  probs <- as.numeric(hda.fit$counts/sum(hda.fit$counts))
-
-  f <- function(k) {
-    probs[k] * drcm(x = newdata, mu = hda.fit$means[k, ],
-                    Psi = hda.fit$Psi, nu = hda.fit$nu)
-  }
-  scaled_dens <- sapply(seq_len(K), f)
-  post <- scaled_dens/rowSums(scaled_dens)
-  colnames(post) <- names(hda.fit$counts)
-  pred.class <- apply(scaled_dens, 1, which.max)
-  return(list(class = pred.class))#, prob = post))
-}
-
-
 
 ## ---- numerical_experiment ----
+# As a function of n_i
 par.ne <- list(k = 3,
-               nu = 15,
-               p = 10,
-               n.sims = 2500,
-               n.obs = seq(5, 11, by = 1))
+               nu = 30,
+               p = 20,
+               n.sims = 1000,
+               n.obs = ceil(c(7, seq(10, 40, length.out = 7))))
 
 if (!exists("df.numerical") || recompute) {
   set.seed(987654321)
   st <- proc.time()
   res <- list()
   for (i in seq_along(par.ne$n.obs)) {
-    tmp <- foreach(j = seq_len(par.ne$n.sims)) %dopar% {
+    tmp <- foreach(j = seq_len(par.ne$n.sims)) %do% {
       with(par.ne, test.rcm(k = k, n = n.obs[i], p = p, nu = nu))
     }
     res <- c(res, tmp)
@@ -189,24 +156,87 @@ if (!exists("df.numerical") || recompute) {
   resave(df.numerical, file = "saved.RData")
 }
 
+# As a function of p
+par.ne2 <- list(k = 3,
+                nu = 150,
+                p = ceil(seq(5, 40, length.out = 8)),
+                n.sims = 1000,
+                n.obs = 40)
+
+if (!exists("df.numerical2") || recompute) {
+  set.seed(1234567890)
+  st <- proc.time()
+  res <- list()
+  for (i in seq_along(par.ne2$p)) {
+    tmp <- foreach(j = seq_len(par.ne2$n.sims)) %dopar% {
+      with(par.ne2, test.rcm(k = k, n = n.obs, p = p[i], nu = nu))
+    }
+    res <- c(res, tmp)
+    cat("loop =", i, "of", length(par.ne2$p), "done after",
+        (proc.time()-st)[3] %/% 60, "mins.\n")
+  }
+  df.numerical2 <- as.data.frame(t(sapply(res, SSEs)))
+  rm(tmp)
+  resave(df.numerical2, file = "saved.RData")
+}
+
+# Time pr fit
+par.ne3 <- list(k = 3,
+                nu = 300,
+                p = c(100, 150, 200, 250),
+                n.sims = 10,
+                n.obs = 210)
+
+if (!exists("df.numerical3") || recompute) {
+  set.seed(3842856)
+  st <- proc.time()
+  res <- list()
+  for (i in seq_along(par.ne3$p)) {
+    tmp <- foreach(j = seq_len(par.ne3$n.sims)) %do% {
+      with(par.ne3, test.rcm(k = k, n = n.obs, p = p[i], nu = nu))
+    }
+    res <- c(res, tmp)
+    cat("loop =", i, "of", length(par.ne3$p), "done after",
+        (proc.time()-st)[3] %/% 60, "mins.\n")
+  }
+  df.numerical3 <- as.data.frame(t(sapply(res, SSEs)))
+  resave(df.numerical3, file = "saved.RData")
+}
+
+## ---- end ----
+
 
 ## ---- numerical_experiment_plot ----
+ci <- function(x) 1.96*sd(x)/sqrt(length(x))
 df <- aggregate(cbind(SSE.rcm.em, SSE.rcm.mle, SSE.rcm.pool) ~
-                  n + nu + k + p, median, data = df.numerical)
+                  n + nu + k + p, FUN = mean, data = df.numerical)
+df.mad <- aggregate(cbind(SSE.rcm.em, SSE.rcm.mle, SSE.rcm.pool) ~
+                      n + nu + k + p, FUN = ci,
+                    data = df.numerical)
+tm.elapsed <-
+  aggregate(cbind(time.em.elapsed,  time.pool.elapsed, time.mle.elapsed) ~
+              n + nu + k + p, FUN = mean,
+            data = df.numerical3)
 
 figure1 <- "figure1.jpg"
 jpeg(figure1, height=7/2, width=7, units = "in", res = 200)
 {
-  plot(df$n, df$SSE.rcm.em, col = num2col[3], type = "b", axes = FALSE,
+  par(mfrow = c(1,2))
+  plot(df$n, df$SSE.rcm.em,
+       col = num2col[3],
+       type = "b",
+       axes = FALSE,
        xlab = expression(n = n[i]),
-       ylim = range(df[,5]),
-       ylab = "median SSE", pch = 15, lty = 1,
+       ylim = range(df[,5:7]),
+       ylab = "mean SSE",
+       pch = 15,
+       lty = 1,
        main = "")
 
   legend_expressions <-
     sapply(1:3, function(i) {
-      as.expression(substitute(x == y, list(x = as.name(c("k", "nu", "p")[i]),
-                                            y = unique(c(df$k, df$nu, df$p))[i])))
+      as.expression(substitute(x == y,list(x = as.name(c("k", "nu", "p")[i]),
+                                    y = unique(c(df$k, df$nu, df$p))[i])))
     })
   legend("bottomleft", inset = 0.01, bty = "n", horiz = TRUE,
          legend = legend_expressions)
@@ -214,177 +244,215 @@ jpeg(figure1, height=7/2, width=7, units = "in", res = 200)
   axis(2)
   grid()
 
-  lines(df$n, df$SSE.rcm.pool, col = num2col[4], type = "b", pch=16, lty=2, lwd=2)
-  lines(df$n, df$SSE.rcm.mle, col = num2col[5], type = "b", pch=17, lty=3, lwd=2)
+  lines(df$n+0.2, df$SSE.rcm.pool, col = num2col[4], type = "b", pch=16, lty=2, lwd=2)
+  lines(df$n+0.4, df$SSE.rcm.mle, col = num2col[5], type = "b", pch=17, lty=3, lwd=2)
   legend("topright", legend = c("EM", "pool", "Approx. MLE"),
          lty = 1:4, pch = c(15, 16, 17), lwd = 2, bty = "n",
-         col = num2col[c(3,4,5)])
+         col = num2col[c(3,4,5)], inset = 0.05)
+
+  arrows(df$n, df$SSE.rcm.em-df.mad$SSE.rcm.em,
+         df$n, df$SSE.rcm.em+df.mad$SSE.rcm.em,
+         length=0.05, angle=90, code=3, col = num2col[3])
+  arrows(df$n+0.2, df$SSE.rcm.pool-df.mad$SSE.rcm.pool,
+         df$n+0.2, df$SSE.rcm.pool+df.mad$SSE.rcm.pool,
+         length=0.05, angle=90, code=3, col = num2col[4])
+  arrows(df$n+0.4, df$SSE.rcm.mle-df.mad$SSE.rcm.mle,
+         df$n+0.4, df$SSE.rcm.mle+df.mad$SSE.rcm.mle,
+         length=0.05, angle=90, code=3, col = num2col[5])
+
+
+
+  # Panel 2
+  plot(tm.elapsed$p, tm.elapsed$time.em.elapsed,
+       type = "b",
+       col = num2col[3],
+       xlim =c(100, 250),
+       ylab = "Computation time (s)",
+       xlab = "p",
+       axes = FALSE,
+       pch = 16)
+  grid()
+  axis(1)
+  axis(2)
+  lines(tm.elapsed$p, tm.elapsed$time.pool.elapsed, type = "b",
+        col = num2col[4], pch = 16)
+  lines(tm.elapsed$p, tm.elapsed$time.mle.elapsed, type = "b",
+        col = num2col[5], pch = 16)
+
+  legend("topleft", legend = c("EM", "pool", "Approx. MLE"),
+         lty = 1:4, pch = c(15, 16, 17), lwd = 2, bty = "n",
+         col = num2col[c(3,4,5)], inset = 0.05)
 }
 dev.off()
+
+
+
+
+
 ## ---- end ----
 
 
+# #
+# # Discriminant analysis
+# #
 #
-# Discriminant analysis
+# ## ---- discriminant_analysis ----
+# e <- function(i, p) { # ith standard basis vector of length p
+#   vec <- rep(0, p)
+#   vec[i] <- 1
+#   return(vec)
+# }
 #
-
-## ---- discriminant_analysis ----
-e <- function(i, p) { # ith standard basis vector of length p
-  vec <- rep(0, p)
-  vec[i] <- 1
-  return(vec)
-}
-
-par.xda <- list(K = 3,
-                n.obs = 40,
-                n.obs.valid = 100,
-                n.runs = 2500,
-                p.dims = c(5, 10, 20, 35))
-if (!exists("misclassification.risks") || recompute) {
-
-  inner <- structure(vector("list", 4),
-                     names = c("eq.sph", "neq.sph",
-                               "eq.ell", "neq.ell"))
-  misclassification.risks <-
-    replicate(length(par.xda$p.dims), inner, simplify = FALSE)
-  names(misclassification.risks) <- paste0("p", par.xda$p.dims)
-
-  st <- proc.time()
-  for (p.index in seq_along(par.xda$p.dims)) {
-
-    p <- par.xda$p.dims[p.index]
-
-    for (s in seq_len(4)) {
-      cat("p =", p, "and s =", s, "started at",
-          (proc.time()-st)[3] %/% 60, "mins.\n")
-      flush.console()
-
-      method <- switch(s,
-                       "EqualSpherical",
-                       "UnequalSpherical",
-                       "EqualEllipsoidal",
-                       "UnequalEllipsoidal")
-      theta <- rtheta(m = par.xda$K, d = p, method = method)
-      theta$pie <- c(1, 1, 1)/3
-      theta$mu <- list(rep(0, p), 3*e(1, p), 4*e(1, p))
-
-      if (method == "EqualEllipsoidal") { # Low-variance subspace
-        evec <- eigen(theta$sigma[[1]])$vectors
-        eval <- eigen(theta$sigma[[1]])$values
-        w2 <- ( seq(sqrt(0.5), sqrt(4), length.out = p)^2) # reverse t
-        w3 <- (-seq(sqrt(0.5), sqrt(3), length.out = p)^2) # reverse
-        mu1 <- rep(0, p)
-        mu2 <- c(evec %*% (sqrt(eval)*w2))
-        mu3 <- c(evec %*% (sqrt(eval)*w3))
-        theta$mu <- list(mu1, mu2, mu3)
-      }
-
-      mis.risk <-
-        structure(rep(NA, 3*par.xda$n.runs), dim = c(par.xda$n.runs, 3),
-                  dimnames = list(NULL, c("LDA", "QDA", "HDA")))
-      misclassification.risks[[p.index]][[s]]  <-
-        tmp <- foreach(i = seq_len(par.xda$n.runs), .combine = rbind,
-                       .packages = c("dplyr", "correlateR")) %dopar% {
-                         cat("i =", i, "\n"); flush.console()
-
-          repeat {
-            train <- to.df(SimulateGMMData(par.xda$n.obs,       theta = theta))
-            valid <- to.df(SimulateGMMData(par.xda$n.obs.valid, theta = theta))
-            # Make sure that we have a least two observations in each group
-            if (all(table(train$classes) > 2) && all(table(valid$classes) > 2)){
-              break
-            }
-          }
-
-          qda.train <- qda.fit(train$classes, dplyr::select(train, -classes))
-          lda.train <- qda2lda(qda.train)
-          hda.train <- hda.fit(train$classes, dplyr::select(train, -classes), eps=1e-2)
-
-          lda.pred <- lda.predict(lda.train, newdata = dplyr::select(valid, -classes))
-          qda.pred <- qda.predict(qda.train, newdata = dplyr::select(valid, -classes))
-          hda.pred <- hda.predict(hda.train, newdata = dplyr::select(valid, -classes))
-
-          conf.lda <- table(True = valid$classes, Pred = lda.pred$class)
-          conf.qda <- table(True = valid$classes, Pred = qda.pred$class)
-          conf.hda <- table(True = valid$classes, Pred = hda.pred$class)
-
-          return(c(misclassificationRisk(conf.lda),
-                   misclassificationRisk(conf.qda),
-                   misclassificationRisk(conf.hda)))
-      }
-      colnames(misclassification.risks[[p.index]][[s]]) <- c("LDA","QDA","HDA")
-
-    }
-  }
-
-  resave(misclassification.risks, file = "saved.RData")
-}
-
-## ---- hda_table_res ----
-# Formatting results in misclassification.risks
-cm  <- rapply(misclassification.risks, colMeans)
-csd <- misclassificationRiskSE(cm, par.xda$n.runs)
-# csd2 <- rapply(misclassification.risks, colSds)/sqrt(par.xda$n.runs)
-# cbind(csd, csd2)
-tmp <- t(simplify2array(strsplit(names(cm), "\\.")))
-
-# Format
-misclass.df <-
-  data.frame(t(simplify2array(strsplit(names(cm), "\\.")))) %>%
-  dplyr::select(p = X1, equal = X2, spherical = X3, method = X4) %>%
-  mutate(p = gsub("p", "", p)) %>%
-  mutate(risk = sprintf("%.03f (%.3f)", cm, csd), mean = cm, sd = csd) %>%
-  mutate(risk = gsub("0\\.", ".", risk)) %>%
-  group_by(p, equal, spherical) %>%
-  mutate(is.min = mean==min(mean), is.max = mean==max(mean))
-misclass.df <- as.data.frame(misclass.df)
-
-misclass.wide <-
-  reshape(misclass.df,
-          idvar = c("method", "spherical", "equal"),
-          drop = c("mean", "sd", "is.min", "is.max"),
-          timevar = "p", v.names = "risk", direction = "wide")
-names(misclass.wide) <-
-  gsub("risk\\.([0-9]+)", "$p = \\1$", names(misclass.wide))
-
-misclass.wide.is.min <-
-  reshape(as.data.frame(misclass.df), idvar = c("method", "spherical", "equal"),
-          drop = c("mean", "sd", "risk", "is.max"),
-          timevar = "p", v.names = "is.min", direction = "wide")
-
-misclass.wide.is.max <-
-  reshape(misclass.df, idvar = c("method", "spherical", "equal"),
-          drop = c("mean", "sd", "risk", "is.min"),
-          timevar = "p", v.names = "is.max", direction = "wide")
-
-tmp <- misclass.wide[, -(1:3)]
-tmp.min <- as.matrix(misclass.wide.is.min[, -(1:3)])
-tmp.max <- as.matrix(misclass.wide.is.max[, -(1:3)])
-cmd <- ifelse(tmp.min, "green", ifelse(tmp.max, "red", ""))
-
-df.rownames <-
-  sprintf("%s, %s",
-          ifelse(misclass.wide$equal == "eq", "Equal", "Unequal"),
-          ifelse(misclass.wide$spherical == "sph", "spherical", "ellipsoidal"))
-
-
-# Create LaTeX table
-latex(tmp, file = "",
-      title = "$\\vSigma_1, ..., \\vSigma_3$",
-      rowname = gsub("NDA", "HDA", misclass.wide$method),
-      n.rgroup = table(df.rownames)[unique(df.rownames)],
-      rgroup = unique(df.rownames),
-      n.cgroup = ncol(misclass.wide) - 3,
-      cgroup = "Mean misclassification risk (sd)",
-      cellTexCmds = cmd,
-      label = "HDA_tab",
-      caption.loc = "bottom",
-      caption = paste("The estimated misclassification risk for the different",
-                      "scenarios. The minimum",
-                      "and maximum misclassification risks are highlighted in",
-                      "green and red, respectively."))
-rm(cm, csd, tmp, df.rownames)
-## ---- end ----
+# par.xda <- list(K = 3,
+#                 n.obs = 40,
+#                 n.obs.valid = 100,
+#                 n.runs = 2500,
+#                 p.dims = c(5, 10, 20, 35))
+# if (!exists("misclassification.risks") || recompute) {
+#
+#   inner <- structure(vector("list", 4),
+#                      names = c("eq.sph", "neq.sph",
+#                                "eq.ell", "neq.ell"))
+#   misclassification.risks <-
+#     replicate(length(par.xda$p.dims), inner, simplify = FALSE)
+#   names(misclassification.risks) <- paste0("p", par.xda$p.dims)
+#
+#   st <- proc.time()
+#   for (p.index in seq_along(par.xda$p.dims)) {
+#
+#     p <- par.xda$p.dims[p.index]
+#
+#     for (s in seq_len(4)) {
+#       cat("p =", p, "and s =", s, "started at",
+#           (proc.time()-st)[3] %/% 60, "mins.\n")
+#       flush.console()
+#
+#       method <- switch(s,
+#                        "EqualSpherical",
+#                        "UnequalSpherical",
+#                        "EqualEllipsoidal",
+#                        "UnequalEllipsoidal")
+#       theta <- rtheta(m = par.xda$K, d = p, method = method)
+#       theta$pie <- c(1, 1, 1)/3
+#       theta$mu <- list(rep(0, p), 3*e(1, p), 4*e(1, p))
+#
+#       if (method == "EqualEllipsoidal") { # Low-variance subspace
+#         evec <- eigen(theta$sigma[[1]])$vectors
+#         eval <- eigen(theta$sigma[[1]])$values
+#         w2 <- ( seq(sqrt(0.5), sqrt(4), length.out = p)^2) # reverse t
+#         w3 <- (-seq(sqrt(0.5), sqrt(3), length.out = p)^2) # reverse
+#         mu1 <- rep(0, p)
+#         mu2 <- c(evec %*% (sqrt(eval)*w2))
+#         mu3 <- c(evec %*% (sqrt(eval)*w3))
+#         theta$mu <- list(mu1, mu2, mu3)
+#       }
+#
+#       mis.risk <-
+#         structure(rep(NA, 3*par.xda$n.runs), dim = c(par.xda$n.runs, 3),
+#                   dimnames = list(NULL, c("LDA", "QDA", "HDA")))
+#       misclassification.risks[[p.index]][[s]]  <-
+#         tmp <- foreach(i = seq_len(par.xda$n.runs), .combine = rbind,
+#                        .packages = c("dplyr", "correlateR")) %dopar% {
+#                          cat("i =", i, "\n"); flush.console()
+#
+#           repeat {
+#             train <- to.df(SimulateGMMData(par.xda$n.obs,       theta = theta))
+#             valid <- to.df(SimulateGMMData(par.xda$n.obs.valid, theta = theta))
+#             # Make sure that we have a least two observations in each group
+#             if (all(table(train$classes) > 2) && all(table(valid$classes) > 2)){
+#               break
+#             }
+#           }
+#
+#           qda.train <- qda.fit(train$classes, dplyr::select(train, -classes))
+#           lda.train <- qda2lda(qda.train)
+#           hda.train <- hda.fit(train$classes, dplyr::select(train, -classes), eps=1e-2)
+#
+#           lda.pred <- lda.predict(lda.train, newdata = dplyr::select(valid, -classes))
+#           qda.pred <- qda.predict(qda.train, newdata = dplyr::select(valid, -classes))
+#           hda.pred <- hda.predict(hda.train, newdata = dplyr::select(valid, -classes))
+#
+#           conf.lda <- table(True = valid$classes, Pred = lda.pred$class)
+#           conf.qda <- table(True = valid$classes, Pred = qda.pred$class)
+#           conf.hda <- table(True = valid$classes, Pred = hda.pred$class)
+#
+#           return(c(misclassificationRisk(conf.lda),
+#                    misclassificationRisk(conf.qda),
+#                    misclassificationRisk(conf.hda)))
+#       }
+#       colnames(misclassification.risks[[p.index]][[s]]) <- c("LDA","QDA","HDA")
+#
+#     }
+#   }
+#
+#   resave(misclassification.risks, file = "saved.RData")
+# }
+#
+# ## ---- hda_table_res ----
+# # Formatting results in misclassification.risks
+# cm  <- rapply(misclassification.risks, colMeans)
+# csd <- misclassificationRiskSE(cm, par.xda$n.runs)
+# # csd2 <- rapply(misclassification.risks, colSds)/sqrt(par.xda$n.runs)
+# # cbind(csd, csd2)
+# tmp <- t(simplify2array(strsplit(names(cm), "\\.")))
+#
+# # Format
+# misclass.df <-
+#   data.frame(t(simplify2array(strsplit(names(cm), "\\.")))) %>%
+#   dplyr::select(p = X1, equal = X2, spherical = X3, method = X4) %>%
+#   mutate(p = gsub("p", "", p)) %>%
+#   mutate(risk = sprintf("%.03f (%.3f)", cm, csd), mean = cm, sd = csd) %>%
+#   mutate(risk = gsub("0\\.", ".", risk)) %>%
+#   group_by(p, equal, spherical) %>%
+#   mutate(is.min = mean==min(mean), is.max = mean==max(mean))
+# misclass.df <- as.data.frame(misclass.df)
+#
+# misclass.wide <-
+#   reshape(misclass.df,
+#           idvar = c("method", "spherical", "equal"),
+#           drop = c("mean", "sd", "is.min", "is.max"),
+#           timevar = "p", v.names = "risk", direction = "wide")
+# names(misclass.wide) <-
+#   gsub("risk\\.([0-9]+)", "$p = \\1$", names(misclass.wide))
+#
+# misclass.wide.is.min <-
+#   reshape(as.data.frame(misclass.df), idvar = c("method", "spherical", "equal"),
+#           drop = c("mean", "sd", "risk", "is.max"),
+#           timevar = "p", v.names = "is.min", direction = "wide")
+#
+# misclass.wide.is.max <-
+#   reshape(misclass.df, idvar = c("method", "spherical", "equal"),
+#           drop = c("mean", "sd", "risk", "is.min"),
+#           timevar = "p", v.names = "is.max", direction = "wide")
+#
+# tmp <- misclass.wide[, -(1:3)]
+# tmp.min <- as.matrix(misclass.wide.is.min[, -(1:3)])
+# tmp.max <- as.matrix(misclass.wide.is.max[, -(1:3)])
+# cmd <- ifelse(tmp.min, "green", ifelse(tmp.max, "red", ""))
+#
+# df.rownames <-
+#   sprintf("%s, %s",
+#           ifelse(misclass.wide$equal == "eq", "Equal", "Unequal"),
+#           ifelse(misclass.wide$spherical == "sph", "spherical", "ellipsoidal"))
+#
+#
+# # Create LaTeX table
+# latex(tmp, file = "",
+#       title = "$\\vSigma_1, ..., \\vSigma_3$",
+#       rowname = gsub("NDA", "HDA", misclass.wide$method),
+#       n.rgroup = table(df.rownames)[unique(df.rownames)],
+#       rgroup = unique(df.rownames),
+#       n.cgroup = ncol(misclass.wide) - 3,
+#       cgroup = "Mean misclassification risk (sd)",
+#       cellTexCmds = cmd,
+#       label = "HDA_tab",
+#       caption.loc = "bottom",
+#       caption = paste("The estimated misclassification risk for the different",
+#                       "scenarios. The minimum",
+#                       "and maximum misclassification risks are highlighted in",
+#                       "green and red, respectively."))
+# rm(cm, csd, tmp, df.rownames)
+# ## ---- end ----
 
 
 # ## ---- one_dimensional_loglik ----
