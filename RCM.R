@@ -220,7 +220,7 @@ tm.elapsed <-
 figure1 <- "figure1.jpg"
 jpeg(figure1, height=7/2, width=7, units = "in", res = 200)
 {
-  par(mfrow = c(1,2))
+  par(mfrow = c(1,2), mar = c(5, 4, 0, 2) + 0.1)
   plot(df$n, df$SSE.rcm.em,
        col = num2col[3],
        type = "b",
@@ -243,8 +243,10 @@ jpeg(figure1, height=7/2, width=7, units = "in", res = 200)
   axis(2)
   grid()
 
-  lines(df$n+0.2, df$SSE.rcm.pool, col = num2col[4], type = "b", pch=16, lty=2, lwd=2)
-  lines(df$n+0.4, df$SSE.rcm.mle, col = num2col[5], type = "b", pch=17, lty=3, lwd=2)
+  lines(df$n+0.2, df$SSE.rcm.pool,
+        col = num2col[4], type = "b", pch=16, lty=2, lwd=2)
+  lines(df$n+0.4, df$SSE.rcm.mle,
+        col = num2col[5], type = "b", pch=17, lty=3, lwd=2)
   legend("topright", legend = c("EM", "pool", "Approx. MLE"),
          lty = 1:4, pch = c(15, 16, 17), lwd = 2, bty = "n",
          col = num2col[c(3,4,5)], inset = 0.05)
@@ -258,8 +260,6 @@ jpeg(figure1, height=7/2, width=7, units = "in", res = 200)
   arrows(df$n+0.4, df$SSE.rcm.mle-df.mad$SSE.rcm.mle,
          df$n+0.4, df$SSE.rcm.mle+df.mad$SSE.rcm.mle,
          length=0.05, angle=90, code=3, col = num2col[5])
-
-
 
   # Panel 2
   plot(tm.elapsed$p, tm.elapsed$time.em.elapsed,
@@ -281,6 +281,17 @@ jpeg(figure1, height=7/2, width=7, units = "in", res = 200)
   legend("topleft", legend = c("EM", "pool", "Approx. MLE"),
          lty = 1:4, pch = c(15, 16, 17), lwd = 2, bty = "n",
          col = num2col[c(3,4,5)], inset = 0.05)
+
+  legend_expressions <-
+    sapply(1:3, function(i) {
+      as.expression(substitute(x == y,
+                               list(x = as.name(c("k", "nu", "n")[i]),
+                                    y = unique(c(tm.elapsed$k,
+                                                 tm.elapsed$nu,
+                                                 tm.elapsed$n))[i])))
+    })
+  legend("topright", inset = 0.01, bty = "n", horiz = TRUE,
+         legend = legend_expressions)
 }
 dev.off()
 
