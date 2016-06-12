@@ -20,15 +20,14 @@ library("igraph")
 library("MCMCpack")
 library("dplyr")
 
-if (file.exists("saved.RData")) load("saved.RData")
+if (file.exists("saved.RData")) loaded <- load("saved.RData")
 
 # Multicore support
 library("foreach")
 library("doMC")
 registerDoMC(detectCores())
 # library("doParallel") # Use this package on windows
-# registerDoMC(detectCores())
-registerDoParallel(detectCores())
+# registerDoParallel(detectCores())
 
 num2col <- c("gray32",
              "darkolivegreen3",
