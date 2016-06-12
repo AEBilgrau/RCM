@@ -220,7 +220,7 @@ tm.elapsed <-
 figure1 <- "figure1.jpg"
 jpeg(figure1, height=7/2, width=7, units = "in", res = 200)
 {
-  par(mfrow = c(1,2), mar = c(5, 4, 0, 2) + 0.1)
+  par(mfrow = c(1,2), mar = c(5, 4, 0, 0.1) + 0.1)
   plot(df$n, df$SSE.rcm.em,
        col = num2col[3],
        type = "b",
@@ -235,9 +235,9 @@ jpeg(figure1, height=7/2, width=7, units = "in", res = 200)
   legend_expressions <-
     sapply(1:3, function(i) {
       as.expression(substitute(x == y,list(x = as.name(c("k", "nu", "p")[i]),
-                                    y = unique(c(df$k, df$nu, df$p))[i])))
+                                           y = unique(c(df$k, df$nu, df$p))[i])))
     })
-  legend("bottomleft", inset = 0.01, bty = "n", horiz = TRUE,
+  legend("right", inset = 0.01, bty = "n", horiz = FALSE,
          legend = legend_expressions)
   axis(1)
   axis(2)
@@ -269,29 +269,24 @@ jpeg(figure1, height=7/2, width=7, units = "in", res = 200)
        ylab = "Computation time (s)",
        xlab = "p",
        axes = FALSE,
-       pch = 16)
+       pch = 15)
   grid()
   axis(1)
   axis(2)
   lines(tm.elapsed$p, tm.elapsed$time.pool.elapsed, type = "b",
         col = num2col[4], pch = 16)
   lines(tm.elapsed$p, tm.elapsed$time.mle.elapsed, type = "b",
-        col = num2col[5], pch = 16)
+        col = num2col[5], pch = 17)
 
   legend("topleft", legend = c("EM", "pool", "Approx. MLE"),
          lty = 1:4, pch = c(15, 16, 17), lwd = 2, bty = "n",
          col = num2col[c(3,4,5)], inset = 0.05)
 
-  legend_expressions <-
-    sapply(1:3, function(i) {
-      as.expression(substitute(x == y,
-                               list(x = as.name(c("k", "nu", "n")[i]),
-                                    y = unique(c(tm.elapsed$k,
-                                                 tm.elapsed$nu,
-                                                 tm.elapsed$n))[i])))
-    })
-  legend("topright", inset = 0.01, bty = "n", horiz = TRUE,
-         legend = legend_expressions)
+  legend("left", inset = 0.01, bty = "n", horiz = FALSE,
+         legend = as.expression(
+           c(substitute(k == x,    list(x = unique(tm.elapsed$k))),
+             substitute(nu == x,   list(x = unique(tm.elapsed$nu))),
+             substitute(n[i] == x, list(x = unique(tm.elapsed$n))))))
 }
 dev.off()
 
