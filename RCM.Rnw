@@ -285,7 +285,6 @@ By the independence assumptions, the log-likelihood for $\vPsi$ and $\nu$ is giv
 \end{align*}
 We use the generic notation $f(\cdot | \cdot)$ and $f(\cdot)$ for the conditional and unconditional pdf of random variables, respectively, throughout this paper.
 Since the inverse Wishart distribution is conjugate to the multivariate Gaussian distribution the integral, of which the integrand forms a Gaussian-inverse-Wishart distribution, can be evaluated. Hence $\vSigma_i$ can be marginalized out, cf.\ \eqref{eq:marg1} in Appendix \ref{sec:marginalization}, and we arrive at the following expression for the log-likelihood function,
-\small
 \begin{align}
   &\ell\!\left(\vPsi, \nu \big| \vX_1, ..., \vX_k \right) %\notag\\
   = \log\prod_{i=1}^k
@@ -300,7 +299,6 @@ Since the inverse Wishart distribution is conjugate to the multivariate Gaussian
        \!\bigg]\!,
     \label{eq:loglik}
 \end{align}
-\normalsize
 up to an additive constant.
 As should be expected, the scatter matrix $\vS_i =\vX_i^\top\vX_i$ and study sample size $n_i$ are sufficient statistics for each study.
 Note that $\vS_i$ is conditionally Wishart distributed, $\vS_i|\vSigma_i \sim \calW(\vSigma_i, n_i)$, by construction.
@@ -542,7 +540,6 @@ implying that
           {(\nu-p)(\nu-p-1)^2(\nu-p-3)}.
 \end{align}
 Continuing with the expected conditional variance of $S_{ij} | \vSigma$ in the denominator of \eqref{eq:ICC},
-\small
 \begin{align}
   \bbE\big[\var(S_{ij}|\Sigma_{ij})\big]
   &= \var(\Sigma_{ij}) + \bbE[\Sigma_{ij}]^2
@@ -552,7 +549,6 @@ Continuing with the expected conditional variance of $S_{ij} | \vSigma$ in the d
     + (\nu-p-1)^{-2}(\Psi_{ij}^2 + \Psi_{ii}\Psi_{jj}).
     \label{eq:varSij}
 \end{align}
-\normalsize
 An expression of $\var(S_{ij})$ in terms of the elements of $\vPsi$ can then found by substituting \eqref{eq:invwishcovar} and \eqref{eq:invwishvar} into \eqref{eq:varSij} and by extension an expression for the ICC \eqref{eq:ICC} can be obtained.
 We omit this tedious calculation which can be verified to yield $\text{ICC}(\nu) = 1/(\nu - p)$ above.
 Naturally enough, the ICC depends only on $\nu$.
@@ -826,7 +822,7 @@ and where $\calW^{-1}_p(\vPsi, \nu)$ denotes a $p$-dimensional inverse Wishart d
 where $\vSigma_i$ is p.d. and $\Gamma_p$ is the multivariate generalization of the gamma function $\Gamma$ seen in Appendix \ref{sec:multigamma}.
 For ease of notation we drop the subscript $i$ on $\vSigma_i$, $\vX_i$, $\vS_i = \vX_i \vX_i^\top$, and $n_i$.
 By the model assumptions,
-\small
+{\small
 \begin{align*}
   &f(\vX | \vPsi, \nu)
   = \int f(\vX|\vSigma) f(\vSigma | \vPsi, \nu) d\vSigma \\
@@ -851,9 +847,9 @@ By the model assumptions,
          e^{-\frac{1}{2}\tr\!\Big(\big(\vPsi+ \vS\big)\vSigma^{-1}\Big)}
       \;d\vSigma.
 \end{align*}
-\normalsize
+\normalsize}%
 The integrand can be recognized as a unnormalized inverse Wishart pdf of the distribution $\calW^{-1}\big(\vPsi + \vS, \nu + n\big)$, and so the integral evaluates to the reciprocal value of the normalizing constant in that density. Thus,
-\small
+{\small
 \begin{align}
   f(\vX | \vPsi, \nu)
   =
@@ -867,7 +863,7 @@ The integrand can be recognized as a unnormalized inverse Wishart pdf of the dis
            \big|\vPsi + \vS\big|^{\frac{\nu + n}{2}} \Gamma_p\!\left(\frac{\nu}{2}\right)}.
     \label{eq:marg1}
 \end{align}
-\normalsize
+\normalsize}%
 Using the matrix determinant lemma and $\vS = \vX^\top\vX$, this can be further simplified to
 \begin{align*}
   f(\vX | \vPsi, \nu)
@@ -904,7 +900,7 @@ We reduce to the one-dimensional case where
      - \sum_{i = 1}^k \frac{\nu + n_i}{2}\log\!\big(\psi + x_i^2\big),
 \end{align*}
 which implies
-\small
+{\small
 \begin{align*}
   \ell'(\psi)
   = \frac{k\nu}{2}\frac{1}{\psi}
@@ -914,7 +910,7 @@ which implies
   =  - \frac{k\nu}{2}\frac{1}{\psi^2}
       + \sum_{i = 1}^k \frac{\nu + n_i}{2}\frac{1}{\big(\psi + x_i^2\big)^2}.
 \end{align*}
-\normalsize
+\normalsize}%
 It is straightforward to show there exists a value for $\psi$, $n_i$ and $\nu$ for which $\ell''(\psi) > 0$.
 Since the second derivative is not always negative the log-likelihood $\ell$ is not log-concave.
 \end{proof}
@@ -1155,7 +1151,7 @@ In our vector space we need to show that
 \end{align*}
 holds in every stationary point analogous to $\vec{z}^\top \vec{A}\vec{z} = \sum_{ij} A_{ij} z_i z_j < 0$.
 From the second derivative, this amounts to showing that in every stationary point,
-\small
+{\small
 \begin{align}
 - k\nu\tr\!\left( \vY\vPsi^{-1} \vY\vPsi^{-1} \right)
 + \sum_{a = 1}^k (\nu + n_a)
@@ -1166,7 +1162,7 @@ From the second derivative, this amounts to showing that in every stationary poi
     < 0.
   \label{eq:negativedefinte}
 \end{align}
-\normalsize
+\normalsize}%
 Now, by the positive-definiteness of $\vPsi$, let
 \begin{align*}
   \vY &:= \vPsi^{-\frac{1}{2}} \vY \vPsi^{-\frac{1}{2}} \text{ and } \\
