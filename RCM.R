@@ -206,12 +206,21 @@ if (!exists("df.numerical3") || recompute) {
 
 
 ## ---- numerical_experiment_plot ----
+# Compute total estimation time
+sim.est.time <-
+  round(colSums(df.numerical[grepl("time", names(df.numerical))])/60, 1)
+
+
+# Summarize and compute CI
 ci <- function(x) 1.96*sd(x)/sqrt(length(x))
 df <- aggregate(cbind(SSE.rcm.em, SSE.rcm.mle, SSE.rcm.pool) ~
                   n + nu + k + p, FUN = mean, data = df.numerical)
-df.mad <- aggregate(cbind(SSE.rcm.em, SSE.rcm.mle, SSE.rcm.pool) ~
-                      n + nu + k + p, FUN = ci,
-                    data = df.numerical)
+df.ci <- aggregate(cbind(SSE.rcm.em, SSE.rcm.mle, SSE.rcm.pool) ~
+                     n + nu + k + p, FUN = ci, data = df.numerical)
+df2 <- aggregate(cbind(SSE.rcm.em, SSE.rcm.mle, SSE.rcm.pool) ~
+                   n + nu + k + p, FUN = mean, data = df.numerical2)
+df2.ci <- aggregate(cbind(SSE.rcm.em, SSE.rcm.mle, SSE.rcm.pool) ~
+                      n + nu + k + p, FUN = ci, data = df.numerical2)
 tm.elapsed <-
   aggregate(cbind(time.em.elapsed,  time.pool.elapsed, time.mle.elapsed) ~
               n + nu + k + p, FUN = mean,
@@ -220,6 +229,7 @@ tm.elapsed <-
 figure1 <- "figure1.jpg"
 jpeg(figure1, height=7/2, width=7, units = "in", res = 200)
 {
+  d <- 0.2 # constant
   par(mfrow = c(1,2), mar = c(5, 4, 0, 0.1) + 0.1)
   plot(df$n, df$SSE.rcm.em,
        col = num2col[3],
@@ -234,6 +244,10 @@ jpeg(figure1, height=7/2, width=7, units = "in", res = 200)
   grid()
   axis(1)
   axis(2)
+  lines(df$n+d, df$SSE.rcm.pool,
+        col = num2col[4], type = "b", pch=16, lty=2, lwd=2)
+  lines(df$n+2*d, df$SSE.rcm.mle,
+        col = num2col[5], type = "b", pch=17, lty=3, lwd=2)
   legend_expressions <-
     sapply(1:3, function(i) {
       as.expression(substitute(x == y,list(x = as.name(c("k", "nu", "p")[i]),
@@ -241,23 +255,18 @@ jpeg(figure1, height=7/2, width=7, units = "in", res = 200)
     })
   legend("right", inset = 0.01, bty = "n", horiz = FALSE,
          legend = legend_expressions)
-
-  lines(df$n+0.2, df$SSE.rcm.pool,
-        col = num2col[4], type = "b", pch=16, lty=2, lwd=2)
-  lines(df$n+0.4, df$SSE.rcm.mle,
-        col = num2col[5], type = "b", pch=17, lty=3, lwd=2)
   legend("topright", legend = c("EM", "pool", "Approx. MLE"),
          lty = 1:4, pch = c(15, 16, 17), lwd = 2, bty = "n",
          col = num2col[c(3,4,5)], inset = 0.05)
-
-  arrows(df$n, df$SSE.rcm.em-df.mad$SSE.rcm.em,
-         df$n, df$SSE.rcm.em+df.mad$SSE.rcm.em,
+  # Add ci
+  arrows(df$n, df$SSE.rcm.em-df.ci$SSE.rcm.em,
+         df$n, df$SSE.rcm.em+df.ci$SSE.rcm.em,
          length=0.05, angle=90, code=3, col = num2col[3])
-  arrows(df$n+0.2, df$SSE.rcm.pool-df.mad$SSE.rcm.pool,
-         df$n+0.2, df$SSE.rcm.pool+df.mad$SSE.rcm.pool,
+  arrows(df$n+d, df$SSE.rcm.pool-df.ci$SSE.rcm.pool,
+         df$n+d, df$SSE.rcm.pool+df.ci$SSE.rcm.pool,
          length=0.05, angle=90, code=3, col = num2col[4])
-  arrows(df$n+0.4, df$SSE.rcm.mle-df.mad$SSE.rcm.mle,
-         df$n+0.4, df$SSE.rcm.mle+df.mad$SSE.rcm.mle,
+  arrows(df$n+2*d, df$SSE.rcm.mle-df.ci$SSE.rcm.mle,
+         df$n+2*d, df$SSE.rcm.mle+df.ci$SSE.rcm.mle,
          length=0.05, angle=90, code=3, col = num2col[5])
 
   # Panel 2
@@ -281,16 +290,56 @@ jpeg(figure1, height=7/2, width=7, units = "in", res = 200)
          lty = 1:4, pch = c(15, 16, 17), lwd = 2, bty = "n",
          col = num2col[c(3,4,5)], inset = 0.05)
 
+  lgnd <- c(substitute(k == x,    list(x = unique(tm.elapsed$k))),
+            substitute(nu == x,   list(x = unique(tm.elapsed$nu))),
+            substitute(n[i] == x, list(x = unique(tm.elapsed$n))))
   legend("left", inset = 0.01, bty = "n", horiz = FALSE,
-         legend = as.expression(
-           c(substitute(k == x,    list(x = unique(tm.elapsed$k))),
-             substitute(nu == x,   list(x = unique(tm.elapsed$nu))),
-             substitute(n[i] == x, list(x = unique(tm.elapsed$n))))))
+         legend = as.expression(lgnd))
 }
 dev.off()
 
 
 ## ---- end ----
+
+# d <-0
+#
+# plot(df2$p, df2$SSE.rcm.em,
+#      col = num2col[3],
+#      type = "b",
+#      axes = FALSE,
+#      xlab = expression(p),
+#      xlim = c(20, 40),
+#      ylim = range(df2[,5:7]),
+#      ylab = "mean SSE",
+#      pch = 15,
+#      lty = 1,
+#      main = "")
+# grid()
+# axis(1)
+# axis(2)
+# lines(df2$p+d, df2$SSE.rcm.pool,
+#       col = num2col[4], type = "b", pch=16, lty=2, lwd=2)
+# lines(df2$p+2*d, df2$SSE.rcm.mle,
+#       col = num2col[5], type = "b", pch=17, lty=3, lwd=2)
+# lgnd <- c(substitute(k == x,    list(x = unique(df2$k))),
+#           substitute(nu == x,   list(x = unique(df2$nu))),
+#           substitute(n[i] == x, list(x = unique(df2$n))))
+# legend("left", inset = 0.01, bty = "n", horiz = FALSE,
+#        legend =  as.expression(lgnd))
+# legend("topleft", legend = c("EM", "pool", "Approx. MLE"),
+#        lty = 1:4, pch = c(15, 16, 17), lwd = 2, bty = "n",
+#        col = num2col[c(3,4,5)], inset = 0.05)
+# # Add ci
+# arrows(df2$p, df2$SSE.rcm.em-df2.ci$SSE.rcm.em,
+#        df2$p, df2$SSE.rcm.em+df2.ci$SSE.rcm.em,
+#        length=0.05, angle=90, code=3, col = num2col[3])
+# arrows(df2$p+d, df2$SSE.rcm.pool-df2.ci$SSE.rcm.pool,
+#        df2$p+d, df2$SSE.rcm.pool+df2.ci$SSE.rcm.pool,
+#        length=0.05, angle=90, code=3, col = num2col[4])
+# arrows(df2$p+2*d, df2$SSE.rcm.mle-df2.ci$SSE.rcm.mle,
+#        df2$p+2*d, df2$SSE.rcm.mle+df2.ci$SSE.rcm.mle,
+#        length=0.05, angle=90, code=3, col = num2col[5])
+
 
 
 
