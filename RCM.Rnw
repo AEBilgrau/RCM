@@ -499,6 +499,7 @@ For the RCM, the ICC is given by
   \label{eq:ICCexprs}
 \end{align}
 This follows from the definition of the ICC which is the ratio of the between-study variation $\var(\Sigma_{ij})$ and the total variation $\var(S_{ij})$ of any single pair of variables.
+The ICC might in this sense be utilized in quantifying the reproducbility of the covariance across studies.
 Consider observations from \eqref{eq:RCM}.
 We temporarily abuse our notation and let
 \begin{align*}
@@ -609,10 +610,10 @@ From these, $\hvSigma = (\hat{\nu}-p-1)^{-1}\hvPsi$ was computed and subsequentl
 
 The estimated $\hat{\nu}$ yields a surprisingly low estimated ICC of $\Sexpr{round(1/(dlbcl.rcm[["nu"]] - dlbcl.par[["top.n"]]), 4)}$.
 Hence by the RCM, only $\Sexpr{round(1/(dlbcl.rcm[["nu"]] - dlbcl.par[["top.n"]]), 4)*100} \%$ of the variability of the gene-gene covariances is between-studies on average.
-The selection of only the most (within study) varying genes is an obvious contribution to the low ICC.
-Hence, by selection we have high within-study variability.
-An alternative contribution could indeed also be high study homogeneity.
-In any case, the low ICC might suggest high reproducibility of the covariances between studies of the selected genes.
+This low ICC might suggest a high study homogeneity of covariances meaning that the covariances reproduce across studies.
+However, the selection of only the most varying (across studies) genes is an obvious contribution to the low ICC.
+By selection, we have high inter-study variability which drives the ICC down.
+In any case, the low ICC might still suggest high reproducibility of the covariances between studies of the \textit{selected} genes.
 
 <<dlbcl_mappings, echo=FALSE, results='hide'>>=
 @
