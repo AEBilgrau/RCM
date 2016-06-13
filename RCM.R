@@ -231,7 +231,9 @@ jpeg(figure1, height=7/2, width=7, units = "in", res = 200)
        pch = 15,
        lty = 1,
        main = "")
-
+  grid()
+  axis(1)
+  axis(2)
   legend_expressions <-
     sapply(1:3, function(i) {
       as.expression(substitute(x == y,list(x = as.name(c("k", "nu", "p")[i]),
@@ -239,9 +241,6 @@ jpeg(figure1, height=7/2, width=7, units = "in", res = 200)
     })
   legend("right", inset = 0.01, bty = "n", horiz = FALSE,
          legend = legend_expressions)
-  axis(1)
-  axis(2)
-  grid()
 
   lines(df$n+0.2, df$SSE.rcm.pool,
         col = num2col[4], type = "b", pch=16, lty=2, lwd=2)
