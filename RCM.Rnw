@@ -238,17 +238,15 @@ We model an observation $\vx$ from the $i$'th study as a $p$-dimensional zero-me
   \vx | \vSigma_i &\sim \calN_p(\vec{0}_p, \vSigma_i), \qquad i = 1, ..., k,
 \end{split}
 \end{align}
-where $\calN_p(\vec{\mu},\vSigma_i)$ denotes a $p$-dimensional multivariate Gaussian distribution with mean $\vec{\mu}$ and positive definite (p.d.) covariance matrix $\vSigma_i$, and probability density function (pdf) shown in \eqref{eq:normalpdf}.
-We use the generic notation $f(\cdot | \cdot)$ and $f(\cdot)$ for the conditional and unconditional pdf of random variables, respectively, throughout this paper.
-Above, $\calW^{-1}_p(\vPsi, \nu)$ denotes a $p$-dimensional inverse Wishart distribution with $\nu > p - 1$ degrees of freedom, a p.d. $p \times p$ scale matrix $\vPsi$, and pdf
+where $\calN_p(\vec{\mu},\vSigma_i)$ denotes a $p$-dimensional multivariate Gaussian distribution with mean $\vec{\mu}$ and positive definite (p.d.) covariance matrix $\vSigma_i$, and probability density function (pdf) shown in \eqref{eq:normalpdf},
+and $\calW^{-1}_p(\vPsi, \nu)$ denotes a $p$-dimensional inverse Wishart distribution with $\nu > p - 1$ degrees of freedom, a p.d. $p \times p$ scale matrix $\vPsi$, and pdf
 shown in \eqref{eq:wishartpdf}.
-While the inverse Wishart distribution is defined for all $\nu > p - 1$, the first order moment $(\nu - p - 1)^{-1}\vPsi = \vSigma$ exists only when $\nu > p + 1$.
-The inverse Wishart distribution of \eqref{eq:RCM} the common expected covariance matrix is
+While the inverse Wishart distribution is defined for all $\nu > p - 1$, the first order moment exists only when $\nu > p + 1$ and is given by
 \begin{align}
   \label{eq:expcovar}
   \bbE[\vSigma_i] = \vSigma = \frac{\vPsi}{\nu-p-1} \text{ for } \nu > p + 1.
 \end{align}
-Hence, in the RCM given by \eqref{eq:RCM}, $\vSigma$ can be interpreted as a location-like parameter as it is the expected covariance matrix in each study.
+Hence, in the RCM of \eqref{eq:RCM}, $\vSigma$ can be interpreted as a location-like parameter as it is the expected covariance matrix in each study.
 The parameter $\nu$ inversely controls the inter-class variation and can thus be considered an inter-class homogeneity parameter of the covariance structure.
 A large $\nu$ corresponds to high study homogeneity and vice versa for small $\nu$.
 This can be further seen as $\vSigma_i$ concentrates around $\vSigma$ for $\nu\to\infty$ which can be interpreted as the inter-study variation goes towards zero for increasing $\nu$.
@@ -285,6 +283,7 @@ By the independence assumptions, the log-likelihood for $\vPsi$ and $\nu$ is giv
                f(\vSigma_i | \vPsi, \nu)
                d\vSigma_i.
 \end{align*}
+We use the generic notation $f(\cdot | \cdot)$ and $f(\cdot)$ for the conditional and unconditional pdf of random variables, respectively, throughout this paper.
 Since the inverse Wishart distribution is conjugate to the multivariate Gaussian distribution the integral, of which the integrand forms a Gaussian-inverse-Wishart distribution, can be evaluated. Hence $\vSigma_i$ can be marginalized out, cf.\ \eqref{eq:marg1} in Appendix \ref{sec:marginalization}, and we arrive at the following expression for the log-likelihood function,
 \small
 \begin{align}
