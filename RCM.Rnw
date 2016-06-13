@@ -273,11 +273,6 @@ By the independence assumptions, the log-likelihood for $\vPsi$ and $\nu$ is giv
                \vSigma_1, ..., \vSigma_k, \vPsi, \nu)
              f(\vSigma_1, ..., \vSigma_k | \vPsi, \nu)
              d\vSigma_1 \cdots d\vSigma_k \\
-%   &= \log\!\int
-%                \prod_{i=1}^k
-%                f(\vX_i | \vSigma_i)
-%                f(\vSigma_i | \vPsi, \nu)
-%                d\vSigma_1 \cdots d\vSigma_k \\
   &= \log \prod_{i=1}^k \!\int
                f(\vX_i | \vSigma_i)
                f(\vSigma_i | \vPsi, \nu)
@@ -299,7 +294,7 @@ Since the inverse Wishart distribution is conjugate to the multivariate Gaussian
        \!\bigg]\!,
     \label{eq:loglik}
 \end{align}
-up to an additive constant.
+up to an additive constant where $\Gamma_p$ is the multivariate generalization of the gamma function $\Gamma$, see \eqref{eq:multigamma}.
 As should be expected, the scatter matrix $\vS_i =\vX_i^\top\vX_i$ and study sample size $n_i$ are sufficient statistics for each study.
 Note that $\vS_i$ is conditionally Wishart distributed, $\vS_i|\vSigma_i \sim \calW(\vSigma_i, n_i)$, by construction.
 
@@ -819,7 +814,17 @@ and where $\calW^{-1}_p(\vPsi, \nu)$ denotes a $p$-dimensional inverse Wishart d
   \exp\!\left( -\frac{1}{2} \tr\!\big(\vPsi\vSigma_i^{-1}\big) \right),
   \quad\nu > p - 1,
 \end{align}
-where $\vSigma_i$ is p.d. and $\Gamma_p$ is the multivariate generalization of the gamma function $\Gamma$ seen in Appendix \ref{sec:multigamma}.
+where $\vSigma_i$ is p.d. and $\Gamma_p$ is the multivariate generalization of the gamma function $\Gamma$ given by
+\begin{align}
+  \label{eq:multigamma}
+  \Gamma_p(t) = \pi^{ \frac{1}{2} \binom{p}{2} }
+  \prod_{j = 1}^p \Gamma\!\left(t + \frac{1 - j}{2}\right)
+  \text{ where }
+  \Gamma(t) = \int_0^\infty x^{t-1} e^{-x} dx.
+\end{align}
+
+
+
 For ease of notation we drop the subscript $i$ on $\vSigma_i$, $\vX_i$, $\vS_i = \vX_i \vX_i^\top$, and $n_i$.
 By the model assumptions,
 {\small
@@ -948,27 +953,6 @@ Hence, the likelihood is log-concave in $\nu$.
 
 
 
-
-
-\subsubsection{log-convexity of the multivariate gamma function}
-\label{sec:multigamma}
-The multivariate gamma function $\Gamma_p$ is log-convex as can be seen using the following characterization,
-\begin{align}
-  \label{eq:multigamma}
-  \Gamma_p(t) = \pi^{ \frac{1}{2} \binom{p}{2} }
-  \prod_{j = 1}^p \Gamma\!\left(t + \frac{1 - j}{2}\right)
-  \text{ where }
-  \Gamma(t) = \int_0^\infty x^{t-1} e^{-x} dx.
-\end{align}
-From this
-\begin{align}
-  \label{eq:logmultigamma}
-  \log\Gamma_p(t) =
-  \frac{1}{2}\binom{p}{2} \log\pi +
-  \sum_{j = 1}^p \Gamma\left(t + \frac{1-j}{2}\right),
-\end{align}
-which is convex since $\Gamma$ is log-convex and a sum of convex functions is convex.
-Hence $\Gamma_p$ is also log-convex.
 
 
 
