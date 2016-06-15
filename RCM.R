@@ -20,7 +20,9 @@ library("igraph")
 library("MCMCpack")
 library("dplyr")
 
-if (file.exists("saved.RData")) loaded <- load("saved.RData")
+if (file.exists("saved.RData"))
+  loaded <- load("saved.RData")
+
 
 # Multicore support
 library("foreach")
@@ -45,14 +47,8 @@ names(num2names) <- num2col
 cleanName <- function(x) {
   return(gsub("[0-9]+|dark|medium|light", "", x))
 }
-#c("#C55F4B", "#98BE53", "#A463B5", "#94B9B5", "#614051")
-#names(num2col) <- c("Coral", "Pistachio", "Orchid", "Viridian", "Eggplant")
 
 ## ---- auxiliary_functions ----
-
-#
-# HDA
-#
 
 # Density of the RCM model
 drcm <- correlateR::drcm
