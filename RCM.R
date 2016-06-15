@@ -390,6 +390,35 @@ dlbcl.cor <- cov2cor(dlbcl.exp)
 
 
 
+# Using much larger p
+dlbcl.par2 <- list(top.n = 1000,
+                   linkage = "ward",
+                   go.alpha.level = 0.01,
+                   ontology = "MF",
+                   minModuleSize = 20,
+                   n.modules = 10,
+                   threshold = NA)
+
+use.genes2 <- names(sort(var.pool, decreasing = TRUE)[seq_len(dlbcl.par2$top.n)])
+gep.sub2 <- lapply(gep, function(x) exprs(x)[use.genes2, ])
+if (!exists("dlbcl.rcm2") || recompute) {
+  dlbcl.ns  <- sapply(gep.sub2, ncol)
+  dlbcl.S   <- lapply(gep.sub2, function(x) correlateR::scatter(t(x)))
+  nu <- sum(dlbcl.ns) + ncol(dlbcl.S[[1]]) + 1
+  psi <- nu*correlateR:::pool(dlbcl.S, dlbcl.ns)
+  dlbcl.rcm2 <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE,
+                       Psi.init = psi, nu.init = nu, eps = 0.1,
+                       max.ite = 5000)
+  dimnames(dlbcl.rcm2$Psi) <- dimnames(dlbcl.S[[1]])
+  resave(dlbcl.rcm2, file = "saved.RData")
+}
+
+
+
+
+
+
+
 
 ## ---- dlbcl_mappings ----
 all.genes <- gsub("_at$", "", names(sort(var.pool, decreasing = TRUE)))
