@@ -54,8 +54,9 @@ cleanName <- function(x) {
 drcm <- correlateR::drcm
 
 # Simulate data
-test.rcm <- function(k = 4, n = 10, ns = rep(n, k), p = 10, nu = 15, Psi, ...) {
-  #stopifnot(nu > p - 1)
+test.rcm <- function(k = 4, n = 10, ns = rep(n, k),
+                     p = 10, nu = 15, Psi, e = 1e-2, ...) {
+  stopifnot(nu > p - 1)
 
   if (missing(Psi)) {
     rho <- 0.5  # Compound symmetry matrix
@@ -64,7 +65,7 @@ test.rcm <- function(k = 4, n = 10, ns = rep(n, k), p = 10, nu = 15, Psi, ...) {
   }
 
   S <- createRCMData(ns = ns, psi = Psi, nu = nu)
-  e <- 1e-2
+
   t_em   <- system.time(res.em   <- fit.rcm(S, ns, method = "EM",   eps=e, ...))
   t_pool <- system.time(res.pool <- fit.rcm(S, ns, method = "pool", eps=e, ...))
   t_mle  <- system.time(res.mle  <- fit.rcm(S, ns, method = "appr", eps=e, ...))
@@ -127,75 +128,72 @@ accuracy <- function(x) {
 
 
 ## ---- numerical_experiment ----
+# Different parameter settings
 # As a function of n_i
-par.ne <- list(k = 3,
-               nu = 30,
-               p = 20,
-               n.sims = 1000,
-               n.obs = ceil(c(7, seq(10, 40, length.out = 7))))
+par.ni.sp <- list(k = 3,
+                  nu = 30,
+                  p = 20,
+                  n.sims = 1000,
+                  n.obs = ceil(c(7, seq(10, 40, length.out = 7))))
+# Larger p
+par.ni.lp <- list(k = 3,
+                  nu = 115,
+                  p = 100,
+                  n.sims = 1000,
+                  n.obs = ceil(seq(35, 105, length.out = 8)))
+# Time pr fit
+par.t <- list(k = 3,
+              nu = 300,
+              p = c(100, 150, 200, 250),
+              n.sims = 10,
+              n.obs = 210)
 
-if (!exists("df.numerical") || recompute) {
+if (!exists("df.ni.sp") || recompute) {
   set.seed(987654321)
   st <- proc.time()
   res <- list()
-  for (i in seq_along(par.ne$n.obs)) {
-    tmp <- foreach(j = seq_len(par.ne$n.sims)) %do% {
+  for (i in seq_along(par.ni.sp$n.obs)) {
+    tmp <- foreach(j = seq_len(par.ni.sp$n.sims)) %do% {
       with(par.ne, test.rcm(k = k, n = n.obs[i], p = p, nu = nu))
     }
     res <- c(res, tmp)
-    cat("loop =", i, "of", length(par.ne$n.obs), "done after",
+    cat("loop =", i, "of", length(par.ni.sp$n.obs), "done after",
         (proc.time() - st)[3] %/% 60, "mins.\n")
   }
-  df.numerical <- as.data.frame(t(sapply(res, SSEs)))
-  rm(tmp)
-  resave(df.numerical, file = "saved.RData")
+  df.ni.sp <- as.data.frame(t(sapply(res, SSEs)))
+  resave(df.ni.sp, file = "saved.RData")
 }
 
-# As a function of p
-par.ne2 <- list(k = 3,
-                nu = 150,
-                p = ceil(seq(5, 40, length.out = 8)),
-                n.sims = 1000,
-                n.obs = 40)
-
-if (!exists("df.numerical2") || recompute) {
-  set.seed(1234567890)
+if (!exists("df.ni.lp") || recompute) {
+  set.seed(987654321)
   st <- proc.time()
   res <- list()
-  for (i in seq_along(par.ne2$p)) {
-    tmp <- foreach(j = seq_len(par.ne2$n.sims)) %dopar% {
-      with(par.ne2, test.rcm(k = k, n = n.obs, p = p[i], nu = nu))
+  for (i in seq_along(par.ni.lp$n.obs)) {
+    tmp <- foreach(j = seq_len(par.ni.lp$n.sims)) %do% {
+      with(par.ne, test.rcm(k = k, n = n.obs[i], p = p, nu = nu))
     }
     res <- c(res, tmp)
-    cat("loop =", i, "of", length(par.ne2$p), "done after",
-        (proc.time()-st)[3] %/% 60, "mins.\n")
+    cat("loop =", i, "of", length(par.ni.lp$n.obs), "done after",
+        (proc.time() - st)[3] %/% 60, "mins.\n")
   }
-  df.numerical2 <- as.data.frame(t(sapply(res, SSEs)))
-  rm(tmp)
-  resave(df.numerical2, file = "saved.RData")
+  df.ni.lp <- as.data.frame(t(sapply(res, SSEs)))
+  resave(df.ni.lp, file = "saved.RData")
 }
 
-# Time pr fit
-par.ne3 <- list(k = 3,
-                nu = 300,
-                p = c(100, 150, 200, 250),
-                n.sims = 10,
-                n.obs = 210)
-
-if (!exists("df.numerical3") || recompute) {
+if (!exists("df.t") || recompute) {
   set.seed(3842856)
   st <- proc.time()
   res <- list()
-  for (i in seq_along(par.ne3$p)) {
-    tmp <- foreach(j = seq_len(par.ne3$n.sims)) %do% {
-      with(par.ne3, test.rcm(k = k, n = n.obs, p = p[i], nu = nu))
+  for (i in seq_along(par.t$p)) {
+    tmp <- foreach(j = seq_len(par.t$n.sims)) %do% {
+      with(par.t, test.rcm(k = k, n = n.obs, p = p[i], nu = nu))
     }
     res <- c(res, tmp)
-    cat("loop =", i, "of", length(par.ne3$p), "done after",
+    cat("loop =", i, "of", length(par.t$p), "done after",
         (proc.time()-st)[3] %/% 60, "mins.\n")
   }
-  df.numerical3 <- as.data.frame(t(sapply(res, SSEs)))
-  resave(df.numerical3, file = "saved.RData")
+  df.t <- as.data.frame(t(sapply(res, SSEs)))
+  resave(df.t, file = "saved.RData")
 }
 
 ## ---- end ----
@@ -203,69 +201,73 @@ if (!exists("df.numerical3") || recompute) {
 
 ## ---- numerical_experiment_plot ----
 # Compute total estimation time
-sim.est.time <-
-  round(colSums(df.numerical[grepl("time", names(df.numerical))])/60, 1)
+sim.est.time   <- round(colSums(df.ni.sp[grepl("time", names(df.ni.sp))])/60, 1)
+sim.est.time.l <- round(colSums(df.ni.lp[grepl("time", names(df.ni.lp))])/60, 1)
 
-
-# Summarize and compute CI
-ci <- function(x) 1.96*sd(x)/sqrt(length(x))
-df <- aggregate(cbind(SSE.rcm.em, SSE.rcm.mle, SSE.rcm.pool) ~
-                  n + nu + k + p, FUN = mean, data = df.numerical)
-df.ci <- aggregate(cbind(SSE.rcm.em, SSE.rcm.mle, SSE.rcm.pool) ~
-                     n + nu + k + p, FUN = ci, data = df.numerical)
-df2 <- aggregate(cbind(SSE.rcm.em, SSE.rcm.mle, SSE.rcm.pool) ~
-                   n + nu + k + p, FUN = mean, data = df.numerical2)
-df2.ci <- aggregate(cbind(SSE.rcm.em, SSE.rcm.mle, SSE.rcm.pool) ~
-                      n + nu + k + p, FUN = ci, data = df.numerical2)
 tm.elapsed <-
   aggregate(cbind(time.em.elapsed,  time.pool.elapsed, time.mle.elapsed) ~
               n + nu + k + p, FUN = mean,
-            data = df.numerical3)
+            data = df.t)
 
 figure1 <- "figure1.jpg"
-jpeg(figure1, height=7/2, width=7, units = "in", res = 200)
+jpeg(figure1, height=7, width=7, units = "in", res = 200)
 {
   d <- 0.2 # constant
-  par(mfrow = c(1,2), mar = c(5, 4, 0, 0.1) + 0.1)
-  plot(df$n, df$SSE.rcm.em,
-       col = num2col[3],
-       type = "b",
-       axes = FALSE,
-       xlab = expression(n = n[i]),
-       ylim = range(df[,5:7]),
-       ylab = "mean SSE",
-       pch = 15,
-       lty = 1,
-       main = "")
-  grid()
-  axis(1)
-  axis(2)
-  lines(df$n+d, df$SSE.rcm.pool,
-        col = num2col[4], type = "b", pch=16, lty=2, lwd=2)
-  lines(df$n+2*d, df$SSE.rcm.mle,
-        col = num2col[5], type = "b", pch=17, lty=3, lwd=2)
-  legend_expressions <-
-    sapply(1:3, function(i) {
-      as.expression(substitute(x == y,list(x = as.name(c("k", "nu", "p")[i]),
-                                           y = unique(c(df$k, df$nu, df$p))[i])))
-    })
-  legend("right", inset = 0.01, bty = "n", horiz = FALSE,
-         legend = legend_expressions)
-  legend("topright", legend = c("EM", "pool", "Approx. MLE"),
-         lty = 1:4, pch = c(15, 16, 17), lwd = 2, bty = "n",
-         col = num2col[c(3,4,5)], inset = 0.05)
-  # Add ci
-  arrows(df$n, df$SSE.rcm.em-df.ci$SSE.rcm.em,
-         df$n, df$SSE.rcm.em+df.ci$SSE.rcm.em,
-         length=0.05, angle=90, code=3, col = num2col[3])
-  arrows(df$n+d, df$SSE.rcm.pool-df.ci$SSE.rcm.pool,
-         df$n+d, df$SSE.rcm.pool+df.ci$SSE.rcm.pool,
-         length=0.05, angle=90, code=3, col = num2col[4])
-  arrows(df$n+2*d, df$SSE.rcm.mle-df.ci$SSE.rcm.mle,
-         df$n+2*d, df$SSE.rcm.mle+df.ci$SSE.rcm.mle,
-         length=0.05, angle=90, code=3, col = num2col[5])
 
-  # Panel 2
+  par( mar = c(5, 4, 0, 0.1) + 0.1) #mfrow = c(1,2),
+  layout(rbind(c(1,1,2,2), c(0,3,3,0)), heights = c(1,1))
+
+  for (df.ni in list(df.ni.sp, df.ni.lp)) {
+
+    # Summarize and compute CI
+    ci <- function(x) qnorm(0.995)*sd(x)/sqrt(length(x))
+    df <- aggregate(cbind(SSE.rcm.em, SSE.rcm.mle, SSE.rcm.pool) ~
+                      n + nu + k + p, FUN = mean, data = df.ni)
+    df.ci <- aggregate(cbind(SSE.rcm.em, SSE.rcm.mle, SSE.rcm.pool) ~
+                         n + nu + k + p, FUN = ci, data = df.ni)
+
+    plot(df$n, df$SSE.rcm.em,
+         col = num2col[3],
+         type = "b",
+         axes = FALSE,
+         xlab = expression(n = n[i]),
+         ylim = range(df[,5:7]),
+         ylab = "mean SSE",
+         pch = 15,
+         lty = 1,
+         main = "")
+    grid()
+    axis(1)
+    axis(2)
+    lines(df$n+d, df$SSE.rcm.pool,
+          col = num2col[4], type = "b", pch=16, lty=2, lwd=2)
+    lines(df$n+2*d, df$SSE.rcm.mle,
+          col = num2col[5], type = "b", pch=17, lty=3, lwd=2)
+    legend_expressions <-
+      sapply(1:3, function(i) {
+        as.expression(substitute(x == y,list(x = as.name(c("k", "nu", "p")[i]),
+                                             y = unique(c(df$k, df$nu, df$p))[i])))
+      })
+    legend("right", inset = 0.01, bty = "n", horiz = FALSE,
+           legend = legend_expressions)
+    legend("topright", legend = c("EM", "pool", "Approx. MLE"),
+           lty = 1:4, pch = c(15, 16, 17), lwd = 2, bty = "n",
+           col = num2col[c(3,4,5)], inset = 0.05)
+    # Add ci
+    ci.arrows <- function(x, m, se, k) {
+      arrows(x0 = x, y0 = m - se, x1 = x, y1 = m + se,
+             length = 0.05, angle = 90, code = 3, col = num2col[k])
+    }
+    ci.arrows(df$n,     df$SSE.rcm.em,   df.ci$SSE.rcm.em,   3)
+    ci.arrows(df$n+d,   df$SSE.rcm.pool, df.ci$SSE.rcm.pool, 4)
+    ci.arrows(df$n+2*d, df$SSE.rcm.mle,  df.ci$SSE.rcm.mle,  5)
+
+    mtext(ifelse(identical(df.ni, df.ni.sp), "A", "B"),
+          line = -1, adj = -0.15, font = 2)
+  }
+
+  # Panel 3 - function of p
+
   plot(tm.elapsed$p, tm.elapsed$time.em.elapsed,
        type = "b",
        col = num2col[3],
@@ -274,6 +276,7 @@ jpeg(figure1, height=7/2, width=7, units = "in", res = 200)
        xlab = "p",
        axes = FALSE,
        pch = 15)
+
   grid()
   axis(1)
   axis(2)
@@ -291,51 +294,13 @@ jpeg(figure1, height=7/2, width=7, units = "in", res = 200)
             substitute(n[i] == x, list(x = unique(tm.elapsed$n))))
   legend("left", inset = 0.01, bty = "n", horiz = FALSE,
          legend = as.expression(lgnd))
+
+  mtext("C", line = -1, adj = -0.15, font = 2)
 }
 dev.off()
 
 
 ## ---- end ----
-
-# d <-0
-#
-# plot(df2$p, df2$SSE.rcm.em,
-#      col = num2col[3],
-#      type = "b",
-#      axes = FALSE,
-#      xlab = expression(p),
-#      xlim = c(20, 40),
-#      ylim = range(df2[,5:7]),
-#      ylab = "mean SSE",
-#      pch = 15,
-#      lty = 1,
-#      main = "")
-# grid()
-# axis(1)
-# axis(2)
-# lines(df2$p+d, df2$SSE.rcm.pool,
-#       col = num2col[4], type = "b", pch=16, lty=2, lwd=2)
-# lines(df2$p+2*d, df2$SSE.rcm.mle,
-#       col = num2col[5], type = "b", pch=17, lty=3, lwd=2)
-# lgnd <- c(substitute(k == x,    list(x = unique(df2$k))),
-#           substitute(nu == x,   list(x = unique(df2$nu))),
-#           substitute(n[i] == x, list(x = unique(df2$n))))
-# legend("left", inset = 0.01, bty = "n", horiz = FALSE,
-#        legend =  as.expression(lgnd))
-# legend("topleft", legend = c("EM", "pool", "Approx. MLE"),
-#        lty = 1:4, pch = c(15, 16, 17), lwd = 2, bty = "n",
-#        col = num2col[c(3,4,5)], inset = 0.05)
-# # Add ci
-# arrows(df2$p, df2$SSE.rcm.em-df2.ci$SSE.rcm.em,
-#        df2$p, df2$SSE.rcm.em+df2.ci$SSE.rcm.em,
-#        length=0.05, angle=90, code=3, col = num2col[3])
-# arrows(df2$p+d, df2$SSE.rcm.pool-df2.ci$SSE.rcm.pool,
-#        df2$p+d, df2$SSE.rcm.pool+df2.ci$SSE.rcm.pool,
-#        length=0.05, angle=90, code=3, col = num2col[4])
-# arrows(df2$p+2*d, df2$SSE.rcm.mle-df2.ci$SSE.rcm.mle,
-#        df2$p+2*d, df2$SSE.rcm.mle+df2.ci$SSE.rcm.mle,
-#        length=0.05, angle=90, code=3, col = num2col[5])
-
 
 
 
