@@ -255,8 +255,9 @@ jpeg(figure1, height=7, width=7, units = "in", res = 200)
            col = num2col[c(3,4,5)], inset = 0.05)
     # Add ci
     ci.arrows <- function(x, m, se, k) {
-      arrows(x0 = x, y0 = m - se, x1 = x, y1 = m + se,
-             length = 0.05, angle = 90, code = 3, col = num2col[k])
+      suppressWarnings(
+        arrows(x0 = x, y0 = m - se, x1 = x, y1 = m + se,
+               length = 0.05, angle = 90, code = 3, col = num2col[k]))
     }
     ci.arrows(df$n,     df$SSE.rcm.em,   df.ci$SSE.rcm.em,   3)
     ci.arrows(df$n+d,   df$SSE.rcm.pool, df.ci$SSE.rcm.pool, 4)
