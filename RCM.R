@@ -314,6 +314,7 @@ dev.off()
 
 ## ---- dlbcl_analysis ----
 the.module <- num2col[3] # = "mediumorchid3"
+the.other.module <- num2col[2] # = ""
 
 load("studies.RData")
 load("gep.ensg.RData")
@@ -695,6 +696,7 @@ m <- max(table(dlbcl.modules))  # Get largest module
 # Construct table
 dlbcl.mod.tab.genes <-
   sapply(tmp, function(x) unname(c(map2hugo(x), rep(NA, m - length(x)))))
+dlbcl.mod.tab.genes.copy <- dlbcl.mod.tab.genes
 
 # First letter capitalized
 cgroup <- capitalize(cleanName(names(dlbcl.module.genes)))
