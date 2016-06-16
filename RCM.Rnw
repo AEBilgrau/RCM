@@ -159,7 +159,7 @@ The approach was inspired by traditional meta-analysis using random effects mode
 Simple inference and interpretation of an introduced parameter measuring the inter-class homogeneity is suggested.
 The methods are generally applicable where multiple classes are present and believed to share a common covariance matrix of interest that is obscured by class-dependent noise.
 As such, it provides a basis for meta- or integrative analysis of covariance matrices where the classes are formed by datasets.
-By application of posthoc analysis on the estimated common covariance matrix for the DLBCL data we were able to identify a number of biologically menaningful gene networks of prognostic value. Of particular interst was the identification of a network with the S100 family of calcium-binding proteins—S100A8 (MRP8; calgranulin A) and S100A9 (MRP14; calgranulin B) as central players further fuelling the indications that knock down of these proteins may improve the outcome of immunotherapy strategies in lymphoma.
+By application of posthoc analysis on the estimated common covariance matrix for the DLBCL data we were able to identify a number of biologically meaningful gene networks of prognostic value. Of particular interest was the identification of a network with the S100 family of calcium-binding proteins—S100A8 (MRP8; calgranulin A) and S100A9 (MRP14; calgranulin B) as central players further fueling the indications that knock down of these proteins may improve the outcome of immunotherapy strategies in lymphoma.
 \end{abstract}
 
 \begin{keyword}
