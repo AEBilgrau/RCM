@@ -339,12 +339,91 @@ if (!exists("dlbcl.rcm") || !exists("var.pool") || recompute) {
   dlbcl.S   <- lapply(gep.sub, function(x) correlateR::scatter(t(x)))
   nu <- sum(dlbcl.ns) + ncol(dlbcl.S[[1]]) + 1
   psi <- nu*correlateR:::pool(dlbcl.S, dlbcl.ns)
-  dlbcl.rcm <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE,
-                       Psi.init = psi, nu.init = nu, eps = 0.01,
-                       max.ite = 1500)
+  dlbcl.time <- system.time({
+    dlbcl.trace <- capture.output({
+      dlbcl.rcm <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE,
+                           Psi.init = psi, nu.init = nu, eps = 0.01,
+                           max.ite = 1500)
+    })
+  })
   dimnames(dlbcl.rcm$Psi) <- dimnames(dlbcl.S[[1]])
+  dlbcl.rcm$time <- dlbcl.time
+  dlbcl.rcm$trace <- dlbcl.trace
   resave(dlbcl.rcm, file = "saved.RData")
+
+  # Alternative fit 1
+  dlbcl.time.alt <- system.time({
+    dlbcl.trace.alt <- capture.output({
+      dlbcl.rcm.alt <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE,
+                               Psi.init = psi/2, nu.init = ceil(nu/2),
+                               eps = 0.01, max.ite = 1500)
+    })
+  })
+  dimnames(dlbcl.rcm.alt$Psi) <- dimnames(dlbcl.S[[1]])
+  dlbcl.rcm.alt$time <- dlbcl.time.alt
+  dlbcl.rcm.alt$trace <- dlbcl.trace.alt
+  resave(dlbcl.rcm.alt, file = "saved.RData")
+
+  # Alternative fit 2
+  tmp <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE,
+                 Psi.init = diag(diag(psi)), nu.init = 1000,
+                 eps = 0.01, max.ite = 2500, method = "approxMLE")
+  dlbcl.time.alt2 <- system.time({
+    dlbcl.trace.alt2 <- capture.output({
+      dlbcl.rcm.alt2 <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE,
+                               Psi.init = tmp$Psi, nu.init =tmp$nu,
+                               eps = 0.01, max.ite = 5000)
+    })
+  })
+  dimnames(dlbcl.rcm.alt2$Psi) <- dimnames(dlbcl.S[[1]])
+  dlbcl.rcm.alt2$time <- dlbcl.time.alt2
+  dlbcl.rcm.alt2$trace <- dlbcl.trace.alt2
+  resave(dlbcl.rcm.alt2, file = "saved.RData")
 }
+
+
+
+
+# Check equality
+diff.psi <- max(dlbcl.rcm.alt$Psi - dlbcl.rcm$Psi)/max(dlbcl.rcm.alt$Psi, dlbcl.rcm$Psi)
+diff.nu <- (dlbcl.rcm.alt$nu - dlbcl.rcm$nu)/dlbcl.rcm$nu
+diff.psi2 <- max(dlbcl.rcm.alt$Psi - dlbcl.rcm$Psi)/max(dlbcl.rcm.alt2$Psi, dlbcl.rcm$Psi)
+diff.nu2 <- (dlbcl.rcm.alt2$nu - dlbcl.rcm$nu)/dlbcl.rcm$nu
+stopifnot(diff.psi < 1e-3)
+stopifnot(diff.nu < 1e-3)
+stopifnot(diff.psi2 < 1e-3)
+stopifnot(diff.nu2 < 1e-3)
+
+# Make convergence plot
+get.ll.trace <- function(x) {
+   as.numeric(gsub(" L = ","",sapply(strsplit(x, "\\|"),"[",2)))
+}
+ll.tr <-get.ll.trace(dlbcl.rcm$trace)
+ll.tr.a <- get.ll.trace(dlbcl.rcm.alt$trace)
+ll.tr.a2 <- get.ll.trace(dlbcl.rcm.alt2$trace)
+
+loglik.trace.plot <- "figure4.jpg"
+jpeg(loglik.trace.plot, width = 7, height = 7/2, units = "in", res = 200)
+{
+  par(mar = c(4, 4.5, 0, 0) + 0.1, mgp = c(2, 1, 0))
+  plot(ll.tr, type = "l", ylab = "", xlab = "Iteration", lwd = 2,
+       xlim = c(0,1500), axes = FALSE)
+  axis(1)
+  axis(2, las = 2)
+  title(ylab = "log-likelihood", line = 3.4)
+  grid()
+  lines(ll.tr.a, lty = 2, col = "steelblue", lwd = 2)
+  lines(ll.tr.a2, lty = 3, col = "orange", lwd = 2)
+  legend("bottomright", col = c("black", "steelblue", "orange"), lty = 1:2,
+         bty = "n",
+         legend = paste0("Fit ", 1:3, " (",
+                         round(c(dlbcl.rcm$time[3],
+                                 dlbcl.rcm.alt$time[3],
+                                 dlbcl.rcm.alt2$time[3])/60, 0), " min.)"),
+         inset = 0.1, lwd = 2)
+}
+dev.off()
+
 
 # Expected covariance matrix
 dlbcl.exp <- with(dlbcl.rcm, Psi2Sigma(Psi, nu))
