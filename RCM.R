@@ -382,9 +382,6 @@ if (!exists("dlbcl.rcm") || !exists("var.pool") || recompute) {
   resave(dlbcl.rcm.alt2, file = "saved.RData")
 }
 
-
-
-
 # Check equality
 diff.psi <- max(dlbcl.rcm.alt$Psi - dlbcl.rcm$Psi)/max(dlbcl.rcm.alt$Psi, dlbcl.rcm$Psi)
 diff.nu <- (dlbcl.rcm.alt$nu - dlbcl.rcm$nu)/dlbcl.rcm$nu
@@ -426,37 +423,9 @@ jpeg(loglik.trace.plot, width = 7, height = 7/2, units = "in", res = 200)
 dev.off()
 
 
-# Expected covariance matrix
+# Expected covariance and correlation matrix
 dlbcl.exp <- with(dlbcl.rcm, Psi2Sigma(Psi, nu))
 dlbcl.cor <- cov2cor(dlbcl.exp)
-
-
-
-# Using much larger p
-dlbcl.par2 <- list(top.n = 1000,
-                   linkage = "ward",
-                   go.alpha.level = 0.01,
-                   ontology = "MF",
-                   minModuleSize = 20,
-                   n.modules = 10,
-                   threshold = NA)
-
-use.genes2 <- names(sort(var.pool, decreasing = TRUE)[seq_len(dlbcl.par2$top.n)])
-gep.sub2 <- lapply(gep, function(x) exprs(x)[use.genes2, ])
-if (!exists("dlbcl.rcm2") || recompute) {
-  dlbcl.ns  <- sapply(gep.sub2, ncol)
-  dlbcl.S   <- lapply(gep.sub2, function(x) correlateR::scatter(t(x)))
-  nu <- sum(dlbcl.ns) + ncol(dlbcl.S[[1]]) + 1
-  psi <- nu*correlateR:::pool(dlbcl.S, dlbcl.ns)
-  dlbcl.rcm2 <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE,
-                       Psi.init = psi, nu.init = nu, eps = 0.1,
-                       max.ite = 5000)
-  dimnames(dlbcl.rcm2$Psi) <- dimnames(dlbcl.S[[1]])
-  resave(dlbcl.rcm2, file = "saved.RData")
-}
-
-
-
 
 
 
@@ -523,7 +492,19 @@ E(dlbcl.g)$color <- keycols[cut(E(dlbcl.g)$weight, keybreaks)]
 # Phylo / dendrogram
 phylo <- as.phylo(dlbcl.clust)
 phylo$tip.label <- map2hugo(phylo$tip.label)
+
+
+# For large p network
+
+
+
 ## ---- end ----
+
+
+
+
+
+
 
 
 ## ---- dlbcl_plot ----
@@ -940,5 +921,56 @@ get.TestPValue <- function(the.list, the.object) {
   return(n / N)
 }
 
+
+## ---- end ----
+
+
+
+
+## ---- large_p_dblcl_analysis ----
+
+# Using much larger p
+dlbcl.par2 <- list(top.n = 1000,
+                   linkage = "ward",
+                   go.alpha.level = 0.01,
+                   ontology = "MF",
+                   minModuleSize = 20,
+                   n.modules = 15,
+                   threshold = NA)
+
+use.genes2 <- names(sort(var.pool, decreasing = TRUE)[seq_len(dlbcl.par2$top.n)])
+gep.sub2 <- lapply(gep, function(x) exprs(x)[use.genes2, ])
+if (!exists("dlbcl.rcm2") || recompute) {
+  dlbcl.ns  <- sapply(gep.sub2, ncol)
+  dlbcl.S   <- lapply(gep.sub2, function(x) correlateR::scatter(t(x)))
+  nu <- sum(dlbcl.ns) + ncol(dlbcl.S[[1]]) + 1
+  psi <- nu*correlateR:::pool(dlbcl.S, dlbcl.ns)
+  dlbcl.time2 <- system.time({
+    dlbcl.trace2 <- capture.output({
+      dlbcl.rcm2 <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE,
+                            Psi.init = psi, nu.init = nu, eps = 0.1,
+                            max.ite = 10000)
+    })
+  })
+  dimnames(dlbcl.rcm2$Psi) <- dimnames(dlbcl.S[[1]])
+  dlbcl.rcm2$time <- dlbcl.time2
+  dlbcl.rcm2$trace <- dlbcl.trace2
+  resave(dlbcl.rcm2, file = "saved.RData")
+}
+
+# Expected covariance and correlation matrix
+dlbcl.exp2 <- with(dlbcl.rcm2, Psi2Sigma(Psi, nu))
+dlbcl.cor2 <- cov2cor(dlbcl.exp2)
+
+# Clustering and tree cut
+dlbcl.clust2 <- flashClust(as.dist(1 - abs(dlbcl.cor2)),
+                          method = dlbcl.par2$linkage)
+dlbcl.cut2 <- cutree(dlbcl.clust2, k = dlbcl.par2$n.modules)
+num2col2 <- paste0("module", 1:dlbcl.par2$n.modules)
+dlbcl.modules2 <- num2col2[dlbcl.cut2]
+names(dlbcl.modules2) <- dlbcl.clust2$labels
+
+table(dlbcl.modules2[names(dlbcl.modules)], dlbcl.modules)
+with(dlbcl.rcm2, ICC(nu, nrow(Psi)))*100
 
 ## ---- end ----

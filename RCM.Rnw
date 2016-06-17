@@ -598,7 +598,7 @@ Hence, we investigate \Sexpr{format(dlbcl.par$top.n*(dlbcl.par$top.n + 1)/2, big
 
 The parameters of the RCM were estimated using the EM algorithm and yielded the $\Sexpr{dlbcl.par$top.n} \times \Sexpr{dlbcl.par$top.n}$ matrix $\hvPsi$ and $\hat{\nu} = \Sexpr{round(dlbcl.rcm[["nu"]], 2)}$.
 The model was fitted using three different initial sets of parameters which all converged to the same likelihood and parameter estimates.
-The log-likelihood trace and computation times are seen in Figure \ref{\Sexpr{loglik.trace.plot}}
+The log-likelihood trace and computation times are seen in Figure \ref{\Sexpr{loglik.trace.plot}}.
 From these, $\hvSigma = (\hat{\nu}-p-1)^{-1}\hvPsi$ was computed and subsequently scaled to the corresponding correlation matrix $\hat{\vec{R}}$.
 
 \fig{\Sexpr{loglik.trace.plot}}{0.8\textwidth}{The trace of the log-likelihood for three different starting values of $\vPsi$ and $\nu$ using the EM algorithm and computational times in minutes.}
@@ -666,7 +666,7 @@ The upper right of Figure~\ref{\Sexpr{dlbcl_plot}} shows suggested functions of 
 <<survival_analysis, echo=FALSE, results='hide'>>=
 @
 
-Lastly, we checked if the identified modules were prognostic for overall survival (OS) in the CHOP and R-CHOP-treated cohorts of the GSE10846 datasets.
+We checked if the identified modules were prognostic for overall survival (OS) in the CHOP and R-CHOP-treated cohorts of the GSE10846 datasets.
 To do this, the eigengene \citep{Horvath2011} for each module was computed and a multiple Cox proportional hazards model for OS was fitted with the module eigengenes as covariates.
 The module eigengene is simply the first principal component of the expression matrix of the module which can thus be represented by a linear combination of the module genes.
 For the prognostic interesting \Sexpr{cleanName(the.module)} module, the Kaplan-Meier estimates were computed for groups arising when dichotomizing the values of the corresponding eigengene as above or below the median value.
@@ -676,7 +676,7 @@ These results are seen in Figure \ref{\Sexpr{figure3}}.
 The top row shows $95\%$ and $99\%$ CI for the hazard ratio for each eigengene in the multiple Cox proportional hazards model containing all eigengenes. The bottom row shows Kaplan-Meier estimates (and $95\%$ CI) of the overall survival for patients stratified by the dichotomized \Sexpr{cleanName(the.module)} eigengene.
 }
 
-From the survival analysis the \Sexpr{cleanName(the.other.module)} module appeared particularly interesting since it identifies a group of patients with high value of the corresponding eigengene and poor survival, thus making them candidates for experimental therapies.
+From the survival analysis, the \Sexpr{cleanName(the.other.module)} module appeared particularly interesting since it identifies a group of patients with high value of the corresponding eigengene and poor survival, thus making them candidates for experimental therapies.
 Interestingly, the gene with highest connectivity in this module is
 \Sexpr{dlbcl.mod.tab.genes.copy[1, the.other.module]} (MRP8; calgranulin A) and the gene
 \Sexpr{dlbcl.mod.tab.genes.copy[16, the.other.module]} (MRP14; calgranulin B)
@@ -685,7 +685,7 @@ Notably, in mice injected with lymphoma cells, knockout of S100A9 resulted in gr
 The knockout mice had higher rates of tumor rejection and lower tumor size than their wild-type littermates.
 This result indicates that knock down of these proteins may improve the outcome of immunotherapy strategies in patients with values of the eigengene of the \Sexpr{cleanName(the.other.module)} module.
 
-From the survival analysis, the \Sexpr{cleanName(the.module)} module appeared particularly interesting since it marked a gene cluster identifying DLBCL patients with significantly improved outcome.
+The \Sexpr{cleanName(the.module)} module also appeared interesting as it marks a gene cluster identifying DLBCL patients with significantly improved outcome.
 Therefore a manual screening of the \Sexpr{length(the.genes)} genes within the \Sexpr{cleanName(the.module)} module was performed.
 The genes CHI3L1, CHIT1, and LYZ are related to chitin degradation and suggests activated immune system response and inflammation.
 Enzymes related to chitin degradation can possibly originate from macrophages as CHIT1 is expressed by activated macrophages.
@@ -698,7 +698,16 @@ ADAMDEC1 is thought to have a central role in dendrite cell functions and their 
 
 The manual screening and GO-analysis results further corroborate that the identified modules are biologically meaningful and that the RCM provides a useful estimate of the covariance.
 
+<<large_p_dblcl_analysis, echo=FALSE, results='hide'>>=
+@
 
+We finally investigated the choice of using only the top \Sexpr{dlbcl.par$top.n} most variable genes and fitted the RMC using the top \Sexpr{dlbcl.par2$top.n} most variable gene.
+The EM algorithm estimated an $\Sexpr{dlbcl.par2$top.n} \times \Sexpr{dlbcl.par2$top.n}$ matrix $\hvPsi$ and $\hat{\nu} = \Sexpr{round(dlbcl.rcm2$nu, 1)}$ in
+$\Sexpr{dlbcl.rcm2$iterations}$ iterations and $\Sexpr{round(dlbcl.rcm2$time[3]/60, 1)}$ minutes.
+This implies an $\text{ICC}(\Sexpr{round(dlbcl.rcm2$nu, 2)}) = \Sexpr{round(with(dlbcl.rcm2, ICC(nu, nrow(Psi))),3)}$ similar to above.
+The common covariance and correlation matrix was computed from $\hvPsi$ and $\hat{\nu}$ and hierarchical clustering was applied to the results above.
+This confirmed that the genes in the \Sexpr{cleanName(the.module)} and
+\Sexpr{cleanName(the.other.module)} still largely clustered together.
 
 
 <<numerical_experiment, echo=FALSE, results='hide'>>=
