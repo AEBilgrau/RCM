@@ -160,7 +160,7 @@ Simple inference and interpretation of an introduced parameter measuring the int
 The methods are generally applicable where multiple classes are present and believed to share a common covariance matrix of interest that is obscured by class-dependent noise.
 As such, it provides a basis for meta- or integrative analysis of covariance matrices where the classes are formed by datasets.
 In a posthoc analysis on the estimated common covariance matrix for the DLBCL data we were able to identify biologically meaningful gene networks of prognostic value.
-Of particular interest was the identification of a network with the S100 family of calcium-binding proteins S100A8 (MRP8; calgranulin A) and S100A9 (MRP14; calgranulin B) as central players further fueling indications that knock down of these proteins may improve the immunotherapy strategies and outcome in lymphoma.
+Of particular interest was the identification of a network with the S100 family of calcium-binding proteins as central players further fueling indications that knock down of these proteins may improve the immunotherapy strategies and outcome in lymphoma.
 \end{abstract}
 
 \begin{keyword}
@@ -681,7 +681,7 @@ Interestingly, the gene with highest connectivity in this module is
 \Sexpr{dlbcl.mod.tab.genes.copy[1, the.other.module]} (MRP8; calgranulin A) and the gene
 \Sexpr{dlbcl.mod.tab.genes.copy[16, the.other.module]} (MRP14; calgranulin B)
 is number 16 further down the connectivity list as compelling research has shown that the S100 family of calcium-binding proteins maintain immunosuppressive MDS cells at the tumor site \citep{Fulmer2008}.
-Notably, in mice injected with lymphoma cells, knockout of S100A9 resulted in greater tumor infiltration of T cells and less accumulation of MDS cells than that seen in wild-type mice \citep{Cheng2008}.
+Notably, in mice injected with lymphoma cells, knockout of S100A9 resulted in greater tumor infiltration of T-cells and less accumulation of MDS cells than that seen in wild-type mice \citep{Cheng2008}.
 The knockout mice had higher rates of tumor rejection and lower tumor size than their wild-type littermates.
 This result indicates that knock down of these proteins may improve the outcome of immunotherapy strategies in patients with values of the eigengene of the \Sexpr{cleanName(the.other.module)} module.
 
@@ -701,13 +701,13 @@ The manual screening and GO-analysis results further corroborate that the identi
 <<large_p_dblcl_analysis, echo=FALSE, results='hide'>>=
 @
 
-We finally investigated the choice of using only the top \Sexpr{dlbcl.par$top.n} most variable genes and fitted the RMC using the top \Sexpr{dlbcl.par2$top.n} most variable gene.
-The EM algorithm estimated an $\Sexpr{dlbcl.par2$top.n} \times \Sexpr{dlbcl.par2$top.n}$ matrix $\hvPsi$ and $\hat{\nu} = \Sexpr{round(dlbcl.rcm2$nu, 1)}$ in
-$\Sexpr{dlbcl.rcm2$iterations}$ iterations and $\Sexpr{round(dlbcl.rcm2$time[3]/60, 1)}$ minutes.
-This implies an $\text{ICC}(\Sexpr{round(dlbcl.rcm2$nu, 2)}) = \Sexpr{round(with(dlbcl.rcm2, ICC(nu, nrow(Psi))),5)}$, smaller than the above.
-The common covariance and correlation matrix was computed from $\hvPsi$ and $\hat{\nu}$ and hierarchical clustering was applied to the results above.
-This confirmed that the genes in the \Sexpr{cleanName(the.module)} and
-\Sexpr{cleanName(the.other.module)} still largely clustered together.
+We finally investigated the choice of using the top \Sexpr{dlbcl.par$top.n} most variable genes and fitted the RCM with the top \Sexpr{dlbcl.par2$top.n} most variable gene.
+The approximate MLE and EM algorithms estimated an $\Sexpr{dlbcl.par2$top.n} \times \Sexpr{dlbcl.par2$top.n}$ matrix $\hvPsi$ and $\hat{\nu} = \Sexpr{paste(round(dlbcl.rcm2$nu, 1))}$ in $\Sexpr{round(dlbcl.rcm2$time[3]/3600, 1)}$ hours.
+This implies that
+$\text{ICC}(\hat{\nu}) = \Sexpr{round(with(dlbcl.rcm2, ICC(nu, nrow(Psi))),5)}$; a somewhat smaller value than the above.
+The common correlation matrix was computed from $\hvPsi$ and $\hat{\nu}$ and hierarchical clustering was applied as above.
+This showed that the same genes in the top \Sexpr{dlbcl.par$top.n} based analysis also largely cluster together in this clustering.
+Particularly, all but one gene from the \Sexpr{cleanName(the.other.module)} module clusters together.
 
 
 <<numerical_experiment, echo=FALSE, results='hide'>>=

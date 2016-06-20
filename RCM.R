@@ -935,7 +935,7 @@ dlbcl.par2 <- list(top.n = 1000,
                    go.alpha.level = 0.01,
                    ontology = "MF",
                    minModuleSize = 20,
-                   n.modules = 15,
+                   n.modules = 7,
                    threshold = NA)
 
 use.genes2 <- names(sort(var.pool, decreasing = TRUE)[seq_len(dlbcl.par2$top.n)])
@@ -945,10 +945,17 @@ if (!exists("dlbcl.rcm2") || recompute) {
   dlbcl.S   <- lapply(gep.sub2, function(x) correlateR::scatter(t(x)))
   nu <- sum(dlbcl.ns) + ncol(dlbcl.S[[1]]) + 1
   psi <- nu*correlateR:::pool(dlbcl.S, dlbcl.ns)
+
   dlbcl.time2 <- system.time({
+    tmp <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE,
+                   Psi.init = psi, nu.init = nu, eps = 0.1,
+                   method = "approxMLE",
+                   max.ite = 10000)
+
+
     dlbcl.trace2 <- capture.output({
       dlbcl.rcm2 <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE,
-                            Psi.init = psi, nu.init = nu, eps = 0.1,
+                            Psi.init = tmp$Psi, nu.init = tmp$nu, eps = 5e-5,
                             max.ite = 10000)
     })
   })
@@ -964,13 +971,23 @@ dlbcl.cor2 <- cov2cor(dlbcl.exp2)
 
 # Clustering and tree cut
 dlbcl.clust2 <- flashClust(as.dist(1 - abs(dlbcl.cor2)),
-                          method = dlbcl.par2$linkage)
+                           method = dlbcl.par2$linkage)
 dlbcl.cut2 <- cutree(dlbcl.clust2, k = dlbcl.par2$n.modules)
-num2col2 <- paste0("module", 1:dlbcl.par2$n.modules)
-dlbcl.modules2 <- num2col2[dlbcl.cut2]
-names(dlbcl.modules2) <- dlbcl.clust2$labels
 
-table(dlbcl.modules2[names(dlbcl.modules)], dlbcl.modules)
-with(dlbcl.rcm2, ICC(nu, nrow(Psi)))*100
+comp <- cbind(labels2colors(dlbcl.cut2), "white")
+rownames(comp) <- names(dlbcl.cut2)
+comp[names(dlbcl.modules), 2] <- dlbcl.modules
+
+# ICC
+with(dlbcl.rcm2, ICC(nu, nrow(Psi)))
+
+# Compare clusterings
+comp.tab <- table(comp[,1], comp[,2], exclude = "white") # White is the top 300:1000
+print(comp.tab) # A realtively sparse matrix
+
+plotDendroAndColors(dlbcl.clust2, comp, c("Top 1000", "Top 300"),
+                    dendroLabels = FALSE, hang = 0.03,
+                    addGuide = TRUE, guideHang = 0.05,
+                    main = "")
 
 ## ---- end ----
