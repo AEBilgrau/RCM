@@ -102,7 +102,7 @@
 \begin{document}
 
 \begin{frontmatter}
-\title{Estimating a common covariance matrix for network meta analysis of
+\title{Estimating a common covariance matrix for network meta-analysis of
 gene expression datasets in diffuse large B-cell lymphoma\thanksref{T1}}
 \runtitle{Estimating a common covariance matrix}
 \thankstext{T1}{Supported by MSCNET, EU FP6, CHEPRE, the Danish Agency for Science, Technology, and Innovation as well as Karen Elise Jensen Fonden.}
@@ -153,13 +153,14 @@ DK-9000 Aalborg \O{}\\
 \end{aug}
 
 \begin{abstract}
-Estimating gene networks in combination with posthoc analysis based on data on malignant tissue is one of the major challenges of cancer systems biology as it allows us to improve our understanding of disease pathology and eventually identify new drug targets.
-Motivated by the need for improving the inherently unstable covariance estimation methods compounded by noisy gene expression data, we present estimation of a hierarchical random covariance model and applied it for meta analysis of gene networks across multiple large-scale gene expression studies of diffuse large B-cell lymphoma (DLBCL).
+Estimating gene networks in combination with posthoc analysis based on data from malignant tissue is a major challenge in cancer systems biology as it allows us to improve our understanding of disease pathology and eventually identify new drug targets.
+Motivated by the need for improving the inherently unstable covariance estimation compounded by noisy gene expression data, we present a hierarchical random covariance model applied as a meta-analysis of gene networks across eleven large-scale gene expression studies of diffuse large B-cell lymphoma (DLBCL).
 The approach was inspired by traditional meta-analysis using random effects models and we derive and compare basic properties and estimators of the model.
 Simple inference and interpretation of an introduced parameter measuring the inter-class homogeneity is suggested.
 The methods are generally applicable where multiple classes are present and believed to share a common covariance matrix of interest that is obscured by class-dependent noise.
 As such, it provides a basis for meta- or integrative analysis of covariance matrices where the classes are formed by datasets.
-By application of posthoc analysis on the estimated common covariance matrix for the DLBCL data we were able to identify a number of biologically meaningful gene networks of prognostic value. Of particular interest was the identification of a network with the S100 family of calcium-binding proteins S100A8 (MRP8; calgranulin A) and S100A9 (MRP14; calgranulin B) as central players further fueling the indications that knock down of these proteins may improve the outcome of immunotherapy strategies in lymphoma.
+In a posthoc analysis on the estimated common covariance matrix for the DLBCL data we were able to identify biologically meaningful gene networks of prognostic value.
+Of particular interest was the identification of a network with the S100 family of calcium-binding proteins S100A8 (MRP8; calgranulin A) and S100A9 (MRP14; calgranulin B) as central players further fueling indications that knock down of these proteins may improve the immunotherapy strategies and outcome in lymphoma.
 \end{abstract}
 
 \begin{keyword}
@@ -188,29 +189,28 @@ read_chunk("RCM.R")
 \section{Introduction}
 Genes and their products carry out their functions in concerted effort via intricate networks.
 Network analysis of genomic data has consequently been an inescapable success by elucidating gene functions and interactions through many different approaches.
-For that reason, we wished to apply and learn from network reconstruction to gene expression data from diffuse large B-cell lymphoma samples from our own lab \citep{DybkaerBoegsted2015} as others \cite{Agnelli2011, Clarke2013} have successfully used network analysis in other malignancies.
+For that reason, we wished to apply and learn from network reconstruction to gene expression data from diffuse large B-cell lymphoma samples from our own lab \citep{DybkaerBoegsted2015} as others \citep{Agnelli2011, Clarke2013} have successfully used network analysis in other malignancies.
 However, the methods have one or more of several shortcomings, particularly, as in our case, when the sample size is moderate.
 
 Crudely, many network analysis methods---such as relevance or correlation networks \citep{Horvath2011}, Gaussian graphical models \citep{Lauritzen1996}, and Bayesian networks---may be categorized according to their use of marginal, partial, or semi-partial correlations.
 The underlying assumption of them all is that correlation hints at causation.
-The different correlation measures separate the methods by different attempts to remove the influence of remaining other genes.
-Confer \citep{Markowetz2007a} for an overview.
+The different measures of correlation separate the methods by different attempts to remove the influence of remaining other genes \citep{Markowetz2007a}.
 As the covariance matrix and its inverse holds this information, its estimation is a central topic to network analysis.
-However, this fundamental problem of accurately and precisely estimating the covariance matrix (or its inverse, the precision matrix) is notoriously difficult.
+However, this fundamental problem of accurately estimating the covariance matrix (or its inverse, the precision matrix) is notoriously difficult.
 The usual bias-corrected maximum likelihood estimator (MLE), the sample covariance matrix, has long been known to perform poorly in general due to high variability \citep{Dempster1972}.
 The sample covariance becomes increasingly ill-conditioned as the number of variables $p$ approaches the sample size $n$ and singular when $p$ exceeds $n$.
 Because of its central statistical role the list of statistical methods and applications utilizing the estimated covariance matrix is exceedingly long.
 Beside the many standard statistical methods such as principal component analysis (PCA) and discriminant analysis, examples of direct applications include gene and protein network analysis \citep{Butte2000, Margolin2006}, spectroscopic imaging \citep{Lin2007}, functional magnetic resonance imaging (fMRI), financial forecasting, and many more.
-Among this expanding list of applications is also an increasing number of high-dimensional applications and datasets publicly available at online repositories.
+Among this expanding list of applications is also an increasing number of high-dimensional applications and datasets publicly available in online repositories.
 
 In genomic datasets, the number of genes $p$ often far exceeds the number of samples $n$.
 Since the number of parameters increases quadratically in $p$ and the sample covariance matrix becomes singular when $p > n$ many shrinkage and regularization estimators have been proposed to combat the accompanying problems by effectively increasing the degrees of freedom.
-These examples include the graphical LASSO and ridge estimation of the precision matrix \citep{Meinshausen2006, Friedman2008, vanWieringen2014}.
+These examples include the graphical lasso and ridge estimation of the precision matrix \citep{Meinshausen2006, Friedman2008, vanWieringen2014}.
 Subsequently, focus on the selection of the regularization parameter has received much attention \citep{Fan2013}.
 
 Instead of attempting to derive still more sophisticated estimators we attempt to alleviate the problem from a different angle by using more available data and thus effectively increasing $n$.
 We do so by utilizing, a large number of genomic DLBCL datasets which, as with all major groups of cancer, are now publicly available online.
-We use these studies in combination with data from our own laboratory as a network meta analysis to arrive at a good estimate of the covariance matrix whilst accounting for and assessing inter-study variation.
+We use these studies in combination with data from our own laboratory as a network meta-analysis to arrive at a good estimate of the covariance matrix whilst accounting for and assessing inter-study variation.
 
 We note, that while the high-dimensional extension to $p > n$ is important, it is out of scope in this paper.
 We restrict ourselves to the case where the total number of samples exceeds $p$.
@@ -218,8 +218,8 @@ Hence, if $k$ classes or datasets are available with sample sizes $n_1, \ldots, 
 
 The remainder of this paper is structured as follows.
 In Section \ref{sec:RCMmodel}, we propose the model for a common covariance matrix across multiple studies, derive estimators hereof, and propose an inter-study homogeneity measure to aid in assessing the variation between studies.
-Next, we apply the model in Section \ref{sec:DLBCL}.
-Before concluding the manuscript in Section \ref{sec:conclusion}, we assess the proposed model estimators via synthetic data.
+Next, we apply the model in Section \ref{sec:DLBCL} to $2{,}046$ DLBCL samples across 11 datasets.
+We then assess the proposed model estimators via synthetic data in Section \ref{sec:estimationassessment} before concluding the manuscript in Section \ref{sec:conclusion}.
 
 Although this work was motivated by gene-gene interaction networks in DLBCL, where the covariance matrix is assumed to contain all information about the conditional dependencies of the genes, the methods are general and not limited to such genomic data.
 
@@ -713,6 +713,7 @@ This confirmed that the genes in the \Sexpr{cleanName(the.module)} and
 <<numerical_experiment, echo=FALSE, results='hide'>>=
 @
 \section{Assessment of the estimation procedures}
+\label{sec:estimationassessment}
 To assess the precision and stability of the estimation procedure we generated data from the hierarchical model \eqref{eq:RCM} under two scenarios with $k = \Sexpr{par.ni.sp[["k"]]}$ studies with an equal number of observations, $n_1 = n_2 = n_3$, and with different choices of the number of genes $p$.
 In the first scenario, we set $p = \Sexpr{par.ni.sp[["p"]]}$ with the number of observations $n_i$ in each study varying in the range
 $\Sexpr{paste0("[", min(par.ni.sp[["n.obs"]]), ",", max(par.ni.sp[["n.obs"]]), "]")}$.
@@ -782,7 +783,7 @@ We believe this work could be further enriched by combining the method with regu
 
 The recent advances in such regularized techniques which allows for analysis of large covariance matrices has unfortunately diminished the focus on collecting an adequate number of samples.
 The technically possible estimates for extreme $n/p$ ratios does not necessarily imply that a good estimate is achieved.
-For example, while non-zero entries often can be accurately recalled in graphical LASSO, actual estimates of the covariances (or precisions) can still be heavily biased.
+For example, while non-zero entries often can be accurately recalled in graphical lasso, actual estimates of the covariances (or precisions) can still be heavily biased.
 Large sample-sizes are still needed to achieve unbiased estimates of the covariance due to the bias-variance trade-off.
 Therefore, an increased focus should also be appointed to efficiently aggregating datasets and achieving sufficiently large sample sizes to allow for stable and unbiased estimation of covariance matrices.
 
