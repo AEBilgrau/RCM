@@ -985,9 +985,10 @@ with(dlbcl.rcm2, ICC(nu, nrow(Psi)))
 comp.tab <- table(comp[,1], comp[,2], exclude = "white") # White is the top 300:1000
 print(comp.tab) # A realtively sparse matrix
 
-plotDendroAndColors(dlbcl.clust2, comp, c("Top 1000", "Top 300"),
-                    dendroLabels = FALSE, hang = 0.03,
-                    addGuide = TRUE, guideHang = 0.05,
-                    main = "")
-
 ## ---- end ----
+
+
+plotDendroAndColors(dlbcl.clust2, comp, c("Top 1000", "Top 300"),
+dendroLabels = FALSE, hang = 0.03,
+addGuide = TRUE, guideHang = 0.05,
+main = "")
