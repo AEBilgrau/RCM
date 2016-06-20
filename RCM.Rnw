@@ -103,7 +103,7 @@
 
 \begin{frontmatter}
 \title{Estimating a common covariance matrix for network meta analysis of
-gene expression data sets in diffuse large B-cell lymphoma\thanksref{T1}}
+gene expression datasets in diffuse large B-cell lymphoma\thanksref{T1}}
 \runtitle{Estimating a common covariance matrix}
 \thankstext{T1}{Supported by MSCNET, EU FP6, CHEPRE, the Danish Agency for Science, Technology, and Innovation as well as Karen Elise Jensen Fonden.}
 
@@ -584,7 +584,7 @@ The corresponding GEO-accession numbers are
 and
 \Sexpr{grep("XXX", base::unique(studies[,"GSE"]), invert = TRUE, value = TRUE)[1]}
 based on various microarray platforms.
-The downloaded data together with  a data set from our own laboratory (GSE56315, \cite{DybkaerBoegsted2015}) yields a total of \Sexpr{rowSums(dlbcl.dims)["Samples"]} samples with study sizes in the range \Sexpr{paste(range(dlbcl.dims["Samples",]), collapse = "-")}.
+The downloaded data together with  a dataset from our own laboratory (GSE56315, \cite{DybkaerBoegsted2015}) yields a total of \Sexpr{rowSums(dlbcl.dims)["Samples"]} samples with study sizes in the range \Sexpr{paste(range(dlbcl.dims["Samples",]), collapse = "-")}.
 The summarization using brainarray CDFs to Ensembl gene identifiers facilitates cross-platform integration.
 
 After RMA normalization and summarization, the data were brought to a common scale by quantile normalizing all data to the common cumulative distribution function of all arrays.

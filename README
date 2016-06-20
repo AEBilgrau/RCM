@@ -1,6 +1,6 @@
 
    ESTIMATING A COMMON COVARIANCE MATRIX FOR NETWORK META ANALYSIS OF
-      GENE EXPRESSION DATA SETS IN DIFFUSE LARGE B-CELL LYMPHOMA
+      GENE EXPRESSION DATASETS IN DIFFUSE LARGE B-CELL LYMPHOMA
 
 To reproduce the article, download the compressed zip file and run the RCM.Rnw via knit function in the knitr package.
 One way to do so is to cd to the directory and run
