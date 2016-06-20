@@ -159,7 +159,7 @@ The approach was inspired by traditional meta-analysis using random effects mode
 Simple inference and interpretation of an introduced parameter measuring the inter-class homogeneity is suggested.
 The methods are generally applicable where multiple classes are present and believed to share a common covariance matrix of interest that is obscured by class-dependent noise.
 As such, it provides a basis for meta- or integrative analysis of covariance matrices where the classes are formed by datasets.
-By application of posthoc analysis on the estimated common covariance matrix for the DLBCL data we were able to identify a number of biologically meaningful gene networks of prognostic value. Of particular interest was the identification of a network with the S100 family of calcium-binding proteins—S100A8 (MRP8; calgranulin A) and S100A9 (MRP14; calgranulin B) as central players further fueling the indications that knock down of these proteins may improve the outcome of immunotherapy strategies in lymphoma.
+By application of posthoc analysis on the estimated common covariance matrix for the DLBCL data we were able to identify a number of biologically meaningful gene networks of prognostic value. Of particular interest was the identification of a network with the S100 family of calcium-binding proteins S100A8 (MRP8; calgranulin A) and S100A9 (MRP14; calgranulin B) as central players further fueling the indications that knock down of these proteins may improve the outcome of immunotherapy strategies in lymphoma.
 \end{abstract}
 
 \begin{keyword}
@@ -681,7 +681,7 @@ Interestingly, the gene with highest connectivity in this module is
 \Sexpr{dlbcl.mod.tab.genes.copy[1, the.other.module]} (MRP8; calgranulin A) and the gene
 \Sexpr{dlbcl.mod.tab.genes.copy[16, the.other.module]} (MRP14; calgranulin B)
 is number 16 further down the connectivity list as compelling research has shown that the S100 family of calcium-binding proteins maintain immunosuppressive MDS cells at the tumor site \citep{Fulmer2008}.
-Notably, in mice injected with lymphoma cells, knockout of S100A9 resulted in greater tumor infiltration T cells and less accumulation of MDS cells than that seen in wild-type mice \citep{Cheng2008}.
+Notably, in mice injected with lymphoma cells, knockout of S100A9 resulted in greater tumor infiltration of T cells and less accumulation of MDS cells than that seen in wild-type mice \citep{Cheng2008}.
 The knockout mice had higher rates of tumor rejection and lower tumor size than their wild-type littermates.
 This result indicates that knock down of these proteins may improve the outcome of immunotherapy strategies in patients with values of the eigengene of the \Sexpr{cleanName(the.other.module)} module.
 
@@ -764,7 +764,7 @@ The straight-forward approaches of using the mean or pooled covariance matrix ar
 While the improvements are modest, the article demonstrates a potentially advantageous way of modelling the inter-study variability by a hierarchical random covariance model.
 However, the virtue of such a model is not from improvement in accuracy alone.
 Also desirable is the explicit and interpretable quantification of the inter-study variance.
-If $\hat{\nu}$ is estimated to be large, the studies exhibit a largely common covariance structure, and vice-versa when $\hat{\nu}$ is small.
+If $\nu$ is estimated to be large, the studies exhibit a largely common covariance structure, and vice-versa when $\nu$ is estimated to be small.
 We have provided the ICC for the RCM as an attempt to aid in the interpretation of $\nu$.
 Also provided is the basic framework for testing if study heterogeneity is present.
 However, the proposed testing is computationally demanding and only feasible when $p$ is sufficiently small.
