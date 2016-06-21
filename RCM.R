@@ -403,7 +403,7 @@ ll.tr.a2 <- get.ll.trace(dlbcl.rcm.alt2$trace)
 loglik.trace.plot <- "figure4.jpg"
 jpeg(loglik.trace.plot, width = 7, height = 7/2, units = "in", res = 200)
 {
-  par(mar = c(4, 4.5, 0, 0) + 0.1, mgp = c(2, 1, 0))
+  par(mar = c(4, 4.5, 2, 0) + 0.1, mgp = c(2, 1, 0))
   plot(ll.tr, type = "l", ylab = "", xlab = "Iteration", lwd = 2,
        xlim = c(0,1500), axes = FALSE)
   axis(1)
@@ -417,8 +417,11 @@ jpeg(loglik.trace.plot, width = 7, height = 7/2, units = "in", res = 200)
          legend = paste0("Fit ", 1:3, " (",
                          round(c(dlbcl.rcm$time[3],
                                  dlbcl.rcm.alt$time[3],
-                                 dlbcl.rcm.alt2$time[3])/60, 0), " min.)"),
+                                 dlbcl.rcm.alt2$time[3])/60, 0), " min)"),
          inset = 0.1, lwd = 2)
+  axis(3, at = length(ll.tr))
+  axis(3, at = length(ll.tr.a), col = "steelblue")
+  axis(3, at = length(ll.tr.a2), col = "orange")
 }
 dev.off()
 
