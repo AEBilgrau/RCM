@@ -597,9 +597,9 @@ For each dataset the scatter matrix $\vS_i$ of the top \Sexpr{dlbcl.par$top.n} m
 Hence, we investigate \Sexpr{format(dlbcl.par$top.n*(dlbcl.par$top.n + 1)/2, big.mark = ",")} pairwise interactions.
 
 The parameters of the RCM were estimated using the EM algorithm and yielded the $\Sexpr{dlbcl.par$top.n} \times \Sexpr{dlbcl.par$top.n}$ matrix $\hvPsi$ and $\hat{\nu} = \Sexpr{round(dlbcl.rcm[["nu"]], 2)}$.
-The model was fitted using three different initial sets of parameters which all converged to the same likelihood and parameter estimates.
-The log-likelihood trace and computation times are seen in Figure \ref{\Sexpr{loglik.trace.plot}}.
-From these, $\hvSigma = (\hat{\nu}-p-1)^{-1}\hvPsi$ was computed and subsequently scaled to the corresponding correlation matrix $\hat{\vec{R}}$.
+The RCM was fitted using three different initial sets of parameters which all converged to the same parameter estimates.
+Log-likelihood traces and computation times are seen in Figure \ref{\Sexpr{loglik.trace.plot}}.
+From the parameter estimate, the common expected corvariance $\hvSigma = (\hat{\nu}-p-1)^{-1}\hvPsi$ was computed and subsequently scaled to the corresponding correlation matrix $\hat{\vec{R}}$.
 
 \fig{\Sexpr{loglik.trace.plot}}{0.8\textwidth}{The trace of the log-likelihood for three different starting values of $\vPsi$ and $\nu$ using the EM algorithm and computational times in minutes.}
 
@@ -628,17 +628,18 @@ Top right: the correlation network as laid out by the Fruchterman-Reingold algor
 Bottom: A Hierarchical edge bundling representation of the network \citep{Holten2006} where edges loosely follow the dendrogram. Edge colors follow the color key. Only edges with a weight numerically larger than \Sexpr{round(dlbcl.par$threshold, 3)} are plotted.
 }
 
-Next, we outline one of many possible downstream analysis of the estimated covariance.
-For simplicity we employed standard correlation network analyses to the estimated common correlation matrix $\hat{\vec{R}}$ across all studies.
+Next, we outline one of many possible downstream analyses of the estimated covariance.
+For simplicity we employed a standard correlation network analysis to the estimated common correlation matrix $\hat{\vec{R}}$ across all studies.
 To identify clusters with high internal correlation, we used agglomerative hierarchical clustering with \Sexpr{capitalize(dlbcl.clust$method)}-linkage and distance measure defined as 1 minus the absolute value of the correlation.
-The tree was arbitrarily pruned at a height which produces \Sexpr{length(unique(dlbcl.modules))} modules named by colors.
-Figure \ref{\Sexpr{dlbcl_plot}} shows these results. A heat-map, the hierarchical tree, and the identified modules are seen at the top left.
+The tree was arbitrarily pruned at a height which produced \Sexpr{length(unique(dlbcl.modules))} modules named by colors.
+Figure \ref{\Sexpr{dlbcl_plot}} shows these results.
+A heat-map, the hierarchical tree, and the identified modules are seen at the top left.
 The top-right shows a graphical representation of the matrix which better illustrates the clusters and their relations.
 The bottom plot shows the graph radially laid out using hierarchical edge bundling \citep{Holten2006} where the edges are guided by the hierarchical tree.
 Table \ref{tab:dlbcl_mod_tab} shows the top genes within each module.
-As seen e.g.\ in the \Sexpr{cleanName(num2col[2])} module, genes from the same gene family are clustered together.
+As seen e.g.\ in the \Sexpr{cleanName(num2col[2])} module, genes from the same gene family cluster together.
 
-To further investigate the low ICC, we refitted the RCM on the subset of the \Sexpr{length(the.genes)} genes in the \Sexpr{cleanName(the.module)} module for reasons clear later.
+To further investigate the low ICC, we refitted the RCM on the subset of the \Sexpr{length(the.genes)} genes in the \Sexpr{cleanName(the.module)} module.
 This yielded an
 $\text{ICC}(\Sexpr{round(the.rcm$nu, 2)}) = \Sexpr{round(with(the.rcm, ICC(nu, nrow(Psi))),3)}$.
 Subsequently the model was repeatedly fitted on \Sexpr{length(the.genes)} randomly chosen genes \Sexpr{length(rand.rcm)} times to gauge the size of the ICC without the selection bias.
@@ -666,7 +667,7 @@ The upper right of Figure~\ref{\Sexpr{dlbcl_plot}} shows suggested functions of 
 <<survival_analysis, echo=FALSE, results='hide'>>=
 @
 
-We checked if the identified modules were prognostic for overall survival (OS) in the CHOP and R-CHOP-treated cohorts of the GSE10846 datasets.
+We checked if the identified modules were prognostic for overall survival (OS) in the CHOP and R-CHOP-treated cohort datasets of GSE10846.
 To do this, the eigengene \citep{Horvath2011} for each module was computed and a multiple Cox proportional hazards model for OS was fitted with the module eigengenes as covariates.
 The module eigengene is simply the first principal component of the expression matrix of the module which can thus be represented by a linear combination of the module genes.
 For the prognostic interesting \Sexpr{cleanName(the.module)} module, the Kaplan-Meier estimates were computed for groups arising when dichotomizing the values of the corresponding eigengene as above or below the median value.
@@ -677,10 +678,11 @@ The top row shows $95\%$ and $99\%$ CI for the hazard ratio for each eigengene i
 }
 
 From the survival analysis, the \Sexpr{cleanName(the.other.module)} module appeared particularly interesting since it identifies a group of patients with high value of the corresponding eigengene and poor survival, thus making them candidates for experimental therapies.
-Interestingly, the gene with highest connectivity in this module is
+The gene with highest connectivity in this module is
 \Sexpr{dlbcl.mod.tab.genes.copy[1, the.other.module]} (MRP8; calgranulin A) and the gene
 \Sexpr{dlbcl.mod.tab.genes.copy[16, the.other.module]} (MRP14; calgranulin B)
-is number 16 further down the connectivity list as compelling research has shown that the S100 family of calcium-binding proteins maintain immunosuppressive MDS cells at the tumor site \citep{Fulmer2008}.
+appears as number 16 further down the connectivity list.
+This is interesting as compelling research has shown that the S100 family of calcium-binding proteins maintain immunosuppressive MDS cells at the tumor site \citep{Fulmer2008}.
 Notably, in mice injected with lymphoma cells, knockout of S100A9 resulted in greater tumor infiltration of T-cells and less accumulation of MDS cells than that seen in wild-type mice \citep{Cheng2008}.
 The knockout mice had higher rates of tumor rejection and lower tumor size than their wild-type littermates.
 This result indicates that knock down of these proteins may improve the outcome of immunotherapy strategies in patients with values of the eigengene of the \Sexpr{cleanName(the.other.module)} module.
@@ -690,7 +692,7 @@ Therefore a manual screening of the \Sexpr{length(the.genes)} genes within the \
 The genes CHI3L1, CHIT1, and LYZ are related to chitin degradation and suggests activated immune system response and inflammation.
 Enzymes related to chitin degradation can possibly originate from macrophages as CHIT1 is expressed by activated macrophages.
 The inflammation and modulated activity of the immune system are further suggested by the genes ORM1, PLA2G2D, PLA2G7, and IL18.
-CHIT3L1 (also known as YKL40) has been linked to the AKT anti-apoptotic signaling pathway in glioblastoma \citep{Francescone2011} and thus high YKL40 is associated with poor outcome,
+CHIT3L1 (also known as YKL40) has been linked to the AKT anti-apoptotic signaling pathway in glioblastoma \citep{Francescone2011} and thus high CHIT3L1 is associated with poor outcome.
 Some of the remaining, MMP9, PTGDS, ADAMDEC1, HSD11B1, APOC1, and CYP27B1 are involved in metalloproteinase degradation and lipid metabolism.
 MMP9 in particular is known to have a central role in proliferation, migration, differentiation, angiogenesis, apoptosis, and host defenses.
 Numerous studies have linked altered MMP expression in different human cancers with poor disease prognosis where up-regulation of MMPs are associated with enhanced cancer cell invasion.
