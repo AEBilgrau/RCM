@@ -209,8 +209,8 @@ tm.elapsed <-
               n + nu + k + p, FUN = mean,
             data = df.t)
 
-figure1 <- "figure1.jpg"
-jpeg(figure1, height=7, width=7, units = "in", res = 200)
+plot.sim.study <- "figure4.jpg"
+jpeg(plot.sim.study, height=7, width=7, units = "in", res = 200)
 {
   d <- 0.2 # constant
 
@@ -387,7 +387,7 @@ if (!exists("dlbcl.rcm") || !exists("var.pool") || recompute) {
   dlbcl.time.alt2 <- system.time({
     dlbcl.trace.alt2 <- capture.output({
       dlbcl.rcm.alt2 <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE,
-                               Psi.init = tmp$Psi, nu.init =tmp$nu,
+                               Psi.init = tmp$Psi, nu.init = tmp$nu,
                                eps = 0.01, max.ite = 5000)
     })
   })
@@ -415,7 +415,7 @@ ll.tr <-get.ll.trace(dlbcl.rcm$trace)
 ll.tr.a <- get.ll.trace(dlbcl.rcm.alt$trace)
 ll.tr.a2 <- get.ll.trace(dlbcl.rcm.alt2$trace)
 
-loglik.trace.plot <- "figure4.jpg"
+loglik.trace.plot <- "figure1.jpg"
 jpeg(loglik.trace.plot, width = 7, height = 7/2, units = "in", res = 200)
 {
   par(mar = c(4, 4.5, 2, 0) + 0.1, mgp = c(2, 1, 0))

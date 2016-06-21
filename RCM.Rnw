@@ -742,23 +742,23 @@ The benchmarking measure used is the following weighted sum of squared errors,
 @
 
 In both scenarios, the weighted sum of squared errors $\text{SSE}(\hvSigma)$ for each $n_i$ and estimator was computed for $\Sexpr{par.ni.sp[["n.sims"]]}$ datasets.
-The mean SSEs (and 99\% CI) of these values are seen in panels A and B of Figure \ref{\Sexpr{figure1}} as function of $n_i$.
+The mean SSEs (and 99\% CI) of these values are seen in panels A and B of Figure \ref{\Sexpr{plot.sim.study}} as function of $n_i$.
 
 In scenario 1, the EM approach used a total of \Sexpr{sim.est.time["time.em.elapsed"]} minutes of computation time for $\Sexpr{par.ni.sp$n.sims}$ fits compared to \Sexpr{sim.est.time["time.pool.elapsed"]} and \Sexpr{sim.est.time["time.mle.elapsed"]} minutes for the pool and approximate MLE approach, respectively.
 In scenario 2, the EM, pooled, and approximate MLE approach used
 \Sexpr{sim.est.time.l["time.em.elapsed"]},
 \Sexpr{sim.est.time.l["time.pool.elapsed"]}, and
 \Sexpr{sim.est.time.l["time.mle.elapsed"]} minutes respectively.
-Figure \ref{\Sexpr{figure1}}C shows the computational time in an third scenario for more extreme values of $p$.
+Panel C of Figure \ref{\Sexpr{plot.sim.study}} shows the computational time in a third scenario for more extreme values of $p$.
 
-\fig{\Sexpr{figure1}}{\textwidth}{
+\fig{\Sexpr{plot.sim.study}}{\textwidth}{
 Panel A: The mean SSE (and 99 \% CI) for scenario 1 from \Sexpr{par.ni.sp$n.sims} simulations as a function of the number of samples $n_i$ in each of \Sexpr{par.ni.sp$k} studies.
 Panel B: The mean SSE (and 99 \% CI) for scenario 2.
 Panel C: The mean computation time of $\Sexpr{par.t$n.sims}$ fits with varying dimension $p$.
 All panels show the constant parameters in the scenario.
 }
 
-From both panels A and B of Figure \ref{\Sexpr{figure1}}, we see that the EM estimation is superior with less variation to that of the approximate MLE and moment estimators.
+From both panels A and B of Figure \ref{\Sexpr{plot.sim.study}}, we see that the EM estimation is superior with less variation to that of the approximate MLE and moment estimators.
 As seen from the panel C and above computational times, this superiority comes at a computational cost rapidly increasing in $p$.
 
 
@@ -771,6 +771,8 @@ This article provides a basic framework for modeling a common covariance structu
 The straight-forward approaches of using the mean or pooled covariance matrix are seen as moment estimators of the model and the estimate using the EM algorithm is shown to be superior to these simple alternatives.
 While the improvements are modest, the article demonstrates a potentially advantageous way of modelling the inter-study variability by a hierarchical random covariance model.
 However, the virtue of such a model is not from improvement in accuracy alone.
+The model-based approach allows investigating and testing both pairwise and global covariance structures correlations of genes, which we consider for future research.
+Another feature is the invertible estimate provided by the RCM, which allows users to explore the corresponding Gaussian graphical model.
 Also desirable is the explicit and interpretable quantification of the inter-study variance.
 If $\nu$ is estimated to be large, the studies exhibit a largely common covariance structure, and vice-versa when $\nu$ is estimated to be small.
 We have provided the ICC for the RCM as an attempt to aid in the interpretation of $\nu$.
