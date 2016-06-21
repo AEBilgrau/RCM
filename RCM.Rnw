@@ -165,8 +165,10 @@ Of particular interest was the identification of a network with the S100 family 
 
 \begin{keyword}
 \kwd{covariance estimation}
+\kwd{precision estimation}
 \kwd{integrative analysis}
 \kwd{meta-analysis}
+\kwd{network analysis}
 \end{keyword}
 
 \end{frontmatter}
@@ -209,7 +211,7 @@ These examples include the graphical lasso and ridge estimation of the precision
 Subsequently, focus on the selection of the regularization parameter has received much attention \citep{Fan2013}.
 
 Instead of attempting to derive still more sophisticated estimators we attempt to alleviate the problem from a different angle by using more available data and thus effectively increasing $n$.
-We do so by utilizing, a large number of genomic DLBCL datasets which, as with all major groups of cancer, are now publicly available online.
+We do so by utilizing a large number of genomic DLBCL datasets which, as with all major groups of cancer, are now publicly available online.
 We use these studies in combination with data from our own laboratory as a network meta-analysis to arrive at a good estimate of the covariance matrix whilst accounting for and assessing inter-study variation.
 
 We note, that while the high-dimensional extension to $p > n$ is important, it is out of scope in this paper.
@@ -249,7 +251,7 @@ While the inverse Wishart distribution is defined for all $\nu > p - 1$, the fir
 Hence, in the RCM of \eqref{eq:RCM}, $\vSigma$ can be interpreted as a location-like parameter as it is the expected covariance matrix in each study.
 The parameter $\nu$ inversely controls the inter-class variation and can thus be considered an inter-class homogeneity parameter of the covariance structure.
 A large $\nu$ corresponds to high study homogeneity and vice versa for small $\nu$.
-This can be further seen as $\vSigma_i$ concentrates around $\vSigma$ for $\nu\to\infty$ which can be interpreted as the inter-study variation goes towards zero for increasing $\nu$.
+This can further be seen as $\vSigma_i$ concentrates around $\vSigma$ for $\nu\to\infty$ which corresponds to an vanishing inter-study variation for increasing $\nu$.
 This fact is seen directly from variance and covariance expressions for the inverse Wishart (see \eqref{eq:invwishcovar} and \eqref{eq:invwishvar}) where the 4th order denominator grows much faster than the 1st order nominator as polynomials in $\nu$ and causing the variance to vanish for $\nu\to\infty$.
 Thus, the true underlying covariance matrix $\vSigma$ and the homogeneity parameter $\nu$ are the effects of interest to be estimated in this paper.
 These basic properties of the RCM motivates the construction.
@@ -272,11 +274,11 @@ By the independence assumptions, the log-likelihood for $\vPsi$ and $\nu$ is giv
              f(\vX_1, ...,\vX_k |
                \vSigma_1, ..., \vSigma_k, \vPsi, \nu)
              f(\vSigma_1, ..., \vSigma_k | \vPsi, \nu)
-             d\vSigma_1 \cdots d\vSigma_k \\
+             \mathrm{d}\vSigma_1 \cdots \mathrm{d}\vSigma_k \\
   &= \log \prod_{i=1}^k \!\int
                f(\vX_i | \vSigma_i)
                f(\vSigma_i | \vPsi, \nu)
-               d\vSigma_i.
+               \mathrm{d}\vSigma_i.
 \end{align*}
 We use the generic notation $f(\cdot | \cdot)$ and $f(\cdot)$ for the conditional and unconditional pdf of random variables, respectively, throughout this paper.
 Since the inverse Wishart distribution is conjugate to the multivariate Gaussian distribution the integral, of which the integrand forms a Gaussian-inverse-Wishart distribution, can be evaluated. Hence $\vSigma_i$ can be marginalized out, cf.\ \eqref{eq:marg1} in Appendix \ref{sec:marginalization}, and we arrive at the following expression for the log-likelihood function,
@@ -302,7 +304,7 @@ As stated in the following two propositions the likelihood is not log-concave in
 
 \begin{restatable}[Non-concavity in $\vPsi$]{proposition}{propositionNonConcavityInPsi}
   \label{prop:nonconcavityinpsi}
-  For fixed $\nu$, the log-likelihood function \eqref{eq:loglik} is not
+  For a fixed $\nu$, the log-likelihood function \eqref{eq:loglik} is not
   concave in $\vPsi$.
 \end{restatable}
 
@@ -310,7 +312,7 @@ As stated in the following two propositions the likelihood is not log-concave in
 
 \begin{restatable}[Concavity in $\nu$]{proposition}{propositionConcavityInNu}
   \label{prop:concavityinnu}
-  For fixed positive definite $\vPsi$, the log-likelihood function \eqref{eq:loglik}
+  For a fixed positive definite $\vPsi$, the log-likelihood function \eqref{eq:loglik}
   is concave in $\nu$.
 \end{restatable}
 
@@ -446,11 +448,13 @@ That is, equations \eqref{eq:pooledest}, \eqref{eq:em}, or \eqref{eq:mle} define
 The procedure using the EM step utilizes the results about the RCM log-likelihood and thus provides a guarantee of convergence along with the advantage of a very simple implementation.
 Both the EM step and the $\nu$ update will always yield an increase in the likelihood.
 The disadvantage is that the identified stationary point might be a local maximum or
-saddle-point, when considering the log-likelihood function jointly in
+saddle-point when considering the log-likelihood function jointly in
 $(\vPsi, \nu)$.
-The latter probably happens with zero probability, but it
-cannot be excluded that the maximum found is not global.
+Intuitively, the latter possibility happens with zero probability, but it cannot be excluded that the maximum found is not global.
 
+Variations on the convergence criterion can also be considered.
+One alternative is using difference in successive parameters estimates.
+More variants can be create by considering relative, and not absolute, differences.
 
 
 
@@ -458,7 +462,7 @@ cannot be excluded that the maximum found is not global.
 
 \subsubsection*{Test for no class heterogeneity}
 By the RCM construction $\nu$ parameterizes an inter-class variance where the size of $\nu$ corresponds to the homogeneity between the classes.
-A large $\nu$ yields high study homogeneity while small $\nu$ yields low homogeneity.
+A large $\nu$ yields high study homogeneity while a small $\nu$ yields low homogeneity.
 Thus it might be of interest to test if the estimated homogeneity $\hat{\nu}$ is extreme under the null-hypothesis of no heterogeneity (i.e.\ infinite homogeneity).
 I.e.\ a test for the hypothesis $H_0: \nu = \infty$ which is equivalent to
 \begin{align*}
@@ -475,8 +479,8 @@ As \textit{small} values of $\hat{\nu}$ are critical for $H_0$ approximate accep
 \begin{align*}
   P = \frac{1}{N+1}
   \Bigg(
-    1 + \sum_{j=1}^N \bbOne\!\Big[\hat{\nu}_0^{(j)} < \hat{\nu}_\text{obs}\Big],
-  \Bigg)
+    1 + \sum_{j=1}^N \bbOne\!\Big[\hat{\nu}_0^{(j)} < \hat{\nu}_\text{obs}\Big]
+  \Bigg),
 \end{align*}
 where $\bbOne[ \,\cdot\, ]$ is the indicator function.
 The addition of one in the nominator and denominator adds a positive bias to the approximate p-value minimally needed according to \citet{Phipson2010}.
@@ -492,7 +496,7 @@ For the RCM, the ICC is given by
   \label{eq:ICCexprs}
 \end{align}
 This follows from the definition of the ICC which is the ratio of the between-study variation $\var(\Sigma_{ij})$ and the total variation $\var(S_{ij})$ of any single pair of variables.
-The ICC might in this sense be utilized in quantifying the reproducbility of the covariance across studies.
+The ICC might in this sense be utilized in quantifying the reproducibility of the covariance across studies.
 Consider observations from \eqref{eq:RCM}.
 We temporarily abuse our notation and let
 \begin{align*}
@@ -546,7 +550,7 @@ Continuing with the expected conditional variance of $S_{ij} | \vSigma$ in the d
 \end{align}
 An expression of $\var(S_{ij})$ in terms of the elements of $\vPsi$ can then found by substituting \eqref{eq:invwishcovar} and \eqref{eq:invwishvar} into \eqref{eq:varSij} and by extension an expression for the ICC \eqref{eq:ICC} can be obtained.
 We omit this tedious calculation which can be verified to yield $\text{ICC}(\nu) = 1/(\nu - p)$ as above.
-Naturally enough, the ICC depends only on $\nu$.
+Naturally, the ICC depends only on $\nu$.
 A straight-forward plug-in estimator $\widehat{\text{ICC}}(\nu)$ of the ICC of some gene-gene interaction is then $\text{ICC}(\hat{\nu})$.
 
 Though $v > p + 3$ is required for the variances to exist, it is clear that
@@ -669,12 +673,13 @@ The upper right of Figure~\ref{\Sexpr{dlbcl_plot}} shows suggested functions of 
 
 We checked if the identified modules were prognostic for overall survival (OS) in the CHOP and R-CHOP-treated cohort datasets of GSE10846.
 To do this, the eigengene \citep{Horvath2011} for each module was computed and a multiple Cox proportional hazards model for OS was fitted with the module eigengenes as covariates.
-The module eigengene is simply the first principal component of the expression matrix of the module which can thus be represented by a linear combination of the module genes.
+The module eigengene is the first principal component of the expression matrix of the module which thus can be represented by a linear combination of the module genes.
 For the prognostic interesting \Sexpr{cleanName(the.module)} module, the Kaplan-Meier estimates were computed for groups arising when dichotomizing the values of the corresponding eigengene as above or below the median value.
 These results are seen in Figure \ref{\Sexpr{figure3}}.
 
 \fig{\Sexpr{figure3}}{\textwidth}{
-The top row shows $95\%$ and $99\%$ CI for the hazard ratio for each eigengene in the multiple Cox proportional hazards model containing all eigengenes. The bottom row shows Kaplan-Meier estimates (and $95\%$ CI) of the overall survival for patients stratified by the dichotomized \Sexpr{cleanName(the.module)} eigengene.
+The top row shows $95\%$ and $99\%$ CI for the hazard ratio for each eigengene in the multiple Cox proportional hazards model containing all eigengenes.
+The bottom row shows Kaplan-Meier estimates (and $95\%$ CI) for the overall survival for patients stratified by the dichotomized \Sexpr{cleanName(the.module)} eigengene.
 }
 
 From the survival analysis, the \Sexpr{cleanName(the.other.module)} module appeared particularly interesting since it identifies a group of patients with high value of the corresponding eigengene and poor survival, thus making them candidates for experimental therapies.
@@ -795,7 +800,7 @@ Therefore, an increased focus should also be appointed to efficiently aggregatin
 
 \section*{Acknowledgments}
 We thank Martin Raussen, Jon Johnsen, as well as Niels Richard Hansen for their assistance on some of the mathematical proofs.
-The helpful statistical comments from Steffen Falgreen were also much appreciated.
+The helpful comments from Steffen Falgreen, Andreas S.\ Pedersen, and reviewers were also much appreciated.
 The technical assistance from Alexander Schmitz, Julie S.\ B\o{}dker, Ann-Maria Jensen, Louise H.\ Madsen, and Helle H\o{}holt is also greatly appreciated.
 
 
