@@ -947,12 +947,12 @@ if (!exists("dlbcl.rcm2") || recompute) {
   psi <- nu*correlateR:::pool(dlbcl.S, dlbcl.ns)
 
   dlbcl.time2 <- system.time({
-    tmp <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE,
-                   Psi.init = psi, nu.init = nu, eps = 0.1,
-                   method = "approxMLE",
-                   max.ite = 10000)
-
-
+    dlbcl.trace1 <- capture.output({
+      tmp <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE,
+                     Psi.init = psi, nu.init = nu, eps = 0.1,
+                     method = "approxMLE",
+                     max.ite = 10000)
+    })
     dlbcl.trace2 <- capture.output({
       dlbcl.rcm2 <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE,
                             Psi.init = tmp$Psi, nu.init = tmp$nu, eps = 5e-5,
@@ -961,6 +961,7 @@ if (!exists("dlbcl.rcm2") || recompute) {
   })
   dimnames(dlbcl.rcm2$Psi) <- dimnames(dlbcl.S[[1]])
   dlbcl.rcm2$time <- dlbcl.time2
+  dlbcl.rcm2$trace.mle <- dlbcl.trace1
   dlbcl.rcm2$trace <- dlbcl.trace2
   resave(dlbcl.rcm2, file = "saved.RData")
 }
