@@ -313,6 +313,19 @@ dev.off()
 ################################################################################
 
 ## ---- dlbcl_analysis ----
+
+# Define functions
+get.ICC <- function(x) {
+  with(x, ICC(nu, nrow(Psi)))
+}
+
+get.TestPValue <- function(the.list, the.object) {
+  n <- sum(sapply(the.list, "[[", "nu") < the.object$nu) + 1
+  N <- length(the.list) + 1
+  return(n / N)
+}
+
+
 the.module <- num2col[3] # = "mediumorchid3"
 the.other.module <- num2col[2] # = ""
 
@@ -338,8 +351,10 @@ gep.sub <- lapply(gep, function(x) exprs(x)[use.genes, ])
 if (!exists("dlbcl.rcm") || !exists("var.pool") || recompute) {
   dlbcl.ns  <- sapply(gep.sub, ncol)
   dlbcl.S   <- lapply(gep.sub, function(x) correlateR::scatter(t(x)))
+
   nu <- sum(dlbcl.ns) + ncol(dlbcl.S[[1]]) + 1
   psi <- nu*correlateR:::pool(dlbcl.S, dlbcl.ns)
+
   dlbcl.time <- system.time({
     dlbcl.trace <- capture.output({
       dlbcl.rcm <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE,
@@ -495,11 +510,6 @@ E(dlbcl.g)$color <- keycols[cut(E(dlbcl.g)$weight, keybreaks)]
 # Phylo / dendrogram
 phylo <- as.phylo(dlbcl.clust)
 phylo$tip.label <- map2hugo(phylo$tip.label)
-
-
-# For large p network
-
-
 
 ## ---- end ----
 
@@ -914,15 +924,6 @@ if (!exists("homogeneity.rcm") || recompute) {
 }
 
 
-get.ICC <- function(x) {
-  with(x, ICC(nu, nrow(Psi)))
-}
-
-get.TestPValue <- function(the.list, the.object) {
-  n <- sum(sapply(the.list, "[[", "nu") < the.object$nu) + 1
-  N <- length(the.list) + 1
-  return(n / N)
-}
 
 
 ## ---- end ----

@@ -545,7 +545,7 @@ Continuing with the expected conditional variance of $S_{ij} | \vSigma$ in the d
     \label{eq:varSij}
 \end{align}
 An expression of $\var(S_{ij})$ in terms of the elements of $\vPsi$ can then found by substituting \eqref{eq:invwishcovar} and \eqref{eq:invwishvar} into \eqref{eq:varSij} and by extension an expression for the ICC \eqref{eq:ICC} can be obtained.
-We omit this tedious calculation which can be verified to yield $\text{ICC}(\nu) = 1/(\nu - p)$ above.
+We omit this tedious calculation which can be verified to yield $\text{ICC}(\nu) = 1/(\nu - p)$ as above.
 Naturally enough, the ICC depends only on $\nu$.
 A straight-forward plug-in estimator $\widehat{\text{ICC}}(\nu)$ of the ICC of some gene-gene interaction is then $\text{ICC}(\hat{\nu})$.
 
@@ -563,7 +563,7 @@ Algorithm \ref{alg:RCM} and the different estimators are implemented in the stat
 They are incorporated in the open-source R-package \texttt{correlateR} freely available for forking and editing at \url{http://github.com/AEBilgrau/correlateR}.
 We refer to the information here for further details and installation instructions.
 This document was prepared with \texttt{knitr} \citep{Xie2013} and LaTeX.
-To reproduce this document see \ref{suppA}.
+To reproduce this document see \ref{suppA} or \url{http://github.com/AEBilgrau/RCM}.
 
 
 
@@ -603,9 +603,9 @@ From the parameter estimate, the common expected corvariance $\hvSigma = (\hat{\
 
 \fig{\Sexpr{loglik.trace.plot}}{0.8\textwidth}{The trace of the log-likelihood for three different starting values of $\vPsi$ and $\nu$ using the EM algorithm and computational times in minutes. The number of iterations used for each fit is shown above.}
 
-The estimated $\hat{\nu}$ yields a surprisingly low estimated ICC of $\Sexpr{round(1/(dlbcl.rcm[["nu"]] - dlbcl.par[["top.n"]]), 4)}$.
-Hence by the RCM, only $\Sexpr{round(1/(dlbcl.rcm[["nu"]] - dlbcl.par[["top.n"]]), 4)*100} \%$ of the variability of the gene-gene covariances is between-studies on average.
-This low ICC might suggest a high study homogeneity of covariances meaning that the covariances reproduce across studies.
+The estimated $\hat{\nu}$ yields a surprisingly low estimated ICC of $\Sexpr{round(get.ICC(dlbcl.rcm), 4)}$.
+Hence by the RCM, only $\Sexpr{100*round(get.ICC(dlbcl.rcm), 4)} \%$ of the variability of the gene-gene covariances is between-studies on average.
+This low ICC might suggest a high inter-study homogeneity of covariances meaning that the covariances reproduce across studies.
 However, the selection of only the most varying (across studies) genes is an obvious contribution to the low ICC.
 By selection, we have high inter-study variability which drives the ICC down.
 In any case, the low ICC might still suggest high reproducibility of the covariances between studies of the \textit{selected} genes.
@@ -641,7 +641,7 @@ As seen e.g.\ in the \Sexpr{cleanName(num2col[2])} module, genes from the same g
 
 To further investigate the low ICC, we refitted the RCM on the subset of the \Sexpr{length(the.genes)} genes in the \Sexpr{cleanName(the.module)} module.
 This yielded an
-$\text{ICC}(\Sexpr{round(the.rcm$nu, 2)}) = \Sexpr{round(with(the.rcm, ICC(nu, nrow(Psi))),3)}$.
+$\text{ICC}(\Sexpr{round(the.rcm$nu, 2)}) = \Sexpr{round(get.ICC(the.rcm),3)}$.
 Subsequently the model was repeatedly fitted on \Sexpr{length(the.genes)} randomly chosen genes \Sexpr{length(rand.rcm)} times to gauge the size of the ICC without the selection bias.
 This resulted in a mean ICC (lower quartile, upper quartile) of
 $\Sexpr{round(mean(sapply(rand.rcm, get.ICC)),3)}$
@@ -704,9 +704,9 @@ The manual screening and GO-analysis results further corroborate that the identi
 @
 
 We finally investigated the choice of using the top \Sexpr{dlbcl.par$top.n} most variable genes and fitted the RCM with the top \Sexpr{dlbcl.par2$top.n} most variable gene.
-The approximate MLE and EM algorithms estimated an $\Sexpr{dlbcl.par2$top.n} \times \Sexpr{dlbcl.par2$top.n}$ matrix $\hvPsi$ and $\hat{\nu} = \Sexpr{paste(round(dlbcl.rcm2$nu, 1))}$ in $\Sexpr{round(dlbcl.rcm2$time[3]/3600, 1)}$ hours.
+The approximate MLE algorithm followed by the EM algorithm estimated an $\Sexpr{dlbcl.par2$top.n} \times \Sexpr{dlbcl.par2$top.n}$ matrix $\hvPsi$ and $\hat{\nu} = \Sexpr{paste(round(dlbcl.rcm2$nu, 1))}$ in $\Sexpr{round(dlbcl.rcm2$time[3]/3600, 1)}$ hours.
 This implies that
-$\text{ICC}(\hat{\nu}) = \Sexpr{round(with(dlbcl.rcm2, ICC(nu, nrow(Psi))),5)}$; a somewhat smaller value than the above.
+$\text{ICC}(\hat{\nu}) = \Sexpr{round(get.ICC(dlbcl.rcm2),6)}$; a somewhat smaller value than the above.
 The common correlation matrix was computed from $\hvPsi$ and $\hat{\nu}$ and hierarchical clustering was applied as above.
 This showed that the same genes in the top \Sexpr{dlbcl.par$top.n} based analysis also largely cluster together in this clustering.
 Particularly, all but one gene from the \Sexpr{cleanName(the.other.module)} module clusters together.
