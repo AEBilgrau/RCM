@@ -564,7 +564,7 @@ as should be expected.
 
 \subsection{Implementation and availability}
 Algorithm \ref{alg:RCM} and the different estimators are implemented in the statistical programming language R \citep{R} with core functions in \texttt{C++} using packages Rcpp and RcppArmadillo \citep{Eddelbuettel2011, RcppArmadillo}.
-They are incorporated in the open-source R-package \texttt{correlateR} freely available for forking and editing at \url{http://github.com/AEBilgrau/correlateR}.
+They are incorporated in the open-source R-package \texttt{correlateR} freely available for forking and editing \citep{correlateR}.
 We refer to the information here for further details and installation instructions.
 This document was prepared with \texttt{knitr} \citep{Xie2013} and LaTeX.
 To reproduce this document see \ref{suppA} or \url{http://github.com/AEBilgrau/RCM}.
@@ -629,7 +629,7 @@ In any case, the low ICC might still suggest high reproducibility of the covaria
 \fig{\Sexpr{dlbcl_plot}}{0.8\textwidth}{
 Top left: dendrograms of the hierarchical clustering, the identified modules, and a heatmap of the correlation matrix.
 Top right: the correlation network as laid out by the Fruchterman-Reingold algorithm \citep{Fruchterman1991}. The nodes are colored after the identified modules. The edge colors follow the color key of the heatmap. If the edge weight is numerically less than \Sexpr{round(dlbcl.par$threshold, 3)}, corresponding to the $95 \%$ largest values, the edge is suppressed.
-Bottom: A Hierarchical edge bundling representation of the network \citep{Holten2006} where edges loosely follow the dendrogram. Edge colors follow the color key. Only edges with a weight numerically larger than \Sexpr{round(dlbcl.par$threshold, 3)} are plotted.
+Bottom: A Hierarchical edge bundling representation of the network \citep{Holten2006, HierarchicalEdgeBundles} where edges loosely follow the dendrogram. Edge colors follow the color key. Only edges with a weight numerically larger than \Sexpr{round(dlbcl.par$threshold, 3)} are plotted.
 }
 
 Next, we outline one of many possible downstream analyses of the estimated covariance.
