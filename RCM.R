@@ -383,11 +383,12 @@ if (!exists("dlbcl.rcm") || !exists("var.pool") || recompute) {
   # Alternative fit 2
   tmp <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE,
                  Psi.init = diag(diag(psi)), nu.init = 1000,
-                 eps = 0.01, max.ite = 2500, method = "approxMLE")
+                 eps = 1, max.ite = 2, method = "pooled") # Very crude start
   dlbcl.time.alt2 <- system.time({
     dlbcl.trace.alt2 <- capture.output({
       dlbcl.rcm.alt2 <- fit.rcm(S = dlbcl.S, ns = dlbcl.ns, verbose = TRUE,
-                               Psi.init = tmp$Psi, nu.init = tmp$nu,
+                               Psi.init = tmp$Psi,
+                               nu.init = tmp$nu,
                                eps = 0.01, max.ite = 5000)
     })
   })
@@ -418,17 +419,17 @@ ll.tr.a2 <- get.ll.trace(dlbcl.rcm.alt2$trace)
 loglik.trace.plot <- "figure1.jpg"
 jpeg(loglik.trace.plot, width = 7, height = 7/2, units = "in", res = 200)
 {
-  par(mar = c(4, 4.5, 2, 0) + 0.1, mgp = c(2, 1, 0))
+  par(mar = c(4, 4.5, 2, 0) + 0.1, mgp = c(2.5, 1, 0))
   plot(ll.tr, type = "l", ylab = "", xlab = "Iteration", lwd = 2,
-       xlim = c(0,1500), axes = FALSE)
+       xlim = c(0,2000), axes = FALSE)
   axis(1)
   axis(2, las = 2)
-  title(ylab = "log-likelihood", line = 3.4)
+  title(ylab = "log-likelihood", line = 3.6)
   grid()
   lines(ll.tr.a, lty = 2, col = "steelblue", lwd = 2)
   lines(ll.tr.a2, lty = 3, col = "orange", lwd = 2)
-  legend("bottomright", col = c("black", "steelblue", "orange"), lty = 1:2,
-         bty = "n",
+  legend("bottomright", col = c("black", "steelblue", "orange"), lty = 1:3,
+         bty = "n", y.intersp = 1.5,
          legend = paste0("Fit ", 1:3, " (",
                          round(c(dlbcl.rcm$time[3],
                                  dlbcl.rcm.alt$time[3],
