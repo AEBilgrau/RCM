@@ -396,8 +396,7 @@ The maximization step, in which the log-likelihood $\ell(\vTheta|\vDelta_1, ...,
 $
  \hat{\vTheta} = \frac{1}{k\nu}\sum_{i = 1}^k \vDelta_i,
 $
-which is the mean of the scaled precision matrices $\frac{1}{\nu}\vDelta_i$.
-The derivation of this estimate can be seen in Appendix \ref{sec:precisionloglik}.
+which is the mean of the scaled precision matrices $\frac{1}{\nu}\vDelta_i$ (derived in  Appendix \ref{sec:precisionloglik}).
 Let $\hvTheta_{(t)}$ be the current estimate of $\vTheta$.
 This yields the updating scheme
 \begin{align}
@@ -451,9 +450,7 @@ saddle-point when considering the log-likelihood function jointly in
 $(\vPsi, \nu)$.
 Intuitively, the latter possibility happens with zero probability, but it cannot be excluded that the maximum found is not global.
 
-Variations on the convergence criterion can also be considered.
-One alternative is using the difference in successive parameter estimates.
-More variants can be created by considering relative rather than absolute differences.
+Variations on the convergence criterion can also be considered, such as (a) using the difference in successive parameter estimates, or (b) using relative rather than absolute differences.
 
 
 
