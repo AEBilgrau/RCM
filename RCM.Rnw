@@ -218,7 +218,6 @@ We note, that while the high-dimensional extension to $p > n$ is important it is
 We restrict ourselves to the case where the total number of samples exceeds $p$.
 Hence, if $k$ classes or datasets are available with sample sizes $n_1, \ldots, n_k$, we consider the case where $p < \sum_{i=1}^k n_i$ while allowing $p$ to exceed $n_i$ for each individual class $i$.
 
-The remainder of this paper is structured as follows.
 In Section \ref{sec:RCMmodel}, we propose the model for a common covariance matrix across multiple studies, derive estimators thereof, and propose an inter-study homogeneity measure to aid in assessing the variation between studies.
 Next, we apply the model in Section \ref{sec:DLBCL} to $2{,}046$ DLBCL samples across 11 datasets.
 We then assess the proposed model estimators via synthetic data in Section \ref{sec:estimationassessment} before concluding the manuscript in Section \ref{sec:conclusion}.
@@ -251,7 +250,7 @@ While the inverse Wishart distribution is defined for all $\nu > p - 1$, the fir
 Hence, in the RCM of \eqref{eq:RCM}, $\vSigma$ can be interpreted as a location-like parameter as it is the expected covariance matrix in each study.
 The parameter $\nu$ inversely controls the inter-class variation and can as such be considered an inter-class homogeneity parameter of the covariance structure.
 A large $\nu$ corresponds to high study homogeneity and vice versa for small $\nu$.
-This can further be seen as $\vSigma_i$ concentrates around $\vSigma$ for $\nu\to\infty$ which corresponds to an vanishing inter-study variation for increasing $\nu$.
+This can further be seen as $\vSigma_i$ concentrates around $\vSigma$ for $\nu\to\infty$ which corresponds to a vanishing inter-study variation for increasing $\nu$.
 This fact is seen directly from variance and covariance expressions for the inverse Wishart (see \eqref{eq:invwishcovar} and \eqref{eq:invwishvar}) where the 4th order denominator grows much faster than the 1st order nominator as polynomials in $\nu$ and causing the variance to vanish for $\nu\to\infty$.
 Thus, the true underlying covariance matrix $\vSigma$ and the homogeneity parameter $\nu$ are the effects of interest to be estimated in this paper.
 These basic properties of the RCM motivates the construction.
@@ -410,7 +409,7 @@ This yields the updating scheme
 for $\vTheta_{(t)}$.
 We denote the inverse of the estimate obtained by repeated iteration of \eqref{eq:em} by $\hvPsi_\text{EM}$.
 
-An approximate maximum likelihood estimator using a first order approximation is also possible. This derivation has been deferred to Appendix \ref{sec:amle}.
+An approximate maximum likelihood estimator using a first order approximation is also possible (derived in Appendix \ref{sec:amle}).
 
 
 \subsection{Estimation procedure}
