@@ -211,7 +211,7 @@ These examples include the graphical lasso and ridge estimation of the precision
 Subsequently, focus on the selection of the regularization parameter has received much attention \citep{Fan2013}.
 
 Instead of attempting to derive still more sophisticated estimators, we attempt to alleviate the problem from a different angle by using more available data and thus effectively increasing $n$.
-We do so by utilizing a large number of genomic DLBCL datasets which, as with all major groups of cancer, are now publicly available online.
+We do so by utilizing a large number of genomic diffuse large B-cell lymphoma (DLBCL) datasets which, as with all major groups of cancer, are now publicly available online.
 We use these studies in combination with data from our own laboratory as a network meta-analysis to arrive at a better estimate of the covariance matrix whilst accounting for and assessing inter-study variation.
 
 We note, that while the high-dimensional extension to $p > n$ is important it is out of scope in this paper.
