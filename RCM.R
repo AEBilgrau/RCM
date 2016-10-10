@@ -219,6 +219,7 @@ jpeg(plot.sim.study, height=7, width=7, units = "in", res = 200)
 
   par( mar = c(5, 4, 0, 0.1) + 0.1) #mfrow = c(1,2),
   layout(rbind(c(1,1,2,2), c(0,3,3,0)), heights = c(1,1))
+  cols.fig4 <- c("black", "darkgray", "lightgray")
 
   for (df.ni in list(df.ni.sp, df.ni.lp)) {
 
@@ -230,7 +231,7 @@ jpeg(plot.sim.study, height=7, width=7, units = "in", res = 200)
                          n + nu + k + p, FUN = ci, data = df.ni)
 
     plot(df$n, df$SSE.rcm.em,
-         col = num2col[3],
+         col = cols.fig4[1],
          type = "b",
          axes = FALSE,
          xlab = expression(n = n[i]),
@@ -243,9 +244,9 @@ jpeg(plot.sim.study, height=7, width=7, units = "in", res = 200)
     axis(1)
     axis(2)
     lines(df$n+d, df$SSE.rcm.pool,
-          col = num2col[4], type = "b", pch=16, lty=2, lwd=2)
+          col = cols.fig4[2], type = "b", pch = 16, lty = 2, lwd = 2)
     lines(df$n+2*d, df$SSE.rcm.mle,
-          col = num2col[5], type = "b", pch=17, lty=3, lwd=2)
+          col = cols.fig4[3], type = "b", pch = 17, lty = 3, lwd = 2)
     legend_expressions <-
       sapply(1:3, function(i) {
         as.expression(substitute(x == y,list(x = as.name(c("k", "nu", "p")[i]),
@@ -255,16 +256,16 @@ jpeg(plot.sim.study, height=7, width=7, units = "in", res = 200)
            legend = legend_expressions)
     legend("topright", legend = c("EM", "pool", "Approx. MLE"),
            lty = 1:4, pch = c(15, 16, 17), lwd = 2, bty = "n",
-           col = num2col[c(3,4,5)], inset = 0.05)
+           col = cols.fig4, inset = 0.05)
     # Add ci
     ci.arrows <- function(x, m, se, k) {
       suppressWarnings(
         arrows(x0 = x, y0 = m - se, x1 = x, y1 = m + se,
-               length = 0.05, angle = 90, code = 3, col = num2col[k]))
+               length = 0.05, angle = 90, code = 3, col = cols.fig4[k]))
     }
-    ci.arrows(df$n,     df$SSE.rcm.em,   df.ci$SSE.rcm.em,   3)
-    ci.arrows(df$n+d,   df$SSE.rcm.pool, df.ci$SSE.rcm.pool, 4)
-    ci.arrows(df$n+2*d, df$SSE.rcm.mle,  df.ci$SSE.rcm.mle,  5)
+    ci.arrows(df$n,     df$SSE.rcm.em,   df.ci$SSE.rcm.em,   1)
+    ci.arrows(df$n+d,   df$SSE.rcm.pool, df.ci$SSE.rcm.pool, 2)
+    ci.arrows(df$n+2*d, df$SSE.rcm.mle,  df.ci$SSE.rcm.mle,  3)
 
     mtext(ifelse(identical(df.ni, df.ni.sp), "A", "B"),
           line = -1, adj = -0.15, font = 2)
@@ -274,24 +275,23 @@ jpeg(plot.sim.study, height=7, width=7, units = "in", res = 200)
 
   plot(tm.elapsed$p, tm.elapsed$time.em.elapsed,
        type = "b",
-       col = num2col[3],
+       col = cols.fig4[1],
        xlim =c(100, 250),
        ylab = "Computation time (s)",
        xlab = "p",
        axes = FALSE,
        pch = 15)
-
   grid()
   axis(1)
   axis(2)
   lines(tm.elapsed$p, tm.elapsed$time.pool.elapsed, type = "b",
-        col = num2col[4], pch = 16)
+        col = cols.fig4[2], pch = 16)
   lines(tm.elapsed$p, tm.elapsed$time.mle.elapsed, type = "b",
-        col = num2col[5], pch = 17)
+        col = cols.fig4[3], pch = 17)
 
   legend("topleft", legend = c("EM", "pool", "Approx. MLE"),
          lty = 1:4, pch = c(15, 16, 17), lwd = 2, bty = "n",
-         col = num2col[c(3,4,5)], inset = 0.05)
+         col = cols.fig4, inset = 0.05)
 
   lgnd <- c(substitute(k == x,    list(x = unique(tm.elapsed$k))),
             substitute(nu == x,   list(x = unique(tm.elapsed$nu))),
@@ -422,25 +422,26 @@ ll.tr.a2 <- get.ll.trace(dlbcl.rcm.alt2$trace)
 loglik.trace.plot <- "figure1.jpg"
 jpeg(loglik.trace.plot, width = 7, height = 7/2, units = "in", res = 200)
 {
+  fig1.cols <- c("black", "darkgrey", "lightgrey")
   par(mar = c(4, 4.5, 2, 0) + 0.1, mgp = c(2.5, 1, 0))
   plot(ll.tr, type = "l", ylab = "", xlab = "Iteration", lwd = 2,
-       xlim = c(0,2000), axes = FALSE)
+       xlim = c(0,2000), axes = FALSE, col = fig1.cols[1])
   axis(1)
   axis(2, las = 2)
   title(ylab = "log-likelihood", line = 3.6)
   grid()
-  lines(ll.tr.a, lty = 2, col = "steelblue", lwd = 2)
-  lines(ll.tr.a2, lty = 3, col = "orange", lwd = 2)
-  legend("bottomright", col = c("black", "steelblue", "orange"), lty = 1:3,
+  lines(ll.tr.a, lty = 2, col = fig1.cols[2], lwd = 2)
+  lines(ll.tr.a2, lty = 3, col = fig1.cols[3], lwd = 2)
+  legend("bottomright", col = fig1.cols, lty = 1:3,
          bty = "n", y.intersp = 1.5,
          legend = paste0("Fit ", 1:3, " (",
                          round(c(dlbcl.rcm$time[3],
                                  dlbcl.rcm.alt$time[3],
                                  dlbcl.rcm.alt2$time[3])/60, 0), " min)"),
          inset = 0.1, lwd = 2)
-  axis(3, at = length(ll.tr))
-  axis(3, at = length(ll.tr.a), col = "steelblue")
-  axis(3, at = length(ll.tr.a2), col = "orange")
+  axis(3, at = length(ll.tr),    col = fig1.cols[1])
+  axis(3, at = length(ll.tr.a),  col = fig1.cols[2])
+  axis(3, at = length(ll.tr.a2), col = fig1.cols[3])
 }
 dev.off()
 
@@ -824,24 +825,30 @@ jpeg(figure3, height = 1.2*7, width = 2*7, units = "in", res = 200)
     dats <- dats[, -c(2,6)]
     plot.cis(dats)
 
-    # Univariate
-    # cph.fits <- lapply(eg, function(x) coxph(meta$OS ~ x, x = TRUE, y = TRUE))
-    # dats <- do.call(rbind, lapply(cph.fits, get.cis))
-    # dats <- dats[, -c(2,6)]
-    # plot.cis(dats)
-
     for (i in seq_len(ncol(eg))) {
       if (col[i] == the.module) {
         eg.i <- eg[, paste0("ME", col[i])]
         eg.high <- eg.i >= mean(eg.i)
-        plot(survfit(meta$OS ~ factor(eg.high)), conf.int = TRUE,
-             main = "", col = c(col[i], "black"), lwd = 2,
+        sfit.h <- survfit(meta$OS ~ 1, subset = eg.high)
+        sfit.l <- survfit(meta$OS ~ 1, subset = !eg.high)
+
+        plot(sfit.h,
+             conf.int = TRUE,
+             main = "",
+             col = col[i],
+             lwd = 2,
+             lty = c(1,2,2),
              axes = FALSE,
-             xlab = "years", ylab = "Survival proportion")
-        axis(1); axis(2)
-        legend("bottom", bty = "n", lwd = 2,
+             xlab = "years",
+             ylab = "Survival proportion")
+        lines(sfit.l,
+              lwd = 2,
+              lty = c(1,3,3))
+        axis(1)
+        axis(2)
+        legend("bottomleft", bty = "n", lwd = 2, lty = 2:3,
                legend = c("High eigengene", "Low eigengene"),
-               col = c(col[i], "black"), horiz = TRUE)
+               col = c(col[i], "black"), horiz = FALSE)
         legend("topright", legend = paste(cleanName(col[i]), "eigengene"),
                bty = "n", text.col = col[i])
       }
