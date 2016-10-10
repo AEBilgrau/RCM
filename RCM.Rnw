@@ -819,6 +819,13 @@ The technical assistance from Alexander Schmitz, Julie S.\ B\o{}dker, Ann-Maria 
 \sdescription{Tables of gene module memberships, auxiliary information, and the significant GO-terms for each identified module.}
 \end{supplement}
 
+\begin{supplement}
+\sname{Supplement C}\label{suppC}
+\stitle{Appendices}
+\slink[url]{http://people.math.aau.dk/\~{}abilgrau/RCM/SuppC/}
+\sdescription{Appendices for the article.}
+\end{supplement}
+
 % Generate supplement B
 <<GO_tabs, echo=FALSE, results='hide'>>=
 @
@@ -828,7 +835,6 @@ The technical assistance from Alexander Schmitz, Julie S.\ B\o{}dker, Ann-Maria 
 
 \newpage
 \appendix
-
 
 
 
