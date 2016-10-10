@@ -26,10 +26,13 @@ if (file.exists("saved.RData"))
 
 # Multicore support
 library("foreach")
-library("doMC")
-registerDoMC(detectCores())
-# library("doParallel") # Use this package on windows
-# registerDoParallel(detectCores())
+if (Sys.info()[1] == "Windows") {
+  library("doParallel") # Use this package on windows
+  registerDoParallel(detectCores())
+} else {
+  library("doMC")
+  registerDoMC(detectCores())
+}
 
 num2col <- c("gray32",
              "darkolivegreen3",
