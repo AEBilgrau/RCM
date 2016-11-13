@@ -191,10 +191,10 @@ read_chunk("RCM.R")
 \section{Introduction}
 Genes and their products carry out their functions in concerted effort via intricate networks.
 Analysis of genomic data has consequently been an inescapable success by elucidating gene functions and interactions through many different approaches.
-We wished to indentify gene interactions in gene expression data of 89 diffuse large B-cell lymphoma samples from our own lab \citep{DybkaerBoegsted2015} as others \citep{Agnelli2011, Clarke2013} have successfully applied network analysis in other malignancies.
+We wished to indentify and examine gene-gene interactions in gene expression data of 89 diffuse large B-cell lymphoma samples from our own lab \citep{DybkaerBoegsted2015} as others \citep{Agnelli2011, Clarke2013} have successfully applied network analysis in other malignancies.
 Analysing gene-gene interactions using covariances is a simple and well-tested method \citep{Horvath2011} relying on guilt-by-association.
 Most methods for analysing gene-gene interactions available, however, have one or more of several shortcomings.
-Particularly, when the sample size is moderate as with our case, the methods are quickly become unstable or even unapplicable.
+Particularly as with our case, the methods are quickly become unstable or even unapplicable when the sample size is small or moderate.
 
 Crudely, many network analysis methods---such as relevance or correlation networks \citep{Horvath2011}, Gaussian graphical models \citep{Lauritzen1996}, and Bayesian networks---may be categorized according to their use of marginal, partial, or semi-partial correlations.
 The underlying assumption of them all is that correlation hints at causation.
@@ -211,6 +211,7 @@ In genomic studies, the number of genes $p$ often far exceeds the number of samp
 Since the number of parameters increases quadratically in $p$ and the sample covariance matrix becomes singular when $p > n$ many shrinkage and regularization estimators have been proposed to combat the accompanying problems by effectively increasing the degrees of freedom.
 These examples include the graphical lasso and ridge estimation of the precision matrix \citep{Meinshausen2006, Friedman2008, vanWieringen2014}.
 Subsequently, focus on the selection of the regularization parameter has received much attention \citep{Fan2013}.
+These ``single study'' estimators in combination with batch-effect removing methods \citep{Lee2014} could serve as a basis for analysing a common covariance matrix from multiple studies.
 
 Instead of attempting to derive still more sophisticated estimators, we attempt to alleviate the problem from a different angle by using more available data and thus effectively increasing $n$.
 We do so by utilizing a large number of genomic diffuse large B-cell lymphoma (DLBCL) datasets which, as with all major groups of cancer, are now publicly available online.
