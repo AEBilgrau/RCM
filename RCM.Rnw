@@ -191,10 +191,11 @@ read_chunk("RCM.R")
 \section{Introduction}
 Genes and their products carry out their functions in concerted effort via intricate networks.
 Analysis of genomic data has consequently been an inescapable success by elucidating gene functions and interactions through many different approaches.
-We wished to indentify and examine gene-gene interactions in gene expression data of 89 diffuse large B-cell lymphoma samples from our own lab \citep{DybkaerBoegsted2015} as others \citep{Agnelli2011, Clarke2013} have successfully applied network analysis in other malignancies.
+Notably, \citep{Agnelli2011, Clarke2013} have successfully applied network analysis in other malignancies.
+We wished to interrogate and examine gene-gene interactions in gene expression data of 89 diffuse large B-cell lymphoma (DLBCL) samples from our own lab \citep{DybkaerBoegsted2015}.
 Analysing gene-gene interactions using covariances is a simple and well-tested method \citep{Horvath2011} relying on guilt-by-association.
-Most methods for analysing gene-gene interactions available, however, have one or more of several shortcomings.
-Particularly as with our case, the methods are quickly become unstable or even unapplicable when the sample size is small or moderate.
+Most methods for analysing gene-gene interactions available, however, often have several shortcomings.
+Particularly as in our case, the methods quickly become unstable or even unapplicable when the sample size is small or moderate.
 
 Crudely, many network analysis methods---such as relevance or correlation networks \citep{Horvath2011}, Gaussian graphical models \citep{Lauritzen1996}, and Bayesian networks---may be categorized according to their use of marginal, partial, or semi-partial correlations.
 The underlying assumption of them all is that correlation hints at causation.
@@ -214,8 +215,37 @@ Subsequently, focus on the selection of the regularization parameter has receive
 These ``single study'' estimators in combination with batch-effect removing methods \citep{Lee2014} could serve as a basis for analysing a common covariance matrix from multiple studies.
 
 Instead of attempting to derive still more sophisticated estimators, we attempt to alleviate the problem from a different angle by using more available data and thus effectively increasing $n$.
-We do so by utilizing a large number of genomic diffuse large B-cell lymphoma (DLBCL) datasets which, as with all major groups of cancer, are now publicly available online.
+We do so by utilizing 10 genomic DLBCL datasets which, as with all major groups of cancer, are now publicly available online.
 We use these studies in combination with data from our own laboratory as a network meta-analysis to arrive at a better estimate of the covariance matrix whilst accounting for and assessing inter-study variation.
+Table \ref{tab:studies} provides an overview of the studies used.
+
+
+% Hmisc::latex(DLBCLdata::DLBCL_overview[,-c(3,6)],
+%             file = "",
+%             label = "tab:studies",
+%             title = "",
+%             caption = "Overview of studies used.")
+\begin{table}[!tbp]
+\caption{Overview of studies used.\label{tab:studies}}
+\begin{center}
+\begin{tabular}{lllll}
+\hline\hline
+\multicolumn{1}{l}{}&\multicolumn{1}{c}{GSE}&\multicolumn{1}{c}{Study}&\multicolumn{1}{c}{Author}&\multicolumn{1}{c}{ArrayTypes}\tabularnewline
+\hline
+1&GSE56315&CHEPRETRO&\citep{DybkaerBoegsted2015}&hgu133plus2\tabularnewline
+2&GSE19246&BCCA&Williams et. al.&hgu133plus2\tabularnewline
+3&GSE12195&CUICG&Pasqualucci et. al.&hgu133plus2\tabularnewline
+4&GSE22895&HMRC&Jima et. al.&hugene10st\tabularnewline
+5&GSE31312&IDRC&Visco et. al.&hgu133plus2\tabularnewline
+6&GSE10846&LLMPP&Lenz et. al.&hgu133plus2\tabularnewline
+7&GSE34171&MDFCI&Monti et. al.&hgu133plus2,hgu133a,hgu133b,snp6\tabularnewline
+8&GSE22470&MMML&Richter et. al.&hgu133a\tabularnewline
+9&GSE4475&UBCBF&Hummel et. al.&hgu133a\tabularnewline
+10&GSE11318&NCI&Lenz. et. al.&hgu133plus2\tabularnewline
+\hline
+\end{tabular}\end{center}
+
+\end{table}
 
 We note, that while the high-dimensional extension to $p > n$ is important it is out of scope in this paper.
 We restrict ourselves to the case where the total number of samples exceeds $p$.
