@@ -228,20 +228,26 @@ Table \ref{tab:studies} provides an overview of the studies used.
 \begin{table}[!tbp]
 \caption{Overview of studies used.\label{tab:studies}}
 \begin{center}
-\begin{tabular}{lllll}
+\begin{tabular}{llllp{2cm}ll}
 \hline\hline
-\multicolumn{1}{l}{}&\multicolumn{1}{c}{GSE}&\multicolumn{1}{c}{Study}&\multicolumn{1}{c}{Author}&\multicolumn{1}{c}{ArrayTypes}\tabularnewline
+\multicolumn{1}{l}{}&
+\multicolumn{1}{c}{GSE}&
+\multicolumn{1}{c}{Name}&
+\multicolumn{1}{c}{Reference}&
+\multicolumn{1}{c}{Used arrays}&
+\multicolumn{1}{c}{$n$}&
+\multicolumn{1}{c}{$p$}\tabularnewline
 \hline
-1&GSE56315&CHEPRETRO&\citep{DybkaerBoegsted2015}&hgu133plus2\tabularnewline
-2&GSE19246&BCCA&Williams et. al.&hgu133plus2\tabularnewline
-3&GSE12195&CUICG&Pasqualucci et. al.&hgu133plus2\tabularnewline
-4&GSE22895&HMRC&Jima et. al.&hugene10st\tabularnewline
-5&GSE31312&IDRC&Visco et. al.&hgu133plus2\tabularnewline
-6&GSE10846&LLMPP&Lenz et. al.&hgu133plus2\tabularnewline
-7&GSE34171&MDFCI&Monti et. al.&hgu133plus2,hgu133a,hgu133b,snp6\tabularnewline
-8&GSE22470&MMML&Richter et. al.&hgu133a\tabularnewline
-9&GSE4475&UBCBF&Hummel et. al.&hgu133a\tabularnewline
-10&GSE11318&NCI&Lenz. et. al.&hgu133plus2\tabularnewline
+1&GSE56315&CHEPRETRO&\cite{DybkaerBoegsted2015}&hgu133plus2&&\tabularnewline
+2&GSE19246&BCCA&Williams et. al.&hgu133plus2&&\tabularnewline
+3&GSE12195&CUICG&Pasqualucci et. al.&hgu133plus2&&\tabularnewline
+4&GSE22895&HMRC&Jima et. al.&hugene10st&&\tabularnewline
+5&GSE31312&IDRC&\cite{Visco2012}&hgu133plus2&&\tabularnewline
+6&GSE10846&LLMPP&\cite{Lenz2008}&hgu133plus2&&\tabularnewline
+7&GSE34171&MDFCI&\cite{Monti2012}&hgu133plus2, hgu133a, hgu133b, snp6&&\tabularnewline
+8&GSE22470&MMML&Richter et. al.&hgu133a&&\tabularnewline
+9&GSE4475&UBCBF&Hummel et. al.&hgu133a&&\tabularnewline
+10&GSE11318&NCI&Lenz et. al.&hgu133plus2&&\tabularnewline
 \hline
 \end{tabular}\end{center}
 
