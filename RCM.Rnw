@@ -241,7 +241,7 @@ Table \ref{tab:studies} provides an overview of the studies used.
 1&GSE56315&CHEPRETRO&\cite{DybkaerBoegsted2015}&hgu133plus2&&\tabularnewline
 2&GSE19246&BCCA&Williams et. al.&hgu133plus2&&\tabularnewline
 3&GSE12195&CUICG&Pasqualucci et. al.&hgu133plus2&&\tabularnewline
-4&GSE22895&HMRC&Jima et. al.&hugene10st&&\tabularnewline
+4&GSE22895&HMRC&\cite{Jima2010}&hugene10st&&\tabularnewline
 5&GSE31312&IDRC&\cite{Visco2012}&hgu133plus2&&\tabularnewline
 6&GSE10846&LLMPP&\cite{Lenz2008}&hgu133plus2&&\tabularnewline
 7&GSE34171&MDFCI&\cite{Monti2012}&hgu133plus2, hgu133a, hgu133b, snp6&&\tabularnewline
