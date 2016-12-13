@@ -220,11 +220,12 @@ We use these studies in combination with data from our own laboratory as a netwo
 Table \ref{tab:studies} provides an overview of the studies used.
 
 
-% Hmisc::latex(DLBCLdata::DLBCL_overview[,-c(3,6)],
+% R> Hmisc::latex(DLBCLdata::DLBCL_overview[,-c(3,6)],
 %             file = "",
 %             label = "tab:studies",
 %             title = "",
 %             caption = "Overview of studies used.")
+% R> t(dlbcl.dims)
 \begin{table}[!tbp]
 \caption{Overview of studies used.\label{tab:studies}}
 \begin{center}
@@ -238,16 +239,18 @@ Table \ref{tab:studies} provides an overview of the studies used.
 \multicolumn{1}{c}{$n$}&
 \multicolumn{1}{c}{$p$}\tabularnewline
 \hline
-1&GSE56315&CHEPRETRO&\cite{DybkaerBoegsted2015}&hgu133plus2&&\tabularnewline
-2&GSE19246&BCCA&Williams et. al.&hgu133plus2&&\tabularnewline
-3&GSE12195&CUICG&Pasqualucci et. al.&hgu133plus2&&\tabularnewline
-4&GSE22895&HMRC&\cite{Jima2010}&hugene10st&&\tabularnewline
-5&GSE31312&IDRC&\cite{Visco2012}&hgu133plus2&&\tabularnewline
-6&GSE10846&LLMPP&\cite{Lenz2008}&hgu133plus2&&\tabularnewline
-7&GSE34171&MDFCI&\cite{Monti2012}&hgu133plus2, hgu133a, hgu133b, snp6&&\tabularnewline
-8&GSE22470&MMML&Richter et. al.&hgu133a&&\tabularnewline
-9&GSE4475&UBCBF&Hummel et. al.&hgu133a&&\tabularnewline
-10&GSE11318&NCI&Lenz et. al.&hgu133plus2&&\tabularnewline
+1&GSE56315&CHEPRETRO&\cite{DybkaerBoegsted2015}&hgu133plus2&89&\tabularnewline
+2&GSE19246&BCCA&\cite{Williams2010}&hgu133plus2&177&\tabularnewline
+3&GSE12195&CUICG&\cite{Compagno2009}&hgu133plus2&136&\tabularnewline
+4&GSE22895&HMRC&\cite{Jima2010}&hugene10st&101&\tabularnewline
+5&GSE31312&IDRC&\cite{Visco2012}&hgu133plus2&469&\tabularnewline
+6&GSE10846&LLMPP R-CHOP&\cite{Lenz2008}&hgu133plus2&181&\tabularnewline
+7&GSE10846&LLMPP CHOP&\cite{Lenz2008}&hgu133plus2&233&\tabularnewline
+8&GSE34171&MDFCI&\cite{Monti2012}&hgu133plus2, snp6&90&\tabularnewline
+9&GSE34171&MDFCI&\cite{Monti2012}&hgu133a, hgu133b&78&\tabularnewline
+10&GSE22470&MMML&\cite{Salaverria2011}&hgu133a&271&\tabularnewline
+11&GSE4475&UBCBF&\cite{Hummel2006}&hgu133a&221&\tabularnewline
+% 12&GSE11318&NCI&\cite{Lenz2008}&hgu133plus2&&\tabularnewline
 \hline
 \end{tabular}\end{center}
 
