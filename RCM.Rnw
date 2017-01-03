@@ -190,12 +190,13 @@ read_chunk("RCM.R")
 
 \section{Introduction}
 Genes and their products carry out their functions in concerted effort via intricate networks.
-Analysis of genomic data has consequently been an inescapable success by elucidating gene functions and interactions through many different approaches.
-Notably, \citep{Agnelli2011, Clarke2013} have successfully applied network analysis in other malignancies.
-We wished to interrogate and examine gene-gene interactions in gene expression data of 89 diffuse large B-cell lymphoma (DLBCL) samples from our own lab \citep{DybkaerBoegsted2015}.
+Analysis of genomic data has consequently been an inescapable success in elucidating gene interactions and functions through many different approaches.
+Notably, \citep{Agnelli2011, Clarke2013} have successfully applied network analysis in other malignancies to learn novel gene-gene interactions.
+We similarly interrogated and examined gene-gene interactions in gene expression data of 89 diffuse large B-cell lymphoma (DLBCL) samples from our own lab \citep{DybkaerBoegsted2015} data to identify new and corroborate known functional gene-gene relationships.
 Analysing gene-gene interactions using covariances is a simple and well-tested method \citep{Horvath2011} relying on guilt-by-association.
 Most methods for analysing gene-gene interactions available, however, often have several shortcomings.
-Particularly as in our case, the methods quickly become unstable or even unapplicable when the sample size is small or moderate.
+Particularly as with our case, the methods quickly become unstable or even unapplicable when the sample size is small or moderate.
+Therefore we incorrporated the information form multiple other publicly available gene expression DLBCL datasets to obtain a more stable estimate of the gene-gene interactions.
 
 Crudely, many network analysis methods---such as relevance or correlation networks \citep{Horvath2011}, Gaussian graphical models \citep{Lauritzen1996}, and Bayesian networks---may be categorized according to their use of marginal, partial, or semi-partial correlations.
 The underlying assumption of them all is that correlation hints at causation.
@@ -213,11 +214,12 @@ Since the number of parameters increases quadratically in $p$ and the sample cov
 These examples include the graphical lasso and ridge estimation of the precision matrix \citep{Meinshausen2006, Friedman2008, vanWieringen2014}.
 Subsequently, focus on the selection of the regularization parameter has received much attention \citep{Fan2013}.
 These ``single study'' estimators in combination with batch-effect removing methods \citep{Lee2014} could serve as a basis for analysing a common covariance matrix from multiple studies.
+Table \ref{tab:studies} provides an overview of the studies used.
 
 Instead of attempting to derive still more sophisticated estimators, we attempt to alleviate the problem from a different angle by using more available data and thus effectively increasing $n$.
 We do so by utilizing 10 genomic DLBCL datasets which, as with all major groups of cancer, are now publicly available online.
 We use these studies in combination with data from our own laboratory as a network meta-analysis to arrive at a better estimate of the covariance matrix whilst accounting for and assessing inter-study variation.
-Table \ref{tab:studies} provides an overview of the studies used.
+
 
 
 % R> Hmisc::latex(DLBCLdata::DLBCL_overview[,-c(3,6)],
@@ -227,12 +229,12 @@ Table \ref{tab:studies} provides an overview of the studies used.
 %             caption = "Overview of studies used.")
 % R> t(dlbcl.dims)
 \begin{table}[!tbp]
-\caption{Overview of studies used.\label{tab:studies}}
+\caption{Overview of studies used with GEO accession number from the NCBI Gene expression omnibus website, the relevant reference, array types used in the study, and number of samples and features on the used array.\label{tab:studies}}
 \begin{center}
 \begin{tabular}{llllp{2cm}ll}
 \hline\hline
 \multicolumn{1}{l}{}&
-\multicolumn{1}{c}{GSE}&
+\multicolumn{1}{c}{GEO no.}&
 \multicolumn{1}{c}{Name}&
 \multicolumn{1}{c}{Reference}&
 \multicolumn{1}{c}{Used arrays}&
