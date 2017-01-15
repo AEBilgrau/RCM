@@ -195,8 +195,8 @@ Notably, \citep{Agnelli2011, Clarke2013} have successfully applied network analy
 We similarly interrogated and examined gene-gene interactions in gene expression data of 89 diffuse large B-cell lymphoma (DLBCL) samples from our own lab \citep{DybkaerBoegsted2015} data to identify new and corroborate known functional gene-gene relationships.
 Analysing gene-gene interactions using covariances is a simple and well-tested method \citep{Horvath2011} relying on guilt-by-association.
 Most methods for analysing gene-gene interactions available, however, often have several shortcomings.
-Particularly as with our case, the methods quickly become unstable or even unapplicable when the sample size is small or moderate.
-Therefore we incorrporated the information form multiple other publicly available gene expression DLBCL datasets to obtain a more stable estimate of the gene-gene interactions.
+Particularly as with our case, the methods quickly become unstable or even inapplicable when the sample size is small or moderate.
+Therefore we incorporated the information form multiple other publicly available gene expression DLBCL datasets to obtain a more stable estimate of the gene-gene interactions.
 
 Crudely, many network analysis methods---such as relevance or correlation networks \citep{Horvath2011}, Gaussian graphical models \citep{Lauritzen1996}, and Bayesian networks---may be categorized according to their use of marginal, partial, or semi-partial correlations.
 The underlying assumption of them all is that correlation hints at causation.
@@ -501,7 +501,7 @@ Variations on the convergence criterion can also be considered, such as (a) usin
 
 \subsection[Interpretation and inference of nu]{Interpretation and inference}
 \subsubsection*{Intra-study correlation coefficient}
-The heterogenetiy parameter $\nu$ has no straightforward interpretation partly because the values of $\nu$ which corresponds to a large study heterogenity is dependent on the dimension $p$.
+The heterogeneity parameter $\nu$ has no straightforward interpretation partly because the values of $\nu$ which corresponds to a large study heterogeneity is dependent on the dimension $p$.
 We therefore introduce a descriptive statistic analogous to the intra-study correlation coefficient (ICC) \citep{Shrout1979} well known from ordinary meta-analysis.
 For the RCM, the ICC is given by
 \begin{align}
