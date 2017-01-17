@@ -67,11 +67,29 @@ test.rcm <- function(k = 4, n = 10, ns = rep(n, k),
     Psi <- matrix(rho*std^2, p, p) + diag(rep((1 - rho)*std^2, p))
   }
 
+  # Create data
   S <- createRCMData(ns = ns, psi = Psi, nu = nu)
 
-  t_em   <- system.time(res.em   <- fit.rcm(S, ns, method = "EM",   eps=e, ...))
-  t_pool <- system.time(res.pool <- fit.rcm(S, ns, method = "pool", eps=e, ...))
-  t_mle  <- system.time(res.mle  <- fit.rcm(S, ns, method = "appr", eps=e, ...))
+  # Check if initial values are given
+  args <- list(...)
+  if (is.null(args[['nu.init']])) nu.init <- sum(ns) + ncol(S[[1]]) + 1
+  if (is.null(args[['Psi.init']])) Psi.init <- nu.init*correlateR:::pool(S, ns)
+
+  t_em   <- system.time(res.em   <- fit.rcm(S, ns,
+                                            Psi.init = Psi.init,
+                                            nu.init = nu.init,
+                                            method = "EM",   eps=e,
+                                            ...))
+  t_pool <- system.time(res.pool <- fit.rcm(S, ns,
+                                            Psi.init = Psi.init,
+                                            nu.init = nu.init,
+                                            method = "pool", eps=e,
+                                            ...))
+  t_mle  <- system.time(res.mle  <- fit.rcm(S, ns,
+                                            Psi.init = Psi.init,
+                                            nu.init = nu.init,
+                                            method = "appr", eps=e,
+                                            ...))
   time <- c(em = t_em[3], pool = t_pool[3], mle = t_mle[3])
 
   return(list(S = S, ns = ns, nu = nu, Psi = Psi,
@@ -152,12 +170,12 @@ par.t <- list(k = 3,
               n.obs = 210)
 
 if (!exists("df.ni.sp") || recompute) {
-  set.seed(987654321)
+  set.seed(916081)
   st <- proc.time()
   res <- list()
   for (i in seq_along(par.ni.sp$n.obs)) {
     tmp <- foreach(j = seq_len(par.ni.sp$n.sims)) %do% {
-      with(par.ne, test.rcm(k = k, n = n.obs[i], p = p, nu = nu))
+      with(par.ni.sp, test.rcm(k = k, n = n.obs[i], p = p, nu = nu))
     }
     res <- c(res, tmp)
     cat("loop =", i, "of", length(par.ni.sp$n.obs), "done after",
@@ -168,12 +186,12 @@ if (!exists("df.ni.sp") || recompute) {
 }
 
 if (!exists("df.ni.lp") || recompute) {
-  set.seed(987654321)
+  set.seed(470532)
   st <- proc.time()
   res <- list()
   for (i in seq_along(par.ni.lp$n.obs)) {
     tmp <- foreach(j = seq_len(par.ni.lp$n.sims)) %do% {
-      with(par.ne, test.rcm(k = k, n = n.obs[i], p = p, nu = nu))
+      with(par.ni.lp, test.rcm(k = k, n = n.obs[i], p = p, nu = nu))
     }
     res <- c(res, tmp)
     cat("loop =", i, "of", length(par.ni.lp$n.obs), "done after",
@@ -184,7 +202,7 @@ if (!exists("df.ni.lp") || recompute) {
 }
 
 if (!exists("df.t") || recompute) {
-  set.seed(3842856)
+  set.seed(722040)
   st <- proc.time()
   res <- list()
   for (i in seq_along(par.t$p)) {
@@ -200,6 +218,9 @@ if (!exists("df.t") || recompute) {
 }
 
 ## ---- end ----
+
+
+
 
 
 ## ---- numerical_experiment_plot ----
@@ -304,7 +325,17 @@ jpeg(plot.sim.study, height=7, width=7, units = "in", res = 200)
 dev.off()
 
 
+
 ## ---- end ----
+
+
+
+
+
+
+
+
+
 
 
 
