@@ -68,7 +68,13 @@ test.rcm <- function(k = 4, n = 10, ns = rep(n, k),
   }
 
   # Create data
-  S <- createRCMData(ns = ns, psi = Psi, nu = nu)
+  warningHandler <- function(warning) {
+    if (any(grepl("singular Wishart distribution", warning))) {
+      invokeRestart("muffleWarning")
+    }
+  }
+  S <- withCallingHandlers(createRCMData(ns = ns, psi = Psi, nu = nu),
+                           warning = warningHandler)
 
   # Check if initial values are given
   args <- list(...)
