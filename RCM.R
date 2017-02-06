@@ -52,6 +52,22 @@ cleanName <- function(x) {
 }
 
 ## ---- auxiliary_functions ----
+# Borrowed from Martin Morgan
+# http://stackoverflow.com/questions/4948361/how-do-i-save-warnings-and-errors-as-output-from-a-function
+factory <- function(fun) {
+  function(...) {
+    warn <- err <- NULL
+    res <- withCallingHandlers(
+      tryCatch(fun(...), error=function(e) {
+        err <<- conditionMessage(e)
+        NULL
+      }), warning=function(w) {
+        warn <<- append(warn, conditionMessage(w))
+        invokeRestart("muffleWarning")
+      })
+    list(res, warn=warn, err=err)
+  }
+}
 
 # Density of the RCM model
 drcm <- correlateR::drcm
@@ -81,27 +97,46 @@ test.rcm <- function(k = 4, n = 10, ns = rep(n, k),
   if (is.null(args[['nu.init']])) nu.init <- sum(ns) + ncol(S[[1]]) + 1
   if (is.null(args[['Psi.init']])) Psi.init <- nu.init*correlateR:::pool(S, ns)
 
-  t_em   <- system.time(res.em   <- fit.rcm(S, ns,
-                                            Psi.init = Psi.init,
-                                            nu.init = nu.init,
-                                            method = "EM",   eps=e,
-                                            ...))
-  t_pool <- system.time(res.pool <- fit.rcm(S, ns,
-                                            Psi.init = Psi.init,
-                                            nu.init = nu.init,
-                                            method = "pool", eps=e,
-                                            ...))
-  t_mle  <- system.time(res.mle  <- fit.rcm(S, ns,
-                                            Psi.init = Psi.init,
-                                            nu.init = nu.init,
-                                            method = "appr", eps=e,
-                                            ...))
+  t_em   <- system.time(res.em   <-
+                          factory(fit.rcm)(S, ns,
+                                          Psi.init = Psi.init,
+                                          nu.init = nu.init,
+                                          method = "EM",   eps=e,
+                                          ...))
+  t_pool <- system.time(res.pool <-
+                          factory(fit.rcm)(S, ns,
+                                          Psi.init = Psi.init,
+                                          nu.init = nu.init,
+                                          method = "pool", eps=e,
+                                          ...))
+  t_mle  <- system.time(res.mle  <-
+                          factory(fit.rcm)(S, ns,
+                                          Psi.init = Psi.init,
+                                          nu.init = nu.init,
+                                          method = "appr", eps=e,
+                                          ...))
   time <- c(em = t_em[3], pool = t_pool[3], mle = t_mle[3])
 
   return(list(S = S, ns = ns, nu = nu, Psi = Psi,
               rcm.em = res.em, rcm.pool = res.pool, rcm.mle = res.mle,
               time = time))
 }
+
+
+get.err.warn <- function(x = test.rcm()) {
+  out <- rep("<none>", 6)
+  names(out) <- c("em.warn", "em.err",
+                  "pool.warn", "pool.err",
+                  "mle.warn", "mle.err")
+  if (!is.null(x$rcm.em$warn)) out["em.warn"] <- x$rcm.em$warn
+  if (!is.null(x$rcm.em$err)) out["em.err"] <- x$rcm.em$err
+  if (!is.null(x$rcm.pool$warn)) out["pool.warn"] <- x$rcm.pool$warn
+  if (!is.null(x$rcm.pool$err)) out["pool.err"] <- x$rcm.pool$err
+  if (!is.null(x$rcm.mle$warn)) out["mle.warn"] <- x$rcm.mle$warn
+  if (!is.null(x$rcm.mle$err)) out["mle.err"] <- x$rcm.mle$err
+  return(out)
+}
+
 
 SSEs <- function(x) {
   Svar <- function(Sigma, n) {
@@ -117,9 +152,9 @@ SSEs <- function(x) {
   }
   n <- x$ns[1]
   expected  <- Psi2Sigma(Psi = x$Psi, nu = x$nu)
-  sse.rcm.em   <- getSSE(getSigma(x$rcm.em),   expected, n = n)
-  sse.rcm.mle  <- getSSE(getSigma(x$rcm.mle),  expected, n = n)
-  sse.rcm.pool <- getSSE(getSigma(x$rcm.pool), expected, n = n)
+  sse.rcm.em   <- getSSE(getSigma(x$rcm.em[[1]]),   expected, n = n)
+  sse.rcm.mle  <- getSSE(getSigma(x$rcm.mle[[1]]),  expected, n = n)
+  sse.rcm.pool <- getSSE(getSigma(x$rcm.pool[[1]]), expected, n = n)
 
   get <- c("nu", "iterations", "loglik")
   stopifnot(all(x$ns == x$ns[1]))
@@ -130,6 +165,9 @@ SSEs <- function(x) {
            SSE.rcm.em   = sse.rcm.em,
            SSE.rcm.mle  = sse.rcm.mle,
            SSE.rcm.pool = sse.rcm.pool,
+           nu.rcm.em = x$rcm.em[[1]]$nu,
+           nu.rcm.mle = x$rcm.mle[[1]]$nu,
+           nu.rcm.pool = x$rcm.pool[[1]]$nu,
            em = unlist(x$rcm.em[get]),
            mle = unlist(x$rcm.mle[get]),
            pool = unlist(x$rcm.pool[get]),
@@ -159,15 +197,15 @@ accuracy <- function(x) {
 # As a function of n_i
 par.ni.sp <- list(k = 3,
                   nu = 30,
-                  p = 20,
-                  n.sims = 1000,
-                  n.obs = ceil(c(7, seq(10, 40, length.out = 7))))
+                  p = 10,
+                  n.sims = 20,
+                  n.obs = ceil(c(7, seq(10, 40, length.out = 7))/2))
 # Larger p
 par.ni.lp <- list(k = 3,
                   nu = 115,
                   p = 100,
-                  n.sims = 1000,
-                  n.obs = ceil(seq(35, 105, length.out = 8)))
+                  n.sims = 500,
+                  n.obs = ceil(seq(35, 105, length.out = 7)))
 # Time pr fit
 par.t <- list(k = 3,
               nu = 300,
@@ -187,9 +225,17 @@ if (!exists("df.ni.sp") || recompute) {
     cat("loop =", i, "of", length(par.ni.sp$n.obs), "done after",
         (proc.time() - st)[3] %/% 60, "mins.\n")
   }
+
   df.ni.sp <- as.data.frame(t(sapply(res, SSEs)))
-  resave(df.ni.sp, file = "saved.RData")
+  df.ni.sp.err.warn <- t(sapply(res, get.err.warn))
+  resave(df.ni.sp, df.ni.sp.err.warn, file = "saved.RData")
+
+  # Save in separate file
+  res.ni.sp <- res
+  resave(res.ni.sp, file="sim.res.RData")
+  rm(res, res.ni.sp)
 }
+
 
 if (!exists("df.ni.lp") || recompute) {
   set.seed(470532)
@@ -204,8 +250,16 @@ if (!exists("df.ni.lp") || recompute) {
         (proc.time() - st)[3] %/% 60, "mins.\n")
   }
   df.ni.lp <- as.data.frame(t(sapply(res, SSEs)))
-  resave(df.ni.lp, file = "saved.RData")
+  df.ni.lp.err.warn <- t(sapply(res, get.err.warn))
+
+  resave(df.ni.lp, df.ni.lp.err.warn, file = "saved.RData")
+
+  # Save all simulations and results in separate file
+  res.ni.lp <- res
+  resave(res.ni.lp, file="sim.res.RData")
+  rm(res, res.ni.lp)
 }
+
 
 if (!exists("df.t") || recompute) {
   set.seed(722040)
