@@ -16,9 +16,10 @@
 knitr/prof.R
 knitr/*
 RCM-feedback/*
-*RCM.tex
+RCM*.tex
 *.png
 0.drafting*
 *Supp*.txt
 *.zip
 figure*
+table*
