@@ -488,18 +488,22 @@ if(!exists("results.test.sigmas") || recompute){
 }
 
 results.test.sigmas.table <- makeTable(results.test.sigmas)
+results.test.sigmas.table <- results.test.sigmas.table[,-c(4,7)] #Remove MLE results
+names(results.test.sigmas.table) <- c("$n_i$", "nu", "RCM","Pool", "RCM", "Pool")
 
 caption <- 'Mean cophenetic correlation (copheno) and 
             Kullback-Leibler distance (kl)  with $95\\%$ confidence,
             for estimated cluster structure vs true clusters for 
             different values of nu and n, and different methods'
 
-table1 <- latex(results.test.sigmas.table[,-c(4,7)], file = "table1.tex",
+table1 <- latex(results.test.sigmas.table, file = "table1.tex",
                 title = "Clustering results",
                 caption = caption,
                 size = "tiny",
                 label ="tab:results.clustering",
-                rowname=NULL)
+                rowname=NULL,       
+                cgroup = c("", "Cophenetic Correlation", "Kullback-Leibler divergence"),
+                n.cgroup = c(2,2,2))
 
 
 ## IDRC data
@@ -524,6 +528,8 @@ if(!exists("results.idrc.test.sigmas") || recompute){
 }
 
 results.idrc.test.sigmas.table <- makeTable(results.idrc.test.sigmas)
+results.idrc.test.sigmas.table <- results.idrc.test.sigmas.table[,-c(4,7)] #Remove MLE results
+names(results.idrc.test.sigmas.table) <- c("$n_i$", "nu", "RCM","Pool", "RCM", "Pool")
 
 
 caption <- 'Simulation results based on IDRC data. Mean cophenetic correlation (copheno) and 
@@ -531,12 +537,15 @@ caption <- 'Simulation results based on IDRC data. Mean cophenetic correlation (
             for estimated cluster structure vs true clusters for 
             different values of nu and n, and different methods'
 
-tableS1 <- latex(results.idrc.test.sigmas.table[,-c(4,7)], file = "tableS1.tex",
+tableS1 <- latex(results.idrc.test.sigmas.table,
+                file = "tableS1.tex",
                 title = "Clustering results",
                 caption = caption,
                 size = "tiny",
                 label = "tab:results.clustering.idrc",
-                rowname=NULL)
+                rowname=NULL,
+                cgroup = c("", "Cophenetic Correlation", "Kullback-Leibler divergence"),
+                n.cgroup = c(2,2,2))
 
 ## Example Tanglegrams
 exIndex <- 13
@@ -1004,6 +1013,7 @@ dev.off()
 #plot_surv_fig(metadataIDRC, gep.sub$GEPIDRC.ensg, gsub(".CEL", "", metadataIDRC$Array.Data.File))
 #plot_surv_fig(metadataCHEPRETRO, gep.sub$GEPCHEPRETRO.ensg, gsub(".CEL", "", metadataCHEPRETRO$file))
 
+
 ### TOPGO analysis
 all.genes <- gsub("_at$", "", names(sort(var.pool, decreasing = TRUE)))
 
@@ -1117,6 +1127,91 @@ go.table <- latex(go.table3[,-1],
                   lines.page = 80,
                   center = "centering",
                   file = "table3.tex")
+
+
+### Correlate eigenGenes to Genes in modules for CHOP dataset
+eg.cor <- list()
+for (j in 1:2) {
+  modules <- switch(j, dlbcl.modules, dlbcl.pool.modules)
+  name <- switch(j, "RCM", "POOL")
+  expr <- gep.sub$GEPLLMPPCHOP.ensg[names(modules),]
+  
+  res <- moduleEigengenes(t(expr), modules)
+  eg <- res$eigengenes
+  
+  for(module in num2col[1:3]){
+    modeuleGenes <- which(modules == module)
+    expr2 <- cbind(eg[, paste0("ME", module)], t(expr[modeuleGenes,]))
+    eg.cor.j <- cor(expr2)[-1,1]
+    names(eg.cor.j) <- map2hugo(gsub("_at", "",names(eg.cor.j)))
+    eg.cor[[name]][[cleanName(module)]] <- sort(eg.cor.j, decreasing = TRUE)
+  }
+}
+
+## Make top Gene tables
+rcm.eigen.cors <- array(0, dim=c(20,6))
+pool.eigen.cors <- array(0, dim=c(20,6))
+counter <- 1
+for(module in cleanName(num2col[1:3])){
+  rcm.eigen.cors[,counter] <- names(eg.cor[["RCM"]][[module]])[1:20]
+  rcm.eigen.cors[,counter+1] <- round(eg.cor[["RCM"]][[module]][1:20],2)
+  
+  pool.eigen.cors[,counter] <- names(eg.cor[["POOL"]][[module]])[1:20]
+  pool.eigen.cors[,counter+1] <- round(eg.cor[["POOL"]][[module]][1:20],2)
+  
+  counter <- counter +2
+}
+
+colnames(rcm.eigen.cors) <- c("Gene", "Cor","Gene", "Cor","Gene", "Cor")
+colnames(pool.eigen.cors) <- c("Gene", "Cor","Gene", "Cor","Gene", "Cor")
+
+## Comparison table for olivegreen module
+olive.eg.cors <- array(0, dim=c(50,4))
+olive.eg.cors[,1] <- names(eg.cor[["RCM"]][["olivegreen"]])[1:50]
+olive.eg.cors[,2] <- round(eg.cor[["RCM"]][["olivegreen"]][1:50],2)
+olive.eg.cors[,3] <- names(eg.cor[["POOL"]][["olivegreen"]])[1:50]
+olive.eg.cors[,4] <- round(eg.cor[["POOL"]][["olivegreen"]][1:50],2)
+
+colnames(olive.eg.cors) <- c("Gene", "Cor","Gene", "Cor")
+
+
+## Make Latex tables
+rcm.eg.table <- latex(rcm.eigen.cors,
+                  label  = "tab:rcm.eg.cors",
+                  cgroup = names(eg.cor$RCM),
+                  n.cgroup = c(2,2,2),
+                  size = "tiny",
+                  caption = paste("The top 20 genes in each module for the RCM model and",
+                                   "correlation to the eigenGene for the CHOP dataset"),
+                  longtable = TRUE,
+                  lines.page = 80,
+                  center = "centering",
+                  file = "table.rcm.eg.tex")
+
+
+pool.eg.table <- latex(pool.eigen.cors,
+                      label  = "tab:pool.eg.cors",
+                      cgroup = names(eg.cor$POOL),
+                      n.cgroup = c(2,2,2),
+                      size = "tiny",
+                      caption = paste("The top 20 genes in each module for the Pool model and",
+                                       "correlation to the eigenGene for the CHOP dataset"),
+                      longtable = TRUE,
+                      lines.page = 80,
+                      center = "centering",
+                      file = "table.pool.eg.tex")
+
+olive.eg.table <- latex(olive.eg.cors,
+                      label  = "tab:olive.eg.cors",
+                      cgroup = c("RCM", "Pool"),
+                      n.cgroup = c(2,2),
+                      size = "tiny",
+                      caption = paste("The top 50 genes in the olive module for the RCM vs Pool model and",
+                                       "correlation to the eigenGene for the CHOP dataset"),
+                      longtable = TRUE,
+                      lines.page = 80,
+                      center = "centering",
+                      file = "table.olive.eg.tex")
 
 
 ### Get ICC for DLBCL data

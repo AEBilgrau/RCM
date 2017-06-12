@@ -894,6 +894,11 @@ The technical assistance from Alexander Schmitz, Julie S.\ B\o{}dker, Ann-Maria 
 
 \input{tableS1}
 
+\input{table.rcm.eg}
+\input{table.pool.eg}
+\newpage
+\input{table.olive.eg}
+
 \section{Marginalization of the covariance}
 \label{sec:marginalization}
 This section shows the marginalization over $\vSigma$ in \eqref{eq:loglik}.
