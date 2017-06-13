@@ -162,15 +162,10 @@ DK-9000 Aalborg \O{}\\
 \end{aug}
 
 \begin{abstract}
-Estimating gene networks in combination with posthoc analysis based on data from malignant tissue is a major challenge in cancer systems biology. When succesful it does, however, improve our understanding of disease pathology and may lead to identification of new drug targets.
-We present a hierarchical random covariance model applied as a meta-analysis of gene networks across 11 large-scale gene expression studies of diffuse large B-cell lymphoma (DLBCL).
-The approach is motivated by the need for improving the inherently unstable covariance estimation compounded by noisy gene expression data and inspired by traditional meta-analysis using random effects models.
-We derive and compare basic properties and estimators of the model.
-Simple inference and interpretation of an introduced parameter measuring the inter-class homogeneity is suggested.
-The methods are generally applicable where multiple classes are present and believed to share a common covariance matrix of interest that is obscured by class-dependent noise.
-As such, it provides a basis for meta- or integrative analysis of covariance matrices where the classes are formed by studies.
-In a posthoc analysis of the estimated common covariance matrix for the DLBCL data we were able to identify biologically meaningful gene networks of prognostic value.
-Of particular interest was the identification of a network with the S100 family of calcium-binding proteins as central players which further fuels the indications that knockdown of these proteins may improve the immunotherapy strategies and outcome of lymphoma patients.
+The estimation of the covariance matrices of gene expressions has many applications for the understanding of cancer systems biology, e.g. to use the covariance matrix to construct hypotheses about gene correlation networks and thereby improve our understanding of disease pathology and identification of new drug targets. Many gene expression studies, however, are hampered by low sample size and it has therefore become popular to increase sample size by collecting gene expression data across laboratories. Robust methods are therefore required to conduct meta-analysis of covariance matrices. 
+Motivated by the traditional meta-analysis using random effects models, we present a hierarchical random covariance model and use it for the meta-analysis of gene correlation networks across 11 large-scale gene expression studies of diffuse large B-cell lymphoma (DLBCL).
+We suggest to use a maximum likelihood estimator for the underlying common covariance matrix and introduce an EM algorithm for estimation.  By simulation experiments comparing the estimated covariance matrices by cophenetic correlation and Kullback-Leibler divergence the suggested estimator showed to perform better or not worse than the simple pooled estimator.  In a posthoc analysis of the estimated common covariance matrix for the DLBCL data we were able to identify novel biologically meaningful gene correlation networks with eigengenes of prognostic value.
+In conclusions the methods seems to provide a generally applicable framework for the meta-analysis, when multiple features are measured and believed to share a common covariance matrix obscured by study dependent noise. 
 \end{abstract}
 
 \begin{keyword}
@@ -230,43 +225,6 @@ Table \ref{tab:studies} provides an overview of the studies used.
 Instead of attempting to derive still more sophisticated estimators, we attempt to alleviate the problem from a different angle by using more available data and thus effectively increasing $n$.
 We do so by utilizing 10 genomic DLBCL datasets which, as with all major groups of cancer, are now publicly available online.
 We use these studies in combination with data from our own laboratory as a network meta-analysis to arrive at a better estimate of the covariance matrix whilst accounting for and assessing inter-study variation.
-
-
-
-% R> Hmisc::latex(DLBCLdata::DLBCL_overview[,-c(3,6)],
-%             file = "",
-%             label = "tab:studies",
-%             title = "",
-%             caption = "Overview of studies used.")
-% R> t(dlbcl.dims)
-\begin{table}[!tbp]
-\caption{Overview of studies used with GEO accession number from the NCBI Gene expression omnibus website, the relevant reference, array types used in the study, and number of samples and features on the used array.\label{tab:studies}}
-\begin{center}
-\begin{tabular}{llllp{2cm}ll}
-\hline\hline
-\multicolumn{1}{l}{}&
-\multicolumn{1}{c}{GEO no.}&
-\multicolumn{1}{c}{Name}&
-\multicolumn{1}{c}{Reference}&
-\multicolumn{1}{c}{Used arrays}&
-\multicolumn{1}{c}{$n$}\tabularnewline
-\hline
-1&GSE56315&CHEPRETRO&\cite{DybkaerBoegsted2015}&hgu133plus2&89\tabularnewline
-2&GSE19246&BCCA&\cite{Williams2010}&hgu133plus2&177\tabularnewline
-3&GSE12195&CUICG&\cite{Compagno2009}&hgu133plus2&136\tabularnewline
-4&GSE22895&HMRC&\cite{Jima2010}&hugene10st&101\tabularnewline
-5&GSE31312&IDRC&\cite{Visco2012}&hgu133plus2&469\tabularnewline
-6&GSE10846&LLMPP R-CHOP&\cite{Lenz2008}&hgu133plus2&181\tabularnewline
-7&GSE10846&LLMPP CHOP&\cite{Lenz2008}&hgu133plus2&233\tabularnewline
-8&GSE34171&MDFCI&\cite{Monti2012}&hgu133plus2, snp6&90\tabularnewline
-9&GSE34171&MDFCI&\cite{Monti2012}&hgu133a, hgu133b&78\tabularnewline
-10&GSE22470&MMML&\cite{Salaverria2011}&hgu133a&271\tabularnewline
-11&GSE4475&UBCBF&\cite{Hummel2006}&hgu133a&221\tabularnewline
-% 12&GSE11318&NCI&\cite{Lenz2008}&hgu133plus2&\tabularnewline
-\hline
-\end{tabular}\end{center}
-
-\end{table}
 
 We note, that while the high-dimensional extension to $p > n$ is important it is out of scope in this paper.
 We restrict ourselves to the case where the total number of samples exceeds $p$.
@@ -625,16 +583,16 @@ To reproduce this document see \url{http://github.com/AEBilgrau/RCM}.
 \subsection{Estimation of network}
 <<estimate_network, echo=FALSE, results='hide'>>=
 @
-To assess the estimation procedures ability to estimate $\Sigma$ we generated data from the hierarchical model \eqref{eq:RCM} in two different scenarios. In the first scenario we define a simple block matrix of dimension $p=40$ with four blocks of size $10$. Each block has an internal pairwise correlation of $0.5$, blocks 1\and 2 and 3\and 4 have a correlation of $0.3$ between all pairs, and the remaing correlations are set at $0.1$. In the second scenario we select the top 100 genes, ranked by variance, from the IDRC dataset (see Table \ref{tab:studies}) and used the scatter matrix of these genes scaled as a correlation matrix as the $\Sigma$ matrix for simulation. For both scenarios we performed agglomerative hierchacical clustering using Ward-linkage and 1 minus the absolute correlation as a distance measure. Heatmaps with associated hierarchical clustering of both $\Sigma$ matrices are shown in Supplementary Figure \ref{fig:S1}. 
+To assess the estimation procedures ability to estimate $\Sigma$ we generated data from the hierarchical model \eqref{eq:RCM} in two different scenarios. In the first scenario we define a simple block matrix of dimension $p=40$ with four blocks of size $10$. Each block has an internal pairwise correlation of $0.5$, blocks 1\and 2, and 3\and 4 have a correlation of $0.3$ between all pairs, and the remaing correlations are set at $0.1$. In the second scenario we select the top 100 genes, ranked by variance, from the IDRC dataset (see Table \ref{tab:studies}) and used the scatter matrix of these genes, scaled as a correlation matrix, as the $\Sigma$ matrix for simulation. For both scenarios we performed agglomerative hierchacical clustering using Ward-linkage and 1 minus the absolute correlation as a distance measure. Heatmaps with associated hierarchical clustering of both $\Sigma$ matrices are shown in Supplementary Figure \ref{fig:S1}. 
 
-For both scenarios we simulate data with $k=3$ and a range of values for $n_i$ and $\nu$. Each simulation was repeated 100 times, and the correlation matrix was estimated using the RCM, MLE, and Pool approaches as outlined in section \ref{sec:RCMmodel}. The similarity of the estimated and true $\Sigma$ matrices and associated networks were evaluated using respectively the Kullback-Leibler divergence \cite{Mattiussi2011} and the cophenetic correlation\cite{Sokal1962}. The cophenetic correlation is defined as the correlation of cophenetic distances of all pairwise distances in a tree, where the cophenetic distance is the height of the lowest point on the tree where two points merge. Results from the first scenario (Table \ref{tab:results.clustering}), show that for heterogenous data ($\nu = 50, 100$) and $n_i \geq p$ the RCM models outperforms the Pool and MLE model using both measures. Examples of tanglegrams comparing networks estimated from the RCM and Pool model and the true $\Sigma$ matrix are shown in Supplementary Figure \ref{fig:S2}. Tanglegrams were constructed using the R-package \texttt{dendextend} \cite{Galili2015}. Increasing the $\nu$ parameter, thereby making the data more homogeneous across groups diminishes the advantage of the RCM model. Similar results were found in the second scenario using a $\Sigma$ matrix based on the IDRC dataset (Table \ref{tab:results.clustering.idrc}). Results furthermore showed that the estimates for the MLE and Pool approaches are nearly identical, and results from the MLE model were thus excluded from the tables. We expect this to be caused by the fact that the MLE model is initilized with the Pool estimates and stops after one iteration; presumably a better estimate cannot be found in these simple scenarios. 
+For both scenarios we simulate data with $k=3$ and a range of values for $n_i$ and $\nu$. Each simulation was repeated 100 times, and the correlation matrix was estimated using the EM, MLE, and Pool approaches as outlined in section \ref{sec:RCMmodel}. The similarity of the estimated and true $\Sigma$ matrices and associated networks were evaluated using respectively the Kullback-Leibler divergence \citep{Mattiussi2011} and the cophenetic correlation \citep{Sokal1962}. The cophenetic correlation is defined as the correlation of cophenetic distances of all pairwise distances in a tree, where the cophenetic distance is the height of the lowest point on the tree where two points merge. Results from the first scenario (Table \ref{tab:results.clustering}), show that for heterogenous data ($\nu = 50, 100$) and $n_i \geq p$ the EM estimator outperforms the Pool and MLE estimators using both measures. Examples of tanglegrams comparing networks estimated with the EM and Pool method and the true $\Sigma$ matrix are shown in Supplementary Figure \ref{fig:S2}. Tanglegrams were constructed using the R-package \texttt{dendextend} \citep{Galili2015}. Increasing the $\nu$ parameter, thereby making the data more homogeneous across groups diminishes the advantage of the EM estimator. Similar results were found in the second scenario using a $\Sigma$ matrix based on the IDRC dataset (Table \ref{tab:results.clustering.idrc}). Results furthermore showed that the estimates for the MLE and Pool approaches are nearly identical, and results from the MLE method were thus excluded from the tables. We expect this to be caused by the fact that the MLE method is initilized with the Pool estimates and stops after one iteration; presumably a better estimate cannot be found in these simple scenarios. 
 
 \input{table1}
 
 \subsection{Computation time for the RCM model}
 <<computation_time, echo=FALSE, results='hide'>>=
 @
-Next we tested the performance of the different models in terms of computation time. Figure \ref{fig:1} shows computation times of the models with varying values of the dimension of the data, and demonstrates that the increased performance of the RCM model comes at an extra cost in computation time.
+Next we tested the performance of the different methods in terms of computation time. Figure \ref{fig:1} shows computation times of the methods with varying values of the dimension of the data, and demonstrates that the increased performance of the EM method comes at an extra cost in computation time.
 \begin{figure}
   \includegraphics[width=0.8\linewidth]{Figure1.jpg}
   \caption{The mean computation time of $\Sexpr{par.t$n.sims}$ fits with varying dimension $p$.}
@@ -644,7 +602,7 @@ Next we tested the performance of the different models in terms of computation t
 \subsection{Evaluation of the hypothesis testing}
 <<test_pvalue, echo=FALSE, results='hide'>>=
 @
-Finally we investigate the performance of the P-value for the hypothesis test suggested in equation \ref{eq:pvalue}. To do this, we simulate from the hierarchical model with $k=3$ and a range of different values for $p$, $\nu$, and $n_i$. For these simulations we used a $\Psi$ matrix with a diagonal of ones and $0.5$ for off-diagonal values. Simulations were done 100 times for each scenario, and 500 permutations were done for each simulation. Results summarized as boxplots of the P-values obtained in the 100 simulations for each scenario are shown in Supplementary Figure \ref{fig:S3}. We find that for heterogenous data (e.g. $p=20, \nu=30$) the null-hypothesis is clearly rejected if $n_i>p$. When increasing $\nu$ thus making the groups more similar, more observations are needed to reject the null hypothesis, while for identical groups, i.e. $\nu=Inf$, the null-hypothesis is not rejected. The P-values obtained from the permuation test thus performs as intended.
+Finally we investigate the performance of the P-value for the hypothesis test suggested in equation \ref{eq:pvalue}. To do this, we simulate from the hierarchical model with $k=3$ and a range of different values for $p$, $\nu$, and $n_i$. For these simulations we used a $\Psi$ matrix with a diagonal of ones and $0.5$ for off-diagonal values. Simulations were done 100 times for each scenario, and 500 permutations were done for each simulation. Results summarized as boxplots of the P-values obtained in the 100 simulations for each scenario are shown in Supplementary Figure \ref{fig:S3}. We find that for heterogenous data (e.g. $p=20, \nu=30$) the null-hypothesis is clearly rejected if $n_i>p$. When increasing $\nu$ thus making the groups more similar, more observations are needed to reject the null hypothesis, while for identical groups, i.e. $\nu=\text{Inf}$, the null-hypothesis is not rejected. The P-values obtained from the permuation test thus performs as intended.
 
 \section{DLBCL meta-analysis}
 \label{sec:DLBCL}
@@ -662,7 +620,35 @@ The corresponding GEO-accession numbers and microarray platforms used are seen i
 The downloaded data yield a total of \Sexpr{rowSums(dlbcl.dims)["Samples"]} samples with study sizes in the range \Sexpr{paste(range(dlbcl.dims["Samples",]), collapse = "-")}.
 The summarization using brainarray CDFs to Ensembl gene identifiers facilitates cross-platform integration.
 
-After RMA normalization and summarization, the data was brought to a common scale by quantile normalizing all data to the common cumulative distribution function of all arrays. Lastly, the datasets were reduced to \Sexpr{dim(gep[[1]])["Features"]} common genes represented in all studies and array platforms. Figure \ref{fig:S4} shows a plot of the first and second principal components of the combined dataset. We see a clear split on the first principal component, indicitating a possible batch effect and heterogeneous data, and thus a situation where the RCM might offer an advantage compared to the Pool model.
+After RMA normalization and summarization, the data was brought to a common scale by quantile normalizing all data to the common cumulative distribution function of all arrays. Lastly, the datasets were reduced to \Sexpr{dim(gep[[1]])["Features"]} common genes represented in all studies and array platforms. Figure \ref{fig:S4} shows a plot of the first and second principal components of the combined dataset. We see a clear split on the first principal component, indicitating a possible batch effect and heterogeneous data, and thus a situation where the EM estimator might offer an advantage compared to the simpler Pooling approach.
+
+\begin{table}[!tbp]
+\caption{Overview of studies used with GEO accession number from the NCBI Gene expression omnibus website, the relevant reference, array types used in the study, and number of samples and features on the used array.\label{tab:studies}}
+\begin{center}
+\begin{tabular}{llllp{2cm}ll}
+\hline\hline
+\multicolumn{1}{l}{}&
+\multicolumn{1}{c}{GEO no.}&
+\multicolumn{1}{c}{Name}&
+\multicolumn{1}{c}{Reference}&
+\multicolumn{1}{c}{Used arrays}&
+\multicolumn{1}{c}{$n$}\tabularnewline
+\hline
+1&GSE56315&CHEPRETRO&\cite{DybkaerBoegsted2015}&hgu133plus2&89\tabularnewline
+2&GSE19246&BCCA&\cite{Williams2010}&hgu133plus2&177\tabularnewline
+3&GSE12195&CUICG&\cite{Compagno2009}&hgu133plus2&136\tabularnewline
+4&GSE22895&HMRC&\cite{Jima2010}&hugene10st&101\tabularnewline
+5&GSE31312&IDRC&\cite{Visco2012}&hgu133plus2&469\tabularnewline
+6&GSE10846&LLMPP R-CHOP&\cite{Lenz2008}&hgu133plus2&181\tabularnewline
+7&GSE10846&LLMPP CHOP&\cite{Lenz2008}&hgu133plus2&233\tabularnewline
+8&GSE34171&MDFCI&\cite{Monti2012}&hgu133plus2, snp6&90\tabularnewline
+9&GSE34171&MDFCI&\cite{Monti2012}&hgu133a, hgu133b&78\tabularnewline
+10&GSE22470&MMML&\cite{Salaverria2011}&hgu133a&271\tabularnewline
+11&GSE4475&UBCBF&\cite{Hummel2006}&hgu133a&221\tabularnewline
+% 12&GSE11318&NCI&\cite{Lenz2008}&hgu133plus2&\tabularnewline
+\hline
+\end{tabular}\end{center}
+\end{table}
 
 \subsection{Analysis}
 For each dataset the scatter matrix $\vS_i$ of the top \Sexpr{dlbcl.par$top.n} most variable genes (as measured by the pooled variance across all studies) was computed as the sufficient statistics along with the number of samples.
@@ -688,7 +674,7 @@ In any case, the low ICC might still suggest high reproducibility of the covaria
 
 <<dlbcl_clustering, echo=FALSE, results='hide'>>=
 @
-Next we compare the estimated networks from the RCM and Pool models. For simplicity we employed a standard network analysis to the estimated common correlation matrix $\hat{\vec{R}}$ across all studies. To identify clusters with high internal correlation, we used agglomerative hierarchical clustering with \Sexpr{capitalize(dlbcl.par$linkage)}-linkage and distance measure defined as 1 minus the absolute value of the correlation. The network was arbitrarily pruned at a height which produced \Sexpr{length(unique(dlbcl.modules))} modules named by colors. Modules for the two models are named to give the largest overlap of genes with similar color. The top row of Figure \ref{fig:3} shows heatmaps and associated networks for the RCM and pool model, while the bottom row shows a tanglegram comparing the two.From the tanglegram we see that the olivegreen module defined by the Pool method is larger and contains parts of the gray module defined by RCM method. Furthermore, a cophenetic correlation of 0.6 between the emphasises the difference between them.
+Next we compare the estimated networks from the EM and Pool methods. For simplicity we employed a standard network analysis to the estimated common correlation matrix $\hat{\vec{R}}$ across all studies. To identify clusters with high internal correlation, we used agglomerative hierarchical clustering with \Sexpr{capitalize(dlbcl.par$linkage)}-linkage and distance measure defined as 1 minus the absolute value of the correlation. The network was arbitrarily pruned at a height which produced \Sexpr{dlbcl.par$n.modules} modules named by colors. Modules for the two methods are named to give the largest overlap of genes with similar color. The top row of Figure \ref{fig:3} shows heatmaps and associated networks for the EM and pool method, while the bottom row shows a tanglegram comparing the two.From the tanglegram we see that the olivegreen module defined by the Pool method is larger and contains parts of the gray module defined by EM method. Furthermore, a cophenetic correlation of 0.6 emphasises the difference between them.
 
 \begin{figure}
 \begin{subfigure}{0.5\textwidth}
@@ -707,34 +693,38 @@ Next we compare the estimated networks from the RCM and Pool models. For simplic
 	  \includegraphics[width=\linewidth]{Figure3C.jpg}
 	    \label{fig:3c}
 	\end{subfigure}
-\caption{Heatmaps and tanglegram for the estimated correlation matrices of the top 300 genes for the DLBCL data using either the RCM or Pool model. Networks are cut at a height producing 3 clusters, and the tanglegram shows the comparison of clusters between the two methods}
+\caption{Heatmaps and tanglegram for the estimated correlation matrices of the top 300 genes for the DLBCL data using either the EM or Pool method. Networks are cut at a height producing 3 clusters, and the tanglegram shows the comparison of clusters between the two methods}
 \label{fig:3}
 \end{figure}
 
 
 <<survival_analysis, echo=FALSE, results='hide'>>=
 @
-We checked if the identified modules were prognostic for overall survival (OS) in the CHOP and R-CHOP-treated cohort datasets of GSE10846. To do this, the eigengene \citep{Horvath2011} for each module was computed and a multiple Cox proportional hazards model for OS was fitted with the module eigengenes as covariates. The module eigengene is the first principal component of the expression matrix of the module which thus can be represented by a linear combination of the module genes. For the prognostic interesting \Sexpr{cleanName(the.module)} module, the Kaplan-Meier estimates were computed for groups arising when dichotomizing the values of the corresponding eigengene as above or below the median value. These results are shown for the CHOP cohort in Figure \ref{fig:4}, while results for the R-CHOP cohort are show in supplementary Figure \ref{fig:S5}. In both cohorts we find that \Sexpr{cleanName(the.module)} module defined by the RCM model splits the patients into groups with different survival whereas no difference is found for the module defined by the Pool model.
+We checked if the identified modules were prognostic for overall survival (OS) in the CHOP and R-CHOP-treated cohort datasets of GSE10846. To do this, the eigengene \citep{Horvath2011} for each module was computed and a multiple Cox proportional hazards model for OS was fitted with the module eigengenes as covariates. The module eigengene is the first principal component of the expression matrix of the module which thus can be represented by a linear combination of the module genes. For the prognostically interesting \Sexpr{cleanName(the.module)} module, the Kaplan-Meier estimates were computed for groups arising when dichotomizing the values of the corresponding eigengene as above or below the median value. These results are shown for the CHOP cohort in Figure \ref{fig:4}, while results for the R-CHOP cohort are show in supplementary Figure \ref{fig:S5}. In both cohorts we find that \Sexpr{cleanName(the.module)} module defined by the EM method splits the patients into groups with different survival whereas no difference is found for the module defined by the Pool method.
 
 
 \begin{figure}
   \includegraphics[width=0.8\linewidth]{Figure4.jpg}
-  \caption{The top row shows $95\%$ and $99\%$ CI for the hazard ratio for each eigengene in the multiple Cox proportional hazards model containing all eigengenes in the CHOP dataset. The bottom row shows Kaplan-Meier estimates (and $95\%$ CI) for the overall survival for patients stratified by the dichotomized \Sexpr{cleanName(the.module)} eigengene with 3 clusters. Left panels show modules obtained from the RCM model while right panels show modules from the Pool model.}
+  \caption{The top row shows $95\%$ and $99\%$ CI for the hazard ratio for each eigengene in the multiple Cox proportional hazards model containing all eigengenes in the CHOP dataset. The bottom row shows Kaplan-Meier estimates (and $95\%$ CI) for the overall survival for patients stratified by the dichotomized \Sexpr{cleanName(the.module)} eigengene with 3 clusters. Left panels show modules obtained from the EM method while the right panels shows modules from the Pool method.}
   \label{fig:4}
 \end{figure}
 
 <<dlbcl_go_analysis, echo=FALSE, results='hide'>>=
 @
 
-Next, the modules were screened for biological relevance using GO (Gene Ontology) Molecular Function enrichment analysis. Since we pre-selected the top 300 genes by variance, the enrichment analysis was done using only these as the background genes. Results of the GO enrichment analysis at significance level \Sexpr{dlbcl.par$go.alpha.level} for each of the modules defined by respectively the RCM and Pool method are shown in table \ref{tab:results.go}.
+Next, the modules were screened for biological relevance using GO (Gene Ontology) Molecular Function enrichment analysis. Since we pre-selected the top 300 genes by variance, the enrichment analysis was done using only these as the background genes. Results of the GO enrichment analysis at significance level \Sexpr{dlbcl.par$go.alpha.level} for each of the modules defined by respectively the EM and Pool method are shown in table \ref{tab:results.go}. while top20 genes for each module, ranked by correlation to the eigenGene in the CHOP cohort, are shown in Supplementary tables \ref{tab:rcm.eg.cors} and \ref{tab:pool.eg.cors}.
 
 \begin{centering}
   \input{table3}
 \end{centering}
 
-Interpretation of GO results
+The notion of MHC protein binding by GO annotation to the olivegreen module for the EM method in combination with prognostic significance suggests that immune surveillance is enraptured in this model. 
+Immune surveillance plays a major role in controlling the proliferation of cancers and it is reported several times that DLBCL fails to express cell-surface molecules which are necessary for the recognition of tumour cells by immune-effector cells \citep{DybkaerBoegsted2015, pmid22137796, pmid25008267}. For an active immune surveillance, surface expression of both MHC class I and II proteins is required. Hence, antigenic peptide-loaded MHC class II molecules are normally expressed on the surface of professional antigen-presenting cells including dendritic cells, B cells, macrophages and thymic epithelial cells, and are presented to antigen-specific CD4+ T cells \citep{pmid25720354}. If the malignant DLBCL cells have decreased expression they become invisible to the immunesystem resulting in a poor overall survival \citep{pmid14976040}. Loss of MHC class II can occur if the MHC class II transactivator CIITA is lost, which frequently occurs in lymphoid cancers of B-cell origin due to mutations and genetic aberrations \cite{pmid21368758}. 
+In 29\% of cases, due to the mutations in the B2M gene the cell-surface expression of the MHC class I (HLA-I) is lost in DLBCL. The HLA class-I complex is necessary for recognition by CD8+ cytotoxic T-cells. Although loss of HLA I would provide immune escape from cytotoxic T cells, cells that lack HLA I are normally targeted for destruction by natural killer cells (NK). However, mutations in the CD58 gene occurs in more than 21\% of DLBCL patients \citep{pmid22137796}. CD58, a ligand for the C2 receptor, is involved in the recognition and destruction of cells by both NK cells and CD8+ cytotoxic T-cells. In DLBCL, very often there is a coordinated loss of B2M and CD58 suggesting that they are co-selected during lymphoma genesis for their combined role in escape from immune-surveillance. \citep{pmid22137796, pmid25008267}
+In support of captured immunesurveilance via MHC function by the EM method is the observations of GNLY in the top 50 genes (Supplementary Table \ref{tab:olive.eg.cors}). GNLY (Granulycin) is located in the cytotoxic granules of natural killer cells and T cells, from where it is released upon antigen stimulation. It is noteworthy, that only 9 of the top 50 genes for the EM method are not included in the pool method, perhaps illustrating that the olivegreen module in EM method encounters better genes with biological impact on treatment response and outcome.
 
-\newpage
+Finally, we must point out that had the network been cut at a height resulting in five modules instead of three, more similar modules with the same impact on survival would have been observed for the two methods. However, the number of modules at which the network is cut is arbitrary, so it remains important to retain the correct distance between modules at all heights.
+
 
 \section{Concluding remarks}
 \label{sec:conclusion}
@@ -836,7 +826,7 @@ The technical assistance from Alexander Schmitz, Julie S.\ B\o{}dker, Ann-Maria 
   \includegraphics[width=0.8\linewidth]{FigureS2b.jpg}
   \label{fig:S2B}
 \end{subfigure}
-\caption{Tanglegrams for the True vs estimated dendrograms of the RCM and Pool model}
+\caption{Tanglegrams for the True vs estimated dendrograms with the EM and Pool method}
 \label{fig:S2}
 \end{figure}
 
@@ -854,7 +844,7 @@ The technical assistance from Alexander Schmitz, Julie S.\ B\o{}dker, Ann-Maria 
 
 \begin{figure}[H]
   \includegraphics[width=0.8\linewidth]{FigureS5.jpg}
-  \caption{The top row shows $95\%$ and $99\%$ CI for the hazard ratio for each eigengene in the multiple Cox proportional hazards model containing all eigengenes in the R-CHOP dataset. The bottom row shows Kaplan-Meier estimates (and $95\%$ CI) for the overall survival for patients stratified by the dichotomized \Sexpr{cleanName(the.module)} eigengene with 3 clusters. Left panels show modules obtained from the RCM model while right panels show modules from the Pool model.}
+  \caption{The top row shows $95\%$ and $99\%$ CI for the hazard ratio for each eigengene in the multiple Cox proportional hazards model containing all eigengenes in the R-CHOP dataset. The bottom row shows Kaplan-Meier estimates (and $95\%$ CI) for the overall survival for patients stratified by the dichotomized \Sexpr{cleanName(the.module)} eigengene with 3 clusters. Left panels show modules obtained with the EM method while right panels show modules from the Pool method.}
   \label{fig:S5}
 \end{figure}
 
@@ -875,19 +865,19 @@ The technical assistance from Alexander Schmitz, Julie S.\ B\o{}dker, Ann-Maria 
 	  \includegraphics[width=\linewidth]{FigureS6C.jpg}
 	    \label{fig:3c}
 	\end{subfigure}
-\caption{Heatmaps and tanglegram for the estimated correlation matrices of the top 300 genes for the DLBCL data using either the RCM or Pool model. Networks are cut at a height producing 5 clusters, and the tanglegram shows the comparison of clusters between the two methods}
+\caption{Heatmaps and tanglegram for the estimated correlation matrices of the top 300 genes for the DLBCL data using either the EM or Pool method. Networks are cut at a height producing 5 clusters, and the tanglegram shows the comparison of clusters between the two methods}
 \label{fig:S6}
 \end{figure}
 
 \begin{figure}[H]
   \includegraphics[width=0.8\linewidth]{FigureS7.jpg}
-  \caption{The top row shows $95\%$ and $99\%$ CI for the hazard ratio for each eigengene in the multiple Cox proportional hazards model containing all eigengenes in the R-CHOP dataset. The bottom row shows Kaplan-Meier estimates (and $95\%$ CI) for the overall survival for patients stratified by the dichotomized \Sexpr{cleanName(the.module)} eigengene with 5 clusters. Left panels show modules obtained from the RCM model while right panels show modules from the Pool model.}
+  \caption{The top row shows $95\%$ and $99\%$ CI for the hazard ratio for each eigengene in the multiple Cox proportional hazards model containing all eigengenes in the R-CHOP dataset. The bottom row shows Kaplan-Meier estimates (and $95\%$ CI) for the overall survival for patients stratified by the dichotomized \Sexpr{cleanName(the.module)} eigengene with 5 clusters. Left panels show modules obtained from the EM method while the right panels show modules from the Pool method.}
   \label{fig:S7}
 \end{figure}
 
 \begin{figure}[H]
   \includegraphics[width=0.8\linewidth]{FigureS7.jpg}
-  \caption{The top row shows $95\%$ and $99\%$ CI for the hazard ratio for each eigengene in the multiple Cox proportional hazards model containing all eigengenes in the R-CHOP dataset. The bottom row shows Kaplan-Meier estimates (and $95\%$ CI) for the overall survival for patients stratified by the dichotomized \Sexpr{cleanName(the.module)} eigengene with 5 clusters. Left panels show modules obtained from the RCM model while right panels show modules from the Pool model.}
+  \caption{The top row shows $95\%$ and $99\%$ CI for the hazard ratio for each eigengene in the multiple Cox proportional hazards model containing all eigengenes in the R-CHOP dataset. The bottom row shows Kaplan-Meier estimates (and $95\%$ CI) for the overall survival for patients stratified by the dichotomized \Sexpr{cleanName(the.module)} eigengene with 5 clusters. Left panels show modules obtained from the EM method while the right panels show modules from the Pool method.}
   \label{fig:S8}
 \end{figure}
 

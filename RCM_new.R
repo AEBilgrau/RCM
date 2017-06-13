@@ -489,12 +489,12 @@ if(!exists("results.test.sigmas") || recompute){
 
 results.test.sigmas.table <- makeTable(results.test.sigmas)
 results.test.sigmas.table <- results.test.sigmas.table[,-c(4,7)] #Remove MLE results
-names(results.test.sigmas.table) <- c("$n_i$", "nu", "RCM","Pool", "RCM", "Pool")
+names(results.test.sigmas.table) <- c("$n_i$", "nu", "EM","Pool", "EM", "Pool")
 
-caption <- 'Mean cophenetic correlation (copheno) and 
-            Kullback-Leibler distance (kl)  with $95\\%$ confidence,
-            for estimated cluster structure vs true clusters for 
-            different values of nu and n, and different methods'
+caption <- 'Mean cophenetic correlation and 
+            Kullback-Leibler divergence with $95\\%$ confidence,
+            for estimated  vs true network for 
+            different values of nu and $n_i$ using the EM or Pool method'
 
 table1 <- latex(results.test.sigmas.table, file = "table1.tex",
                 title = "Clustering results",
@@ -529,13 +529,13 @@ if(!exists("results.idrc.test.sigmas") || recompute){
 
 results.idrc.test.sigmas.table <- makeTable(results.idrc.test.sigmas)
 results.idrc.test.sigmas.table <- results.idrc.test.sigmas.table[,-c(4,7)] #Remove MLE results
-names(results.idrc.test.sigmas.table) <- c("$n_i$", "nu", "RCM","Pool", "RCM", "Pool")
+names(results.idrc.test.sigmas.table) <- c("$n_i$", "nu", "EM","Pool", "EM", "Pool")
 
 
-caption <- 'Simulation results based on IDRC data. Mean cophenetic correlation (copheno) and 
-            Kullback-Leibler distance (kl)  with $95\\%$ confidence,
-            for estimated cluster structure vs true clusters for 
-            different values of nu and n, and different methods'
+caption <- 'Simulation results based on IDRC data. Mean cophenetic correlation and 
+            Kullback-Leibler divergence  with $95\\%$ confidence,
+            for estimated vs true network for 
+            different values of nu and $n_i$ using the EM or Pool method'
 
 tableS1 <- latex(results.idrc.test.sigmas.table,
                 file = "tableS1.tex",
@@ -545,7 +545,8 @@ tableS1 <- latex(results.idrc.test.sigmas.table,
                 label = "tab:results.clustering.idrc",
                 rowname=NULL,
                 cgroup = c("", "Cophenetic Correlation", "Kullback-Leibler divergence"),
-                n.cgroup = c(2,2,2))
+                n.cgroup = c(2,2,2),
+                greek = TRUE)
 
 ## Example Tanglegrams
 exIndex <- 13
@@ -561,7 +562,7 @@ jpeg("FigureS2A.jpg", height=7/2, width=7, units = "in", res = 200)
 tanglegram(hclu.real, 
            results.clustering[[exIndex]][[simIndex]]$hclu.rcm, 
            main_left ="True", 
-           main_right = "RCM",
+           main_right = "EM",
            sort=T,
            cex_main = 1,
            color_lines=groupColors, 
@@ -694,14 +695,14 @@ for(i in 1:length(results.test.p.values)){
 }
 
 results.test.p.values.plot <- do.call(rbind, results.test.p.values2)
-results.test.p.values.plot$scenario <- with(results.test.p.values.plot, paste0("p=",p, ", nu=", nu, ", n=", n))
+results.test.p.values.plot$scenario <- with(results.test.p.values.plot, paste0("p=",p, ", nu=", nu, ", n_i=", n))
 
 p.value.plot <- ggplot(results.test.p.values.plot, aes(x=scenario, y=p.value)) +
   geom_boxplot() + 
   theme(axis.text.x = element_text(angle = 40, hjust = 1),text = element_text(size=15))
 
 jpeg("FigureS3.jpg", height=7, width=10, units = "in", res = 200)
-print(p.value.plot)
+  print(p.value.plot)
 dev.off()
 
 
@@ -896,7 +897,7 @@ heatmap.2(cov2cor(dlbcl.rcm.sigma),
           ColSideColors = dlbcl.modules,
           labRow = NA,
           labCol = NA,
-          main="RCM")
+          main="EM")
 dev.off()
 
 ## Heatmap for Pool
@@ -925,7 +926,7 @@ copheno_rcm_pool <- cor_cophenetic(dlbcl.rcm.dend, dlbcl.pool.dend)
 jpeg("Figure3C.jpg", width = 7, height = 7/2, units="in", res = 200)
 tanglegram(dlbcl.rcm.dend, dlbcl.pool.dend,
            sort=F, 
-           main_left="RCM", 
+           main_left="EM", 
            main_right="Pool", 
            lwd=2,
            cex_main = 1.2,
@@ -998,7 +999,7 @@ plot_surv_fig <- function(meta, gep, sampleID){
                bty = "n", text.col = col[i])
       }
     }
-    title(switch(j, "RCM", "Pool"), xpd = TRUE)
+    title(switch(j, "EM", "Pool"), xpd = TRUE)
   }
 }
 
@@ -1116,14 +1117,14 @@ go.table <- latex(go.table3[,-1],
                   rowname = go.table3[,1],
                   rgroup = unique(go.col),
                   label  = "tab:results.go",
-                  cgroup = c("RCM", "Pool"),
+                  cgroup = c("EM", "Pool"),
                   n.cgroup = c(2,3),
                   n.rgroup = table(go.col)[unique(go.col)],
                   title = "GO ID",
                   size = "tiny",
-                  caption = paste0("The significant GO terms in the RCM- and Pool-modules at ",
+                  caption = paste0("The significant GO terms in the EM- and Pool-modules at ",
                                    "$\\alpha$-level ", dlbcl.par$go.alpha.level, "."),
-                  longtable = TRUE,
+                  #longtable = TRUE,
                   lines.page = 80,
                   center = "centering",
                   file = "table3.tex")
@@ -1181,7 +1182,7 @@ rcm.eg.table <- latex(rcm.eigen.cors,
                   cgroup = names(eg.cor$RCM),
                   n.cgroup = c(2,2,2),
                   size = "tiny",
-                  caption = paste("The top 20 genes in each module for the RCM model and",
+                  caption = paste("The top 20 genes in each module for the EM method and",
                                    "correlation to the eigenGene for the CHOP dataset"),
                   longtable = TRUE,
                   lines.page = 80,
@@ -1194,7 +1195,7 @@ pool.eg.table <- latex(pool.eigen.cors,
                       cgroup = names(eg.cor$POOL),
                       n.cgroup = c(2,2,2),
                       size = "tiny",
-                      caption = paste("The top 20 genes in each module for the Pool model and",
+                      caption = paste("The top 20 genes in each module for the Pool method and",
                                        "correlation to the eigenGene for the CHOP dataset"),
                       longtable = TRUE,
                       lines.page = 80,
@@ -1206,7 +1207,7 @@ olive.eg.table <- latex(olive.eg.cors,
                       cgroup = c("RCM", "Pool"),
                       n.cgroup = c(2,2),
                       size = "tiny",
-                      caption = paste("The top 50 genes in the olive module for the RCM vs Pool model and",
+                      caption = paste("The top 50 genes in the olive module for the EM vs Pool method and",
                                        "correlation to the eigenGene for the CHOP dataset"),
                       longtable = TRUE,
                       lines.page = 80,
@@ -1299,7 +1300,7 @@ heatmap.2(cov2cor(dlbcl.rcm.sigma),
           ColSideColors = dlbcl.modules,
           labRow = NA,
           labCol = NA,
-          main="RCM")
+          main="EM")
 dev.off()
 
 ## Heatmap for Pool
@@ -1328,7 +1329,7 @@ copheno_rcm_pool <- cor_cophenetic(dlbcl.rcm.dend, dlbcl.pool.dend)
 jpeg("FigureS6C.jpg", width = 7, height = 7/2, units="in", res = 200)
 tanglegram(dlbcl.rcm.dend, dlbcl.pool.dend,
            sort=F, 
-           main_left="RCM", 
+           main_left="EM", 
            main_right="Pool", 
            lwd=2,
            cex_main = 1.2,
