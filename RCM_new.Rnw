@@ -195,47 +195,13 @@ source("RCM_new.R")
 
 
 \section{Introduction}
-Genes and their products carry out their functions in concerted effort via intricate networks.
-Analysis of genomic data has consequently been an inescapable success in elucidating gene interactions and functions through many different approaches.
-Notably, \citep{Agnelli2011, Clarke2013} have successfully applied network analysis in other malignancies to learn novel gene-gene interactions.
-We interrogated and examined gene-gene interactions in gene expression data of 89 diffuse large B-cell lymphoma (DLBCL) samples from our own lab \citep{DybkaerBoegsted2015} data together with 10 other large-scale DLBCL studies to identify new and corroborate known functional gene-gene relationships.
-Analysing gene-gene interactions using correlations is a simple and well-tested method \citep{Horvath2011} relying on guilt-by-association.
-Most methods for analysing gene-gene interactions available, however, often have several shortcomings.
-Particularly as with our case, the methods quickly become unstable or even inapplicable when the sample size is small or moderate.
-Therefore we incorporated the information form multiple other publicly available gene expression DLBCL datasets to obtain a more stable estimate of the gene-gene interactions.
+Human cells carry out their functions in concerted interactions via intricate protein signalling networks. These networks are according to the central dogma of molecular biology controlled by expressed genes.  It has become popular to perform genome wide measurements of expressed genes and proteins and summarizing the information by huge covariance matrices leading to improved understanding of disease pathology and identification of new drug targets \citep{Agnelli2011, Clarke2013}. Many gene expression studies, however, are hampered by low sample size and it has therefore become of interest to increase sample size by collecting gene expression data across laboratories. These are potentially hampered by severe batch effects, and robust methods are therefore required to conduct cross-study meta-analysis of covariance matrices.
 
-Crudely, many network analysis methods---such as correlation networks \citep{Horvath2011}, Gaussian graphical models \citep{Lauritzen1996}, and Bayesian networks---may be categorized according to their use of marginal, partial, or semi-partial correlations.
-The underlying assumption of them all is that correlation hints at causation.
-The different measures of correlation separate the methods by different attempts to remove the influence of remaining other genes \citep{Markowetz2007a}.
-As the covariance matrix and its inverse holds this information, its estimation is a central topic to network analysis.
-However, this fundamental problem of accurately estimating the covariance matrix (or its inverse, the precision matrix) is notoriously difficult.
-The usual bias-corrected maximum likelihood estimator (MLE), the sample covariance matrix, has long been known to perform poorly in general due to high variability \citep{Dempster1972}.
-The sample covariance becomes increasingly ill-conditioned as the number of variables $p$ approaches the sample size $n$ and singular when $p$ exceeds $n$.
-Because of its central statistical role, the list of statistical methods and applications utilizing the estimated covariance matrix is exceedingly long.
-Beside the many standard statistical methods such as principal component analysis (PCA) and discriminant analysis, examples of direct applications include gene and protein network analysis \citep{Butte2000, Margolin2006}, spectroscopic imaging \citep{Lin2007}, functional magnetic resonance imaging (fMRI), financial forecasting, and many more.
-Among this expanding list of applications is also an increasing number of high-dimensional applications and datasets publicly available in online repositories.
+To the best of our knowledge no approaches exist where meta-analysis of covariance matrices have been addressed explicitly. We acknowledge, however, that a number of indirect methods have been constructed. An immediate and tempting approach is to use one of the many batch correcting approaches scattered around in the literature \citep{Irizarry2003, Johnson2007, Lee2014} followed by estimating the covariance matrix either on a pooled data set or pooling covariance matrices estimated from each individual study as suggested by \cite{Lee2014}. This approach suffers from the same disadvantages as usual meta-analysis based on fixed effect pooling of effect estimates compared to random effects modelling as it puts too much weight on a large outlier in the data \citep{Borenstein2010}. 
 
-In genomic studies, the number of genes $p$ often far exceeds the number of samples $n$.
-Since the number of parameters increases quadratically in $p$ and the sample covariance matrix becomes singular when $p > n$ many shrinkage and regularization estimators have been proposed to combat the accompanying problems by effectively increasing the degrees of freedom.
-These examples include the graphical lasso and ridge estimation of the precision matrix \citep{Meinshausen2006, Friedman2008, vanWieringen2014}.
-Subsequently, focus on the selection of the regularization parameter has received much attention \citep{Fan2013}.
-These ``single study'' estimators in combination with batch-effect removing methods \citep{Lee2014} could serve as a basis for analysing a common covariance matrix from multiple studies.
-Table \ref{tab:studies} provides an overview of the studies used.
+Motivated by meta-analysis by random effects modelling, we suggest a hierarchical model where the covariance for each study is drawn from a suitable distribution with an underlying common mean covariance matrix, and data from each study is then subsequently generated by this covariance matrix. We suggest to use a maximum likelihood estimator for the underlying common covariance matrix and introduce an EM algorithm for its estimation. We use the method for the meta-analysis of gene correlation networks across 11 large-scale gene expression studies of diffuse large B-cell lymphoma (DLBCL). It is our expectation that a more suitable handling of the covariance matrix will lead to more adequate estimations of covariance matrices and subsequent inferred gene correlation networks. Table \ref{tab:studies} provides an overview of the used studies.
 
-Instead of attempting to derive still more sophisticated estimators, we attempt to alleviate the problem from a different angle by using more available data and thus effectively increasing $n$.
-We do so by utilizing 10 genomic DLBCL datasets which, as with all major groups of cancer, are now publicly available online.
-We use these studies in combination with data from our own laboratory as a network meta-analysis to arrive at a better estimate of the covariance matrix whilst accounting for and assessing inter-study variation.
-
-We note, that while the high-dimensional extension to $p > n$ is important it is out of scope in this paper.
-We restrict ourselves to the case where the total number of samples exceeds $p$.
-Hence, if $k$ classes are available with sample sizes $n_1, \ldots, n_k$, we consider the case where $p < \sum_{i=1}^k n_i$ while allowing $p$ to exceed $n_i$ for each individual class $i$.
-In this paper, the $k$ classes correspond to $k$ genomic studies.
-
-In Section \ref{sec:RCMmodel}, we propose the model for a common covariance matrix across multiple studies, derive estimators thereof, and propose an inter-study homogeneity measure to aid in assessing the variation between studies.
-Next, we apply the model in Section \ref{sec:DLBCL} to $2{,}046$ DLBCL samples across 11 datasets.
-We then assess the proposed model estimators via synthetic data in Section \ref{sec:estimationassessment} before concluding the manuscript in Section \ref{sec:conclusion}.
-
-Although this work was motivated by gene-gene interaction networks in DLBCL, where the covariance matrix is assumed to contain all information about the conditional dependencies of the genes, the methods are general and not limited to such genomic data.
+In Section \ref{sec:RCMmodel}, we propose the model for a common covariance matrix across multiple studies, derive estimators thereof, and propose an inter-study homogeneity measure to aid in assessing the variation between studies. Next we conduct an extensive simulation study in Section \ref{sec:estimationassessment} comparing the proposed model and simple pooling of covariance matrices. We the apply the model in Section \ref{sec:DLBCL} to $2{,}046$ DLBCL samples across 11 datasets before concluding the manuscript in Section \ref{sec:conclusion}. 
 
 
 \section{A hierarchical model for the covariance matrix}
@@ -476,62 +442,7 @@ For the RCM, the ICC is given by
   = \frac{1}{\nu - p}.
   \label{eq:ICCexprs}
 \end{align}
-This follows from the definition of the ICC which is the ratio of the between-study variation $\var(\Sigma_{ij})$ and the total variation $\var(S_{ij})$ of any single pair of variables.
-The ICC might in this sense be utilized in better quantifying the reproducibility of the covariance across studies.
-Consider observations from \eqref{eq:RCM}.
-We temporarily abuse our notation and let
-\begin{align*}
-  \vSigma \sim \calW_p^{-1}\!( \vPsi, \nu) \quad \text{ and }\quad
-  \vS | \vSigma \sim \calW_p(\vSigma, 1),
-\end{align*}
-and consider only a single observation $(n = 1)$.
-Furthermore, let
-$\vS = (S_{ij})_{p\times p}$,
-$\vSigma = (\Sigma_{ij})_{p \times p}$, and
-$\vPsi = (\Psi_{ij})_{p \times p}$.
-To compute the ICC, we are thus interested in the ratio of the quantities $\var(\Sigma_{ij})$ and $\var(S_{ij})$ corresponding to the between-study and total variation of the covariance between variables $i$ and $j$, respectively.
-That is, the ICC is the proportion of the total variance between studies,
-\begin{align}
-  \text{ICC}(\nu)
-  = \frac{\var(\Sigma_{ij})}
-         {\var(S_{ij})}
-  = \frac{\var(\Sigma_{ij})}
-         {\var(\Sigma_{ij}) + \bbE[ \var(S_{ij}|\vSigma) ]},
-  \label{eq:ICC}
-\end{align}
-where the second equality is obtained by $\bbE[S_{ij}|\vSigma] = \Sigma_{ij}$ and the law of total variation.
-This equality agrees with the usual ICC as $\bbE[\var(S_{ij}|\Sigma_{ij})]$ can be interpreted as the (expected) within-study variation.
-Using the conditional variance given by $\var(S_{ij}|\vSigma) = \Sigma_{ij}^2 + \Sigma_{ii} \Sigma_{jj}$ the needed quantities can be found.
-To compute an expression for \eqref{eq:ICC} we need to consider the fourth-order moments of the observations.
-From the model, known results of the inverse Wishart distribution, cf.\ \citep{Cook2011, Rosen1988}, leads to
-\begin{align}
-  \label{eq:invwishcovar}
-  \cov(\Sigma_{ij}, \Sigma_{kl})
-  = \frac{2\Psi_{ij}\Psi_{kl}+ (\nu{-}p{-}1)
-    \big(\Psi_{ik}\Psi_{jl} + \Psi_{il}\Psi_{kj}\big)}
-          {(\nu-p)(\nu-p-1)^2(\nu-p-3)}, \;\nu > p +3,
-\end{align}
-implying that
-\begin{align}
-  \var(\Sigma_{ij})
-  = \cov(\Sigma_{ij}, \Sigma_{ij})
-  \label{eq:invwishvar}
-  = \frac{(\nu-p+1)\Psi_{ij}^2 + (\nu-p-1)\Psi_{ii}\Psi_{jj}}
-          {(\nu-p)(\nu-p-1)^2(\nu-p-3)}.
-\end{align}
-Continuing with the expected conditional variance of $S_{ij} | \vSigma$ in the denominator of \eqref{eq:ICC},
-\begin{align}
-  \bbE\big[\var(S_{ij}|\Sigma_{ij})\big]
-  &= \var(\Sigma_{ij}) + \bbE[\Sigma_{ij}]^2
-    + \cov(\Sigma_{ii}, \Sigma_{jj})
-    + \bbE[\Sigma_{ii}]\bbE[\Sigma_{jj}]  \notag\\
-  &= \var(\Sigma_{ij}) + \cov(\Sigma_{ii}, \Sigma_{jj})
-    + (\nu-p-1)^{-2}(\Psi_{ij}^2 + \Psi_{ii}\Psi_{jj}).
-    \label{eq:varSij}
-\end{align}
-An expression of $\var(S_{ij})$ in terms of the elements of $\vPsi$ can then found by substituting \eqref{eq:invwishcovar} and \eqref{eq:invwishvar} into \eqref{eq:varSij} and by extension an expression for the ICC \eqref{eq:ICC} can be obtained.
-We omit this tedious calculation which can be verified to yield $\text{ICC}(\nu) = 1/(\nu - p)$ as above.
-Naturally, the ICC depends only on $\nu$.
+This follows from the definition of the ICC which is the ratio of the between-study variation $\var(\Sigma_{ij})$ and the total variation $\var(S_{ij})$ of any single pair of variables; the derivation is shown in Appendix \ref{app:ICC}. The ICC might in this sense be utilized in better quantifying the reproducibility of the covariance across studies. Naturally, the ICC depends only on $\nu$.
 A straight-forward plug-in estimator $\widehat{\text{ICC}}(\nu)$ of the ICC of some gene-gene interaction is then $\text{ICC}(\hat{\nu})$.
 
 Though $v > p + 3$ is required for the variances to exist, it is clear that
@@ -602,7 +513,7 @@ Next we tested the performance of the different methods in terms of computation 
 \subsection{Evaluation of the hypothesis testing}
 <<test_pvalue, echo=FALSE, results='hide'>>=
 @
-Finally we investigate the performance of the P-value for the hypothesis test suggested in equation \ref{eq:pvalue}. To do this, we simulate from the hierarchical model with $k=3$ and a range of different values for $p$, $\nu$, and $n_i$. For these simulations we used a $\Psi$ matrix with a diagonal of ones and $0.5$ for off-diagonal values. Simulations were done 100 times for each scenario, and 500 permutations were done for each simulation. Results summarized as boxplots of the P-values obtained in the 100 simulations for each scenario are shown in Supplementary Figure \ref{fig:S3}. We find that for heterogenous data (e.g. $p=20, \nu=30$) the null-hypothesis is clearly rejected if $n_i>p$. When increasing $\nu$ thus making the groups more similar, more observations are needed to reject the null hypothesis, while for identical groups, i.e. $\nu=\text{Inf}$, the null-hypothesis is not rejected. The P-values obtained from the permuation test thus performs as intended.
+Finally we investigate the performance of the P-value for the hypothesis test suggested in \eqref{eq:pvalue}. To do this, we simulate from the hierarchical model with $k=3$ and a range of different values for $p$, $\nu$, and $n_i$. For these simulations we used a $\Psi$ matrix with a diagonal of ones and $0.5$ for off-diagonal values. Simulations were done 100 times for each scenario, and 500 permutations were done for each simulation. Results summarized as boxplots of the P-values obtained in the 100 simulations for each scenario are shown in Supplementary Figure \ref{fig:S3}. We find that for heterogenous data (e.g. $p=20, \nu=30$) the null-hypothesis is clearly rejected if $n_i>p$. When increasing $\nu$ thus making the groups more similar, more observations are needed to reject the null hypothesis, while for identical groups, i.e. $\nu=\inf$, the null-hypothesis is not rejected. The P-values obtained from the permuation test thus performs as intended.
 
 \section{DLBCL meta-analysis}
 \label{sec:DLBCL}
@@ -674,7 +585,7 @@ In any case, the low ICC might still suggest high reproducibility of the covaria
 
 <<dlbcl_clustering, echo=FALSE, results='hide'>>=
 @
-Next we compare the estimated networks from the EM and Pool methods. For simplicity we employed a standard network analysis to the estimated common correlation matrix $\hat{\vec{R}}$ across all studies. To identify clusters with high internal correlation, we used agglomerative hierarchical clustering with \Sexpr{capitalize(dlbcl.par$linkage)}-linkage and distance measure defined as 1 minus the absolute value of the correlation. The network was arbitrarily pruned at a height which produced \Sexpr{dlbcl.par$n.modules} modules named by colors. Modules for the two methods are named to give the largest overlap of genes with similar color. The top row of Figure \ref{fig:3} shows heatmaps and associated networks for the EM and pool method, while the bottom row shows a tanglegram comparing the two.From the tanglegram we see that the olivegreen module defined by the Pool method is larger and contains parts of the gray module defined by EM method. Furthermore, a cophenetic correlation of 0.6 emphasises the difference between them.
+Next we compare the estimated networks from the EM and Pool methods. For simplicity we employed a standard network analysis to the estimated common correlation matrix $\hat{\vec{R}}$ across all studies. To identify clusters with high internal correlation, we used agglomerative hierarchical clustering with \Sexpr{capitalize(dlbcl.par$linkage)}-linkage and distance measure defined as 1 minus the absolute value of the correlation. The network was arbitrarily pruned at a height which produced \Sexpr{dlbcl.par$n.modules} modules named by colors. Modules for the two methods are named to give the largest overlap of genes with similar color. The top row of Figure \ref{fig:3} shows heatmaps and associated networks for the EM and pool method, while the bottom row shows a tanglegram comparing the two. From the tanglegram we see that the olivegreen module defined by the Pool method is larger and contains parts of the gray module defined by EM method. Furthermore, a cophenetic correlation of 0.6 emphasises the difference between them.
 
 \begin{figure}
 \begin{subfigure}{0.5\textwidth}
@@ -712,55 +623,26 @@ We checked if the identified modules were prognostic for overall survival (OS) i
 <<dlbcl_go_analysis, echo=FALSE, results='hide'>>=
 @
 
-Next, the modules were screened for biological relevance using GO (Gene Ontology) Molecular Function enrichment analysis. Since we pre-selected the top 300 genes by variance, the enrichment analysis was done using only these as the background genes. Results of the GO enrichment analysis at significance level \Sexpr{dlbcl.par$go.alpha.level} for each of the modules defined by respectively the EM and Pool method are shown in table \ref{tab:results.go}. while top20 genes for each module, ranked by correlation to the eigenGene in the CHOP cohort, are shown in Supplementary tables \ref{tab:rcm.eg.cors} and \ref{tab:pool.eg.cors}.
+Next, the modules were screened for biological relevance using GO (Gene Ontology) Molecular Function enrichment analysis. Since we pre-selected the top 300 genes by variance, the enrichment analysis was done using only these as the background genes. Results of the GO enrichment analysis at significance level \Sexpr{dlbcl.par$go.alpha.level} for each of the modules defined by respectively the EM and Pool method are shown in Table \ref{tab:results.go},  while top20 genes for each module, ranked by correlation to the eigenGene in the CHOP cohort, are shown in Supplementary Tables \ref{tab:rcm.eg.cors} and \ref{tab:pool.eg.cors}.
 
-\begin{centering}
-  \input{table3}
-\end{centering}
+\input{table3}
 
-The notion of MHC protein binding by GO annotation to the olivegreen module for the EM method in combination with prognostic significance suggests that immune surveillance is enraptured in this model. 
+The notion of MHC protein binding by GO annotation of the olivegreen module for the EM method in combination with prognostic significance suggests that immune surveillance is enraptured in this model. 
 Immune surveillance plays a major role in controlling the proliferation of cancers and it is reported several times that DLBCL fails to express cell-surface molecules which are necessary for the recognition of tumour cells by immune-effector cells \citep{DybkaerBoegsted2015, pmid22137796, pmid25008267}. For an active immune surveillance, surface expression of both MHC class I and II proteins is required. Hence, antigenic peptide-loaded MHC class II molecules are normally expressed on the surface of professional antigen-presenting cells including dendritic cells, B cells, macrophages and thymic epithelial cells, and are presented to antigen-specific CD4+ T cells \citep{pmid25720354}. If the malignant DLBCL cells have decreased expression they become invisible to the immunesystem resulting in a poor overall survival \citep{pmid14976040}. Loss of MHC class II can occur if the MHC class II transactivator CIITA is lost, which frequently occurs in lymphoid cancers of B-cell origin due to mutations and genetic aberrations \cite{pmid21368758}. 
 In 29\% of cases, due to the mutations in the B2M gene the cell-surface expression of the MHC class I (HLA-I) is lost in DLBCL. The HLA class-I complex is necessary for recognition by CD8+ cytotoxic T-cells. Although loss of HLA I would provide immune escape from cytotoxic T cells, cells that lack HLA I are normally targeted for destruction by natural killer cells (NK). However, mutations in the CD58 gene occurs in more than 21\% of DLBCL patients \citep{pmid22137796}. CD58, a ligand for the C2 receptor, is involved in the recognition and destruction of cells by both NK cells and CD8+ cytotoxic T-cells. In DLBCL, very often there is a coordinated loss of B2M and CD58 suggesting that they are co-selected during lymphoma genesis for their combined role in escape from immune-surveillance. \citep{pmid22137796, pmid25008267}
 In support of captured immunesurveilance via MHC function by the EM method is the observations of GNLY in the top 50 genes (Supplementary Table \ref{tab:olive.eg.cors}). GNLY (Granulycin) is located in the cytotoxic granules of natural killer cells and T cells, from where it is released upon antigen stimulation. It is noteworthy, that only 9 of the top 50 genes for the EM method are not included in the pool method, perhaps illustrating that the olivegreen module in EM method encounters better genes with biological impact on treatment response and outcome.
 
-Finally, we must point out that had the network been cut at a height resulting in five modules instead of three, more similar modules with the same impact on survival would have been observed for the two methods. However, the number of modules at which the network is cut is arbitrary, so it remains important to retain the correct distance between modules at all heights.
+Finally, we must point out that had the network been cut at a height resulting in five modules instead of three, more similar modules with the same impact on survival would have been observed for the two methods, as shown in Supplementary Figures \ref{fig:S6}, \ref{fig:S7}, and \ref{fig:S8}. However, the number of modules at which the network is cut is arbitrary, so it remains important to retain the correct distance between modules at all heights.
 
-
-\section{Concluding remarks}
+\section{Discussion}
 \label{sec:conclusion}
-This article provides a basic framework for modeling a common covariance structure across multiple studies applied to identify biologically meaningful gene-gene interaction networks in DLBCL.
-The straight-forward approaches of using the mean or pooled covariance matrix are seen as moment estimators of the model and the estimate using the EM algorithm is shown to be superior to these simple alternatives.
-While the improvements are modest, the article demonstrates a potentially advantageous way of modelling the inter-study variability by a hierarchical random covariance model.
-However, the virtue of such a model is not from improvement in accuracy alone.
-The model-based approach allows investigating and testing both pairwise and global covariance structures correlations of genes, which we consider for future research.
-Another feature is the invertible estimate provided by the RCM, which allows users to explore the corresponding Gaussian graphical model.
-Also desirable is the explicit and interpretable quantification of the inter-study variance.
-If $\nu$ is estimated to be large, the studies exhibit a largely common covariance structure, and vice-versa when $\nu$ is estimated to be small.
-We have provided the ICC for the RCM as an attempt to aid in the interpretation of $\nu$.
-Also provided is the basic framework for testing if study heterogeneity is present.
-However, the proposed testing is computationally demanding and only feasible when $p$ is sufficiently small.
-This could e.g.\ be overcome by an improved and faster fitting procedures or by deriving the distribution of $\hat{\nu}$ under the null hypothesis.
-Yet the latter is seemingly intractable as $\hat{\nu}$ is a very complex function of the data.
-The fact that the null-hypothesis lies on the edge of parameter space also seems to constrain the feasibility of deriving such a distribution.
+The proposed random covariance model for meta-analysis of covariance structures across multiple studies was shown to be superior to the simple pooling as suggested previously in the literature. The estimated covariance matrix was also capable of providing a dissimilarity measure, which was able to pinpoint alternative biologically meaningful gene correlation networks in DLBCL, which can be used to formulate new hypothesis about the role of immune therapy in DLBCL.
 
-One might question whether the added utility of the $\nu$ parameter is an obvious relaxation of covariance homogeneity.
-For example, it is unclear how large a proportion a \textit{single} extra parameter can explain of the inter-study variance.
-Hence, the present work should be considered a first step in the direction of explicitly modeling the inter-study variation of covariances.
+However, the proposed testing is computationally demanding and only feasible when $p$ is sufficiently small. This could e.g.\ be overcome by an improved and faster fitting procedures or by deriving the distribution of $\hat{\nu}$ under the null hypothesis. Yet the latter is seemingly intractable as $\hat{\nu}$ is a very complex function of the data. The fact that the null-hypothesis lies on the edge of the parameter space also seems to constrain the feasibility of deriving such a distribution. One might question whether the added utility of the $\nu$ parameter provides sufficient relaxation of the covariance homogeneity. Hence, the present work should be considered a first step in the direction of explicitly modelling the inter-study variation of covariance matrices. It is also worth noticing, that although the suggested method proved to be superior to simple pooling, it only works for small or moderate numbers of features $p$. This can partly be alleviated by combining multiple studies to yield a sufficiently large total sample size $n_\bullet$ that allows for the estimation of large covariance matrices.
 
-As demonstrated, combining multiple studies can yield a sufficiently large total sample size $n_\bullet$ that allows for estimation of large covariance matrices without the use of regularization.
-However, we believe this work could be further enriched by combining the method with regularized estimation.
-Such a generalization of the model to $p \gg n_\bullet$ is extremely interesting though out of scope for this article.
+The moderate size of $p$ is a severe drawback as many methods have been published concerning estimation of large covariance matrices by various regularization methods \citep{Meinshausen2006, Friedman2008, vanWieringen2014}. Therefore we believe this work could be further enriched by combining the method with regularized estimation. In the future such generalization of the model to $p \gg n_\bullet$ is extremely interesting though out of scope for this article.
 
-The recent advances in such regularized techniques which allows for analysis of large covariance matrices has unfortunately diminished the focus on collecting an adequate number of samples.
-The technically possible estimates for extreme $n/p$ ratios does not necessarily imply that a good estimate is achieved.
-For example, while non-zero entries can often be accurately recalled in graphical lasso, actual estimates of the covariances (or precisions) can still be heavily biased.
-Large sample-sizes are still needed to achieve unbiased estimates of the covariance due to the bias-variance trade-off.
-An increased focus should therefore also appointed to efficiently aggregating datasets and achieving sufficiently large sample sizes to allow for stable and unbiased estimation of covariance matrices.
-Likewise, results should be validated in independent experiments.
-
-
-
-
+In conclusion the article demonstrates an advantageous model based way of conducting meta-analaysis of covariance matrices - especially in a moderate number of features setting. One should also notice the method seems to provide a generally applicable framework making it usable in other settings where multiple features are measured and believed to share a common covariance matrix obscured by study dependent noise. 
 
 \section*{Acknowledgments}
 We thank Martin Raussen, Jon Johnsen, as well as Niels Richard Hansen for their assistance on some of the mathematical proofs.
@@ -770,8 +652,8 @@ The technical assistance from Alexander Schmitz, Julie S.\ B\o{}dker, Ann-Maria 
 \begin{supplement}
 \sname{Supplement A}\label{suppA}
 \stitle{Appendices}
-\slink[url]{http://people.math.aau.dk/\~{}abilgrau/RCM/SuppC/}
-\sdescription{Appendices for the article.}
+\slink[url]{http://github.com/AEBilgrau/RCM}
+\sdescription{Supplementary figures, tables and proofs.}
 \end{supplement}
 
 \begin{supplement}
@@ -832,7 +714,7 @@ The technical assistance from Alexander Schmitz, Julie S.\ B\o{}dker, Ann-Maria 
 
 \begin{figure}[H]
   \includegraphics[width=0.8\linewidth]{FigureS3.jpg}
-  \caption{Boxplot of obtained P-values from the permutation procedure under different values of $p$, $\nu$ and $n$}
+  \caption{Boxplot of obtained P-values from the permutation procedure under different values of $p$, $\nu$ and $n_i$}
   \label{fig:S3}
 \end{figure}
 
@@ -852,19 +734,16 @@ The technical assistance from Alexander Schmitz, Julie S.\ B\o{}dker, Ann-Maria 
 \begin{subfigure}{0.5\textwidth}
   \centering
   \includegraphics[width=\linewidth]{FigureS6A.jpg}
-   \label{fig:3a}
-\end{subfigure}%
+   \end{subfigure}%
 \begin{subfigure}{0.5\textwidth}
   \centering
   \includegraphics[width=\linewidth]{FigureS6B.jpg}
-  \label{fig:3b}
-\end{subfigure}
+  \end{subfigure}
 \\
 \begin{subfigure}{\textwidth}
 	\centering
 	  \includegraphics[width=\linewidth]{FigureS6C.jpg}
-	    \label{fig:3c}
-	\end{subfigure}
+	 \end{subfigure}
 \caption{Heatmaps and tanglegram for the estimated correlation matrices of the top 300 genes for the DLBCL data using either the EM or Pool method. Networks are cut at a height producing 5 clusters, and the tanglegram shows the comparison of clusters between the two methods}
 \label{fig:S6}
 \end{figure}
@@ -1379,6 +1258,62 @@ which suggests the estimators
   = \frac{\sum_{i=1}^k (\nu + n_i) \vS_i}{(\nu-p-1)n_\bullet}.
 \end{align}
 These estimates are seen to correspond to a weighted sum of the scatter matrices.
+
+\section{Derivation of ICC}
+\label{app:ICC}
+Consider observations from \eqref{eq:RCM}.
+We temporarily abuse our notation and let
+\begin{align*}
+  \vSigma \sim \calW_p^{-1}\!( \vPsi, \nu) \quad \text{ and }\quad
+  \vS | \vSigma \sim \calW_p(\vSigma, 1),
+\end{align*}
+and consider only a single observation $(n = 1)$.
+Furthermore, let
+$\vS = (S_{ij})_{p\times p}$,
+$\vSigma = (\Sigma_{ij})_{p \times p}$, and
+$\vPsi = (\Psi_{ij})_{p \times p}$.
+To compute the ICC, we are thus interested in the ratio of the quantities $\var(\Sigma_{ij})$ and $\var(S_{ij})$ corresponding to the between-study and total variation of the covariance between variables $i$ and $j$, respectively.
+That is, the ICC is the proportion of the total variance between studies,
+\begin{align}
+  \text{ICC}(\nu)
+  = \frac{\var(\Sigma_{ij})}
+         {\var(S_{ij})}
+  = \frac{\var(\Sigma_{ij})}
+         {\var(\Sigma_{ij}) + \bbE[ \var(S_{ij}|\vSigma) ]},
+  \label{eq:ICC}
+\end{align}
+where the second equality is obtained by $\bbE[S_{ij}|\vSigma] = \Sigma_{ij}$ and the law of total variation.
+This equality agrees with the usual ICC as $\bbE[\var(S_{ij}|\Sigma_{ij})]$ can be interpreted as the (expected) within-study variation.
+Using the conditional variance given by $\var(S_{ij}|\vSigma) = \Sigma_{ij}^2 + \Sigma_{ii} \Sigma_{jj}$ the needed quantities can be found.
+To compute an expression for \eqref{eq:ICC} we need to consider the fourth-order moments of the observations.
+From the model, known results of the inverse Wishart distribution, cf.\ \citep{Cook2011, Rosen1988}, leads to
+\begin{align}
+  \label{eq:invwishcovar}
+  \cov(\Sigma_{ij}, \Sigma_{kl})
+  = \frac{2\Psi_{ij}\Psi_{kl}+ (\nu{-}p{-}1)
+    \big(\Psi_{ik}\Psi_{jl} + \Psi_{il}\Psi_{kj}\big)}
+          {(\nu-p)(\nu-p-1)^2(\nu-p-3)}, \;\nu > p +3,
+\end{align}
+implying that
+\begin{align}
+  \var(\Sigma_{ij})
+  = \cov(\Sigma_{ij}, \Sigma_{ij})
+  \label{eq:invwishvar}
+  = \frac{(\nu-p+1)\Psi_{ij}^2 + (\nu-p-1)\Psi_{ii}\Psi_{jj}}
+          {(\nu-p)(\nu-p-1)^2(\nu-p-3)}.
+\end{align}
+Continuing with the expected conditional variance of $S_{ij} | \vSigma$ in the denominator of \eqref{eq:ICC},
+\begin{align}
+  \bbE\big[\var(S_{ij}|\Sigma_{ij})\big]
+  &= \var(\Sigma_{ij}) + \bbE[\Sigma_{ij}]^2
+    + \cov(\Sigma_{ii}, \Sigma_{jj})
+    + \bbE[\Sigma_{ii}]\bbE[\Sigma_{jj}]  \notag\\
+  &= \var(\Sigma_{ij}) + \cov(\Sigma_{ii}, \Sigma_{jj})
+    + (\nu-p-1)^{-2}(\Psi_{ij}^2 + \Psi_{ii}\Psi_{jj}).
+    \label{eq:varSij}
+\end{align}
+An expression of $\var(S_{ij})$ in terms of the elements of $\vPsi$ can then found by substituting \eqref{eq:invwishcovar} and \eqref{eq:invwishvar} into \eqref{eq:varSij} and by extension an expression for the ICC \eqref{eq:ICC} can be obtained.
+We omit this tedious calculation which can be verified to yield $\text{ICC}(\nu) = 1/(\nu - p)$ as given in \eqref{eq:ICCexprs}
 
 
 \end{document}

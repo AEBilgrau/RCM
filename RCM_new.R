@@ -489,12 +489,12 @@ if(!exists("results.test.sigmas") || recompute){
 
 results.test.sigmas.table <- makeTable(results.test.sigmas)
 results.test.sigmas.table <- results.test.sigmas.table[,-c(4,7)] #Remove MLE results
-names(results.test.sigmas.table) <- c("$n_i$", "nu", "EM","Pool", "EM", "Pool")
+names(results.test.sigmas.table) <- c("$n_i$", "$\\nu$", "EM","Pool", "EM", "Pool")
 
 caption <- 'Mean cophenetic correlation and 
             Kullback-Leibler divergence with $95\\%$ confidence,
             for estimated  vs true network for 
-            different values of nu and $n_i$ using the EM or Pool method'
+            different values of $\\nu$ and $n_i$ using the EM or Pool method'
 
 table1 <- latex(results.test.sigmas.table, file = "table1.tex",
                 title = "Clustering results",
@@ -529,13 +529,13 @@ if(!exists("results.idrc.test.sigmas") || recompute){
 
 results.idrc.test.sigmas.table <- makeTable(results.idrc.test.sigmas)
 results.idrc.test.sigmas.table <- results.idrc.test.sigmas.table[,-c(4,7)] #Remove MLE results
-names(results.idrc.test.sigmas.table) <- c("$n_i$", "nu", "EM","Pool", "EM", "Pool")
+names(results.idrc.test.sigmas.table) <- c("$n_i$", "$\\nu$", "EM","Pool", "EM", "Pool")
 
 
 caption <- 'Simulation results based on IDRC data. Mean cophenetic correlation and 
             Kullback-Leibler divergence  with $95\\%$ confidence,
             for estimated vs true network for 
-            different values of nu and $n_i$ using the EM or Pool method'
+            different values of $\\nu$ and $n_i$ using the EM or Pool method'
 
 tableS1 <- latex(results.idrc.test.sigmas.table,
                 file = "tableS1.tex",
@@ -545,8 +545,7 @@ tableS1 <- latex(results.idrc.test.sigmas.table,
                 label = "tab:results.clustering.idrc",
                 rowname=NULL,
                 cgroup = c("", "Cophenetic Correlation", "Kullback-Leibler divergence"),
-                n.cgroup = c(2,2,2),
-                greek = TRUE)
+                n.cgroup = c(2,2,2))
 
 ## Example Tanglegrams
 exIndex <- 13
@@ -698,7 +697,7 @@ results.test.p.values.plot <- do.call(rbind, results.test.p.values2)
 results.test.p.values.plot$scenario <- with(results.test.p.values.plot, paste0("p=",p, ", nu=", nu, ", n_i=", n))
 
 p.value.plot <- ggplot(results.test.p.values.plot, aes(x=scenario, y=p.value)) +
-  geom_boxplot() + 
+  geom_boxplot() +
   theme(axis.text.x = element_text(angle = 40, hjust = 1),text = element_text(size=15))
 
 jpeg("FigureS3.jpg", height=7, width=10, units = "in", res = 200)
@@ -1094,40 +1093,70 @@ if(!exists("dlbcl.pool.go.analysis") || recompute){
 }
 
 ### Make table with GO terms
+
+# EM
 tmp <- dlbcl.go.analysis
 names(tmp) <- cleanName(names(tmp))
 go.table <- do.call(rbind, tmp)
-
-tmp2 <- dlbcl.pool.go.analysis
-names(tmp2) <- cleanName(names(tmp2))
-go.table2 <- do.call(rbind, tmp2)
-
-go.table3 <- merge(go.table[,c(1,2,6)], go.table2[,c(1,2,6)], by=0, all.y=T)
 go.col <- gsub("(^|[[:space:]])([[:alpha:]])",
-               "\\1\\U\\2", gsub("\\.[0-9]+$", "", go.table3$Row.names),
+               "\\1\\U\\2", gsub("\\.[0-9]+$", "", row.names(go.table)),
                perl = TRUE)
-go.table3 <- go.table3[order(go.col, go.table3$classicFisher.y),]
-go.table3 <- go.table3[,-1]
-names(go.table3) <- c("GO ID", "Term", "P", "GO ID", "Term", "P")
-go.table3[is.na(go.table3)] <- " "
-rownames(go.table3) <- NULL
+colnames(go.table)[3:6] <- c("$N$", "$O$", "$E$", "$P$-val")
+rownames(go.table) <- NULL
 
 
-go.table <- latex(go.table3[,-1],
-                  rowname = go.table3[,1],
-                  rgroup = unique(go.col),
-                  label  = "tab:results.go",
-                  cgroup = c("EM", "Pool"),
-                  n.cgroup = c(2,3),
-                  n.rgroup = table(go.col)[unique(go.col)],
-                  title = "GO ID",
-                  size = "tiny",
-                  caption = paste0("The significant GO terms in the EM- and Pool-modules at ",
-                                   "$\\alpha$-level ", dlbcl.par$go.alpha.level, "."),
-                  #longtable = TRUE,
-                  lines.page = 80,
-                  center = "centering",
-                  file = "table3.tex")
+# Pool
+tmp <- dlbcl.pool.go.analysis
+names(tmp) <- cleanName(names(tmp))
+go.table2 <- do.call(rbind, tmp)
+go.col2 <- gsub("(^|[[:space:]])([[:alpha:]])",
+               "\\1\\U\\2", gsub("\\.[0-9]+$", "", row.names(go.table2)),
+               perl = TRUE)
+colnames(go.table2)[3:6] <- c("$N$", "$O$", "$E$", "$P$-val")
+rownames(go.table2) <- NULL
+
+# Combined table
+go.table3 <- latex(rbind(go.table[,-c(1,3)], go.table2[,-c(1,3)]),
+                   rgroup = c(paste("EM", unique(go.col), sep=" - "), paste("Pool", unique(go.col2), sep=" - ")), 
+                   rowname = c(go.table[, 1], go.table2[, 1]),
+                   label  = "tab:results.go",
+                   n.rgroup = c(table(go.col)[unique(go.col)],table(go.col2)[unique(go.col2)]),
+                   title = "GO ID",
+                   size = "tiny",
+                   caption = paste0("The significant GO terms in the modules from the EM and Pool method at ",
+                                    "$\\alpha$-level ", dlbcl.par$go.alpha.level, "."),
+                   lines.page = 80,
+                   center = "centering",
+                   file = "table3.tex")
+
+
+# Combined table Wide
+#go.table3 <- merge(go.table[,c(1,2,6)], go.table2[,c(1,2,6)], by=0, all.y=T)
+#go.col <- gsub("(^|[[:space:]])([[:alpha:]])",
+#               "\\1\\U\\2", gsub("\\.[0-9]+$", "", go.table3$Row.names),
+#               perl = TRUE)
+#go.table3 <- go.table3[order(go.col, go.table3$classicFisher.y),]
+#go.table3 <- go.table3[,-1]
+#names(go.table3) <- c("GO ID", "Term", "P", "GO ID", "Term", "P")
+#go.table3[is.na(go.table3)] <- " "
+#rownames(go.table3) <- NULL
+
+#go.table <- latex(go.table3[,-1],
+#                  rowname = go.table3[,1],
+#                  rgroup = unique(go.col),
+#                  label  = "tab:results.go",
+#                  cgroup = c("EM", "Pool"),
+#                  n.cgroup = c(2,3),
+#                  n.rgroup = table(go.col)[unique(go.col)],
+#                  title = "GO ID",
+#                  size = "tiny",
+#                  caption = paste0("The significant GO terms in the EM- and Pool-modules at ",
+#                                   "$\\alpha$-level ", dlbcl.par$go.alpha.level, "."),
+#                  #longtable = TRUE,
+ #                 lines.page = 80,
+#                  center = "centering",
+#                  file = "table3.tex")
+
 
 
 ### Correlate eigenGenes to Genes in modules for CHOP dataset
@@ -1204,7 +1233,7 @@ pool.eg.table <- latex(pool.eigen.cors,
 
 olive.eg.table <- latex(olive.eg.cors,
                       label  = "tab:olive.eg.cors",
-                      cgroup = c("RCM", "Pool"),
+                      cgroup = c("EM", "Pool"),
                       n.cgroup = c(2,2),
                       size = "tiny",
                       caption = paste("The top 50 genes in the olive module for the EM vs Pool method and",
