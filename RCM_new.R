@@ -31,6 +31,8 @@ library("dplyr")
 library("tawny")
 library("foreach")
 library("WGCNA")
+library("igraph")
+library("gProfileR")
 
 #########################
 ### Multicore support ###
@@ -225,9 +227,9 @@ test.sigmas <- function(real.hclu, real.sigma, results_list){
                     "rcm.copheno"=cor_cophenetic(real.dendro, rcm.dendro),
                     "mle.copheno"=cor_cophenetic(real.dendro, mle.dendro),
                     "pool.copheno"=cor_cophenetic(real.dendro, pool.dendro),
-                    "rcm.kl"=divergence.kl(real.sigma, cov2cor(results_list$sigma.rcm)),
-                    "mle.kl"=divergence.kl(real.sigma, cov2cor(results_list$sigma.mle)),
-                    "pool.kl"=divergence.kl(real.sigma, cov2cor(results_list$sigma.pool)))
+                    "rcm.kl"=divergence.kl(real.sigma, results_list$sigma.rcm),
+                    "mle.kl"=divergence.kl(real.sigma, results_list$sigma.mle),
+                    "pool.kl"=divergence.kl(real.sigma, results_list$sigma.pool))
   
   
   return(test.results)
@@ -488,13 +490,13 @@ if(!exists("results.test.sigmas") || recompute){
 }
 
 results.test.sigmas.table <- makeTable(results.test.sigmas)
-results.test.sigmas.table <- results.test.sigmas.table[,-c(4,7)] #Remove MLE results
-names(results.test.sigmas.table) <- c("$n_i$", "$\\nu$", "EM","Pool", "EM", "Pool")
+results.test.sigmas.table <- results.test.sigmas.table[,-4] #Remove MLE results for copheno
+names(results.test.sigmas.table) <- c("$n_i$", "$\\nu$", "EM","Pool", "EM", "MLE","Pool")
 
 caption <- 'Mean cophenetic correlation and 
             Kullback-Leibler divergence with $95\\%$ confidence,
             for estimated  vs true network for 
-            different values of $\\nu$ and $n_i$ using the EM or Pool method'
+            different values of $\\nu$ and $n_i$ using the EM, MLE or Pool method'
 
 table1 <- latex(results.test.sigmas.table, file = "table1.tex",
                 title = "Clustering results",
@@ -503,7 +505,7 @@ table1 <- latex(results.test.sigmas.table, file = "table1.tex",
                 label ="tab:results.clustering",
                 rowname=NULL,       
                 cgroup = c("", "Cophenetic Correlation", "Kullback-Leibler divergence"),
-                n.cgroup = c(2,2,2))
+                n.cgroup = c(2,2,3))
 
 
 ## IDRC data
@@ -528,14 +530,14 @@ if(!exists("results.idrc.test.sigmas") || recompute){
 }
 
 results.idrc.test.sigmas.table <- makeTable(results.idrc.test.sigmas)
-results.idrc.test.sigmas.table <- results.idrc.test.sigmas.table[,-c(4,7)] #Remove MLE results
-names(results.idrc.test.sigmas.table) <- c("$n_i$", "$\\nu$", "EM","Pool", "EM", "Pool")
+results.idrc.test.sigmas.table <- results.idrc.test.sigmas.table[,-4] #Remove MLE results
+names(results.idrc.test.sigmas.table) <- c("$n_i$", "$\\nu$", "EM","Pool", "EM","MLE", "Pool")
 
 
 caption <- 'Simulation results based on IDRC data. Mean cophenetic correlation and 
             Kullback-Leibler divergence  with $95\\%$ confidence,
             for estimated vs true network for 
-            different values of $\\nu$ and $n_i$ using the EM or Pool method'
+            different values of $\\nu$ and $n_i$ using the EM, MLE or Pool method'
 
 tableS1 <- latex(results.idrc.test.sigmas.table,
                 file = "tableS1.tex",
@@ -545,7 +547,7 @@ tableS1 <- latex(results.idrc.test.sigmas.table,
                 label = "tab:results.clustering.idrc",
                 rowname=NULL,
                 cgroup = c("", "Cophenetic Correlation", "Kullback-Leibler divergence"),
-                n.cgroup = c(2,2,2))
+                n.cgroup = c(2,2,3))
 
 ## Example Tanglegrams
 exIndex <- 13
@@ -717,7 +719,7 @@ dlbcl.par <- list(top.n = 300,
                   go.alpha.level = 0.01,
                   ontology = "MF",
                   minModuleSize = 20,
-                  n.modules = 3,
+                  n.modules = 5,
                   threshold = NA)
 
 ### Subset to top 300 genes
@@ -849,18 +851,11 @@ jpeg("Figure2.jpg", width = 7, height = 7/2, units = "in", res = 200)
 }
 dev.off()
 
-
-
-
-
-### Retrieve Sigma matrices and calculate Hclusts
+### Retrieve Sigma and Correlation matrices and calculate Hclusts for RCM
 dlbcl.rcm.sigma  <- with(dlbcl.rcm, Psi2Sigma(Psi,nu))
-dlbcl.pool.sigma <- with(dlbcl.pool, Psi2Sigma(Psi,nu))
+dlbcl.rcm.cor <- cov2cor(dlbcl.rcm.sigma)
+dlbcl.rcm.hclu   <- flashClust(my.dist(dlbcl.rcm.cor), method=dlbcl.par$linkage)
 
-rownames(dlbcl.pool.sigma) <- colnames(dlbcl.pool.sigma) <- colnames(dlbcl.rcm.sigma)
-
-dlbcl.rcm.hclu   <- flashClust(my.dist(cov2cor(dlbcl.rcm.sigma)), method=dlbcl.par$linkage)
-dlbcl.pool.hclu  <- flashClust(my.dist(cov2cor(dlbcl.pool.sigma)), method=dlbcl.par$linkage)
 
 ### Define colors for clusters
 num2col <- c("gray32",
@@ -869,20 +864,12 @@ num2col <- c("gray32",
              "lightskyblue3",
              "coral3")
 
-
-
 ### Make clusters from RCM model
 dlbcl.cut <- cutree(dlbcl.rcm.hclu, k = dlbcl.par$n.modules)
 dlbcl.modules <- num2col[dlbcl.cut]
 names(dlbcl.modules) <- dlbcl.rcm.hclu$labels
 tangle.colors <- dlbcl.modules[order.dendrogram(as.dendrogram(dlbcl.rcm.hclu))]
 
-### Make clusters from POOL model
-dlbcl.pool.cut <- cutree(dlbcl.pool.hclu, k = dlbcl.par$n.modules)
-dlbcl.pool.modules <- num2col[dlbcl.pool.cut]
-names(dlbcl.pool.modules) <- dlbcl.pool.hclu$labels
-
-table(dlbcl.modules, dlbcl.pool.modules)
 
 ## Heatmap for RCM
 jpeg("Figure3A.jpg", width = 7, height = 7, units="in", res = 200)
@@ -899,67 +886,112 @@ heatmap.2(cov2cor(dlbcl.rcm.sigma),
           main="EM")
 dev.off()
 
-## Heatmap for Pool
+
+## iGraph for RCM
+# PANEL GRAPH layout
+layout.custom <- function(graph,...) {
+  l <- layout.circle(graph)
+  layout_with_fr(graph, niter = 5000,
+                 weights = abs(E(graph)$weight),
+                 coords = l)
+}
+
+
+scaleToLayout <- function(x) {
+  return(2*apply(x, 2, function(x) (x - min(x))/max(x - min(x))) - 1)
+}
+
+# Colors for igraph
+n.col <- 256
+keybreaks <- seq(min(dlbcl.rcm.cor), max(dlbcl.rcm.cor), length.out = n.col)
+
+keycols <- rep("White", n.col - 1)
+tmp <- rle(diff(sign(keybreaks)))
+neg <- tmp$lengths[1]
+pos <- tmp$lengths[3]
+keycols[1:neg] <- colorRampPalette(c("Blue", "White"))(neg)
+keycols[(neg+2):(neg+pos+1)] <- colorRampPalette(c("White", "Red"))(pos)
+
+
+# Make graph
+dlbcl.g <- graph.adjacency(abs(dlbcl.rcm.cor), mode = "undirected",
+                           weighted = TRUE, diag = FALSE)
+V(dlbcl.g)$name  <- map2hugo(V(dlbcl.g)$name)
+V(dlbcl.g)$color <- dlbcl.modules
+E(dlbcl.g)$color <- keycols[cut(E(dlbcl.g)$weight, keybreaks)]
+
+w <- E(dlbcl.g)$weight
+dlbcl.par$threshold <- quantile(abs(w), prob = 0.90)
+
+## Define labels for color legend
+num2names <- c("Antigen & receptor binding",
+               "Fatty acid binding & peptidase activity",
+               "Inflamation & immuneresponse. Lipid metabolisme.",
+               "Extracellular matrix structure & Growthfactor.",
+               "Cytoskeleton organization")
+names(num2names) <- num2col
+
+
+# Plot graph
 jpeg("Figure3B.jpg", width = 7, height = 7, units="in", res = 200)
-heatmap.2(cov2cor(dlbcl.pool.sigma),
-          distfun = my.dist,
-          col = hmColors,
-          breaks = seq(-1,1, length.out = 100),
-          hclustfun = my.hclust,
-          dendrogram = "column",
-          trace = "none",
-          ColSideColors = dlbcl.pool.modules,
-          labRow = NA,
-          labCol = NA,
-          main="Pool")
+layout(matrix(c(1,1,2,2), 2, 2, byrow = TRUE), 
+       widths=c(1,1), heights=c(1,4))
+
+tab <- table(dlbcl.modules)
+go.func <- num2names[match(names(tab), names(num2names))]
+stopifnot(names(tab) == names(go.func))
+
+par(xaxs = "i", yaxs = "i", mar = c(0, 0, 0, 0) + 0.1)
+plot(1, type = "n", axes = FALSE, xlab = "", ylab = "")
+legend(0.7, 1, bty = "n", col = "black", pt.bg = names(tab),
+       cex = 1.2, pch = 22, pt.cex = 3,
+       title = "Modules", legend = capitalize(cleanName(names(tab))),
+       xjust = 0.5, yjust = 0.5)
+legend(.8, 1, bty = "n", col = "black", cex = 1.2, xjust = 0.5, yjust = 0.5,
+       title = "Size", legend =  sprintf("(%d)", tab))
+legend(1.07, 1, bty = "n", col = "black", cex = 1.2, xjust = 0.5, yjust = 0.5,
+       title = "Suggested GO function", legend =  rep("", 5))
+legend(1.12, 1, bty = "n", col = "black", cex = 1.0,
+       title = "", xjust = 0.5, yjust = 0.5,
+       legend =  go.func, y.intersp = 1.25)
+
+# Plot Graph
+tmp.g <- delete.edges(dlbcl.g, which(abs(w) < dlbcl.par$threshold))
+V(tmp.g)$size <- 3
+E(tmp.g)$width <- 1.3
+V(tmp.g)$frame.color <- V(tmp.g)$color
+l <- layout.custom(tmp.g)
+plot(tmp.g, layout = l, vertex.label = "")
+points(scaleToLayout(l), pch = 16, cex = 0.3)
 dev.off()
 
-### Tanglegram of RCM vs Pool
-dlbcl.rcm.dend <- as.dendrogram(dlbcl.rcm.hclu)
-labels_colors(dlbcl.rcm.dend) <- dlbcl.modules[order.dendrogram(dlbcl.rcm.dend)]
 
-dlbcl.pool.dend <- as.dendrogram(dlbcl.pool.hclu)
-labels_colors(dlbcl.pool.dend) <- dlbcl.pool.modules[order.dendrogram(dlbcl.pool.dend)]
-
-copheno_rcm_pool <- cor_cophenetic(dlbcl.rcm.dend, dlbcl.pool.dend)
-jpeg("Figure3C.jpg", width = 7, height = 7/2, units="in", res = 200)
-tanglegram(dlbcl.rcm.dend, dlbcl.pool.dend,
-           sort=F, 
-           main_left="EM", 
-           main_right="Pool", 
-           lwd=2,
-           cex_main = 1.2,
-           color_lines=tangle.colors,
-           lab.cex=0.5,
-           edge.lwd=2,
-          # k_labels = 3,
-           main=paste("Cophenetic correlation =", round(copheno_rcm_pool,2))
-)
-dev.off()
-
+### Survival analysis with EM modules
 ### Survival analysis for clusters
 load("~/GitHub/RCM/metadata.RData")
 the.module <- num2col[2] # = "darkolivegreen3"
 
 
-
-plot_surv_fig <- function(meta, gep, sampleID){
+figure4 <- "Figure4.jpg"
+jpeg(figure4, height = 1.2*7, width = 2*7, units = "in", res = 200)
+{
   par(mar = c(4, 4, 1, 0) + 0.1, oma = c(0,0,0,0), xpd = TRUE, cex = 1.2,
       mgp = c(3, 1, 0)*0.75)
   layout(cbind(1:2,3:4), heights = c(1,2))
   
-  rownames(meta) <- as.character(sampleID)
-  
   for (j in 1:2) {
     
-    modules <- switch(j, dlbcl.modules, dlbcl.pool.modules)
-    expr <- gep[names(modules),]
+    meta <- switch(j, metadataLLMPPCHOP, metadataLLMPPRCHOP)
+    rownames(meta) <- as.character(meta$GEO.ID)
+    expr <- switch(j,
+                   (gep.sub$GEPLLMPPCHOP.ensg)[names(dlbcl.modules), ],
+                   (gep.sub$GEPLLMPPRCHOP.ensg)[names(dlbcl.modules), ])
     meta <- meta[colnames(expr), ] # Reorder
     
     # Check order
     stopifnot(rownames(meta) == colnames(expr))
     
-    res <- moduleEigengenes(t(expr), modules)
+    res <- moduleEigengenes(t(expr), dlbcl.modules)
     eg <- res$eigengenes
     col <- gsub("^ME", "", colnames(eg))
     eg <- as.data.frame(lapply(eg, function(x) x/sd(x))) # Standardize
@@ -998,25 +1030,15 @@ plot_surv_fig <- function(meta, gep, sampleID){
                bty = "n", text.col = col[i])
       }
     }
-    title(switch(j, "EM", "Pool"), xpd = TRUE)
+    title(switch(j, "GSE10846 CHOP", "GSE10846 R-CHOP"), xpd = TRUE)
   }
 }
-
-jpeg("Figure4.jpg", height = 1.2*7, width = 2*7, units = "in", res = 200)
-  plot_surv_fig(metadataLLMPPCHOP, gep.sub$GEPLLMPPCHOP.ensg, metadataLLMPPCHOP$GEO.ID)
 dev.off()
 
-jpeg("FigureS5.jpg", height = 1.2*7, width = 2*7, units = "in", res = 200)
-  plot_surv_fig(metadataLLMPPRCHOP, gep.sub$GEPLLMPPRCHOP.ensg, metadataLLMPPRCHOP$GEO.ID)
-dev.off()
 
-#plot_surv_fig(metadataIDRC, gep.sub$GEPIDRC.ensg, gsub(".CEL", "", metadataIDRC$Array.Data.File))
-#plot_surv_fig(metadataCHEPRETRO, gep.sub$GEPCHEPRETRO.ensg, gsub(".CEL", "", metadataCHEPRETRO$file))
-
-
-### TOPGO analysis
-all.genes <- gsub("_at$", "", names(sort(var.pool, decreasing = TRUE)))
-
+#####################################
+### Top genes in DLBCL RCM modules ##
+#####################################
 if(!exists("gene.info") || recompute){
   mart <- useMart(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")
   attributes <- c("hgnc_symbol", "chromosome_name", "start_position",
@@ -1043,257 +1065,114 @@ map2hugo <- function(ensg) {
   return(ans)
 }
 
+# Genes in modules
+mod.genes <- list()
+for (col in unique(dlbcl.modules)) {
+  mod.genes[[col]] <- names(dlbcl.modules[dlbcl.modules == col])
+}
+  
+stopifnot(all(names(mod.genes) == names(num2names)))
+
+# Order by rowSums
+dlbcl.cor.sub <- lapply(mod.genes, function(ensg) dlbcl.rcm.cor[ensg, ensg])
+dlbcl.cor.sub <- lapply(dlbcl.cor.sub, function(x) {
+  o <- order(rowSums(abs(x)), decreasing = TRUE)
+  return(x[o,o])
+})
+tmp <- lapply(dlbcl.cor.sub, rownames)
+m <- max(table(dlbcl.modules))  # Get largest module
+
+# Construct table
+dlbcl.mod.tab.genes <-
+  sapply(tmp, function(x) unname(c(map2hugo(x), rep(NA, m - length(x)))))
+dlbcl.mod.tab.genes.copy <- dlbcl.mod.tab.genes
+
+# First letter capitalized
+cgroup <- capitalize(cleanName(names(mod.genes)))
+# cgroup <- paste0(cgroup, num2names)
+
+colnames(dlbcl.mod.tab.genes) <- # Number of gens in each module
+  paste0("n = ", colSums(!is.na(dlbcl.mod.tab.genes)))
+
+is.ensg <- structure(grepl("^ENSG", dlbcl.mod.tab.genes),
+                     dim = dim(dlbcl.mod.tab.genes))
+nn <- 50
+seq_tmp <- seq_len(min(nn, nrow(dlbcl.mod.tab.genes)))
+mod.tab.table <- latex(dlbcl.mod.tab.genes[seq_tmp, ],
+                       cgroup = cgroup,
+                       size = "tiny",
+                       caption = paste("The identified modules, their sizes, and",
+                                       "member genes. The genes are sorted decreasingly",
+                                       "by their intra-module connectivity (sum of the incident",
+                                       "edge weights). Only the top", nn, "genes are shown."),
+                       #     cellTexCmds = ifelse(is.ensg, "tiny", "")[seq_tmp, ],
+                       caption.loc = "bottom",
+                       label = "tab:top.genes.em",
+                       landscape = FALSE,
+                       file = "table.top.genes.em.tex")
+
+
+
+
+########################################
+### Enrichment analysis for clusters ###
+########################################
+
 go.genes <- gsub("_at", "", use.genes) # Consider only top 300 genes
 
-### Get HGNC symbol for genes within each group for RCM
-if(!exists("dlbcl.go.analysis") || recompute){
-  dlbcl.go.analysis <- list()
-  dlbcl.module.genes <- list()
-  for (col in unique(dlbcl.modules)) {
-    dlbcl.module.genes[[col]] <- mod.genes <-
-      gsub("_at$", "", names(dlbcl.modules[dlbcl.modules == col]))
-    geneList <- factor(as.integer(go.genes %in% mod.genes))
-    names(geneList) <- go.genes
-    GOdata <- new("topGOdata", ontology = dlbcl.par$ontology,
-                  allGenes = geneList,
-                  annot = annFUN.gene2GO, gene2GO = gid2go)
-    result.fisher <-
-      runTest(GOdata, algorithm = "classic", statistic = "fisher")
-    mod.res <- GenTable(GOdata, classicFisher = result.fisher, topNodes = 100)
-    dlbcl.go.analysis[[col]] <-
-      mod.res %>% filter(classicFisher <= dlbcl.par$go.alpha.level)
-  }
-  resave(dlbcl.go.analysis, file = "saved.RData")
-  dlbcl.module.genes <- lapply(dlbcl.module.genes, map2hugo)
-  resave(dlbcl.module.genes, file = "saved.RData")
+dlbcl.rcm.gprofile <- list()
+for(module in unique(dlbcl.modules)){
+  module.tmp <- sub("_at", "", names(dlbcl.modules[dlbcl.modules==module]))
+  dlbcl.rcm.gprofile[[module]] <- gprofiler(module.tmp, custom_bg = go.genes)#, correction_method = "fdr")  
 }
 
-
-### Get HGNC symbol for genes within each group for POOL
-if(!exists("dlbcl.pool.go.analysis") || recompute){
-  dlbcl.pool.go.analysis <- list()
-  dlbcl.pool.module.genes <- list()
-  for (col in unique(dlbcl.pool.modules)) {
-    dlbcl.pool.module.genes[[col]] <- mod.genes <-
-      gsub("_at$", "", names(dlbcl.pool.modules[dlbcl.pool.modules == col]))
-    geneList <- factor(as.integer(go.genes %in% mod.genes))
-    names(geneList) <- go.genes
-    GOdata <- new("topGOdata", ontology = dlbcl.par$ontology,
-                  allGenes = geneList,
-                  annot = annFUN.gene2GO, gene2GO = gid2go)
-    result.fisher <-
-      runTest(GOdata, algorithm = "classic", statistic = "fisher")
-    mod.res <- GenTable(GOdata, classicFisher = result.fisher, topNodes = 100)
-    dlbcl.pool.go.analysis[[col]] <-
-      mod.res %>% filter(classicFisher <= dlbcl.par$go.alpha.level)
-  }
-  resave(dlbcl.pool.go.analysis, file = "saved.RData")
-  dlbcl.pool.module.genes <- lapply(dlbcl.pool.module.genes, map2hugo)
-  resave(dlbcl.pool.module.genes, file = "saved.RData")
+pickcolumns <- function(x){
+  x <- x[,c("term.id",
+            "domain",
+            "term.name",
+            "p.value",
+            "query.size",
+            "overlap.size",
+            "recall",
+            "precision")]
+  return(x)
 }
 
-### Make table with GO terms
-
-# EM
-tmp <- dlbcl.go.analysis
-names(tmp) <- cleanName(names(tmp))
-go.table <- do.call(rbind, tmp)
-go.col <- gsub("(^|[[:space:]])([[:alpha:]])",
-               "\\1\\U\\2", gsub("\\.[0-9]+$", "", row.names(go.table)),
-               perl = TRUE)
-colnames(go.table)[3:6] <- c("$N$", "$O$", "$E$", "$P$-val")
-rownames(go.table) <- NULL
+dlbcl.rcm.gprofile.table <- do.call(rbind,lapply(dlbcl.rcm.gprofile, pickcolumns))
+dlbcl.rcm.gprofile.table$term.id <- paste0("$",dlbcl.rcm.gprofile.table$term.id,"$")
+dlbcl.rcm.gprofile.table$term.name <- substr(dlbcl.rcm.gprofile.table$term.name,1,40)
 
 
-# Pool
-tmp <- dlbcl.pool.go.analysis
-names(tmp) <- cleanName(names(tmp))
-go.table2 <- do.call(rbind, tmp)
-go.col2 <- gsub("(^|[[:space:]])([[:alpha:]])",
-               "\\1\\U\\2", gsub("\\.[0-9]+$", "", row.names(go.table2)),
-               perl = TRUE)
-colnames(go.table2)[3:6] <- c("$N$", "$O$", "$E$", "$P$-val")
-rownames(go.table2) <- NULL
-
-# Combined table
-go.table3 <- latex(rbind(go.table[,-c(1,3)], go.table2[,-c(1,3)]),
-                   rgroup = c(paste("EM", unique(go.col), sep=" - "), paste("Pool", unique(go.col2), sep=" - ")), 
-                   rowname = c(go.table[, 1], go.table2[, 1]),
-                   label  = "tab:results.go",
-                   n.rgroup = c(table(go.col)[unique(go.col)],table(go.col2)[unique(go.col2)]),
-                   title = "GO ID",
-                   size = "tiny",
-                   caption = paste0("The significant GO terms in the modules from the EM and Pool method at ",
-                                    "$\\alpha$-level ", dlbcl.par$go.alpha.level, "."),
-                   lines.page = 80,
-                   center = "centering",
-                   file = "table3.tex")
-
-
-# Combined table Wide
-#go.table3 <- merge(go.table[,c(1,2,6)], go.table2[,c(1,2,6)], by=0, all.y=T)
-#go.col <- gsub("(^|[[:space:]])([[:alpha:]])",
-#               "\\1\\U\\2", gsub("\\.[0-9]+$", "", go.table3$Row.names),
-#               perl = TRUE)
-#go.table3 <- go.table3[order(go.col, go.table3$classicFisher.y),]
-#go.table3 <- go.table3[,-1]
-#names(go.table3) <- c("GO ID", "Term", "P", "GO ID", "Term", "P")
-#go.table3[is.na(go.table3)] <- " "
-#rownames(go.table3) <- NULL
-
-#go.table <- latex(go.table3[,-1],
-#                  rowname = go.table3[,1],
-#                  rgroup = unique(go.col),
-#                  label  = "tab:results.go",
-#                  cgroup = c("EM", "Pool"),
-#                  n.cgroup = c(2,3),
-#                  n.rgroup = table(go.col)[unique(go.col)],
-#                  title = "GO ID",
-#                  size = "tiny",
-#                  caption = paste0("The significant GO terms in the EM- and Pool-modules at ",
-#                                   "$\\alpha$-level ", dlbcl.par$go.alpha.level, "."),
-#                  #longtable = TRUE,
- #                 lines.page = 80,
-#                  center = "centering",
-#                  file = "table3.tex")
+gp.col.rcm <- gsub("(^|[[:space:]])([[:alpha:]])",
+                   "\\1\\U\\2", gsub("\\.[0-9]+$", "", row.names(dlbcl.rcm.gprofile.table)),
+                   perl = TRUE)
 
 
 
-### Correlate eigenGenes to Genes in modules for CHOP dataset
-eg.cor <- list()
-for (j in 1:2) {
-  modules <- switch(j, dlbcl.modules, dlbcl.pool.modules)
-  name <- switch(j, "RCM", "POOL")
-  expr <- gep.sub$GEPLLMPPCHOP.ensg[names(modules),]
-  
-  res <- moduleEigengenes(t(expr), modules)
-  eg <- res$eigengenes
-  
-  for(module in num2col[1:3]){
-    modeuleGenes <- which(modules == module)
-    expr2 <- cbind(eg[, paste0("ME", module)], t(expr[modeuleGenes,]))
-    eg.cor.j <- cor(expr2)[-1,1]
-    names(eg.cor.j) <- map2hugo(gsub("_at", "",names(eg.cor.j)))
-    eg.cor[[name]][[cleanName(module)]] <- sort(eg.cor.j, decreasing = TRUE)
-  }
-}
-
-## Make top Gene tables
-rcm.eigen.cors <- array(0, dim=c(20,6))
-pool.eigen.cors <- array(0, dim=c(20,6))
-counter <- 1
-for(module in cleanName(num2col[1:3])){
-  rcm.eigen.cors[,counter] <- names(eg.cor[["RCM"]][[module]])[1:20]
-  rcm.eigen.cors[,counter+1] <- round(eg.cor[["RCM"]][[module]][1:20],2)
-  
-  pool.eigen.cors[,counter] <- names(eg.cor[["POOL"]][[module]])[1:20]
-  pool.eigen.cors[,counter+1] <- round(eg.cor[["POOL"]][[module]][1:20],2)
-  
-  counter <- counter +2
-}
-
-colnames(rcm.eigen.cors) <- c("Gene", "Cor","Gene", "Cor","Gene", "Cor")
-colnames(pool.eigen.cors) <- c("Gene", "Cor","Gene", "Cor","Gene", "Cor")
-
-## Comparison table for olivegreen module
-olive.eg.cors <- array(0, dim=c(50,4))
-olive.eg.cors[,1] <- names(eg.cor[["RCM"]][["olivegreen"]])[1:50]
-olive.eg.cors[,2] <- round(eg.cor[["RCM"]][["olivegreen"]][1:50],2)
-olive.eg.cors[,3] <- names(eg.cor[["POOL"]][["olivegreen"]])[1:50]
-olive.eg.cors[,4] <- round(eg.cor[["POOL"]][["olivegreen"]][1:50],2)
-
-colnames(olive.eg.cors) <- c("Gene", "Cor","Gene", "Cor")
+go.table.rcm.gp <- latex(dlbcl.rcm.gprofile.table[,-1],
+                         rgroup = capitalize(cleanName(unique(tolower(gp.col.rcm)))),
+                         rowname = dlbcl.rcm.gprofile.table[,1],
+                         label  = "tab:enrichment.em",
+                         n.rgroup = table(gp.col.rcm)[unique(gp.col.rcm)],
+                         title = "Term ID",
+                         size = "tiny",
+                         caption = paste0("The significant annotations for DLBCL EM method"),
+                         lines.page = 80,
+                         longtable = TRUE,
+                         center = "centering",
+                         file = "table.enrichment.em.tex")
 
 
-## Make Latex tables
-rcm.eg.table <- latex(rcm.eigen.cors,
-                  label  = "tab:rcm.eg.cors",
-                  cgroup = names(eg.cor$RCM),
-                  n.cgroup = c(2,2,2),
-                  size = "tiny",
-                  caption = paste("The top 20 genes in each module for the EM method and",
-                                   "correlation to the eigenGene for the CHOP dataset"),
-                  longtable = TRUE,
-                  lines.page = 80,
-                  center = "centering",
-                  file = "table.rcm.eg.tex")
+##########################################
+### Repeat analysis with pool clusters ###
+##########################################
 
 
-pool.eg.table <- latex(pool.eigen.cors,
-                      label  = "tab:pool.eg.cors",
-                      cgroup = names(eg.cor$POOL),
-                      n.cgroup = c(2,2,2),
-                      size = "tiny",
-                      caption = paste("The top 20 genes in each module for the Pool method and",
-                                       "correlation to the eigenGene for the CHOP dataset"),
-                      longtable = TRUE,
-                      lines.page = 80,
-                      center = "centering",
-                      file = "table.pool.eg.tex")
-
-olive.eg.table <- latex(olive.eg.cors,
-                      label  = "tab:olive.eg.cors",
-                      cgroup = c("EM", "Pool"),
-                      n.cgroup = c(2,2),
-                      size = "tiny",
-                      caption = paste("The top 50 genes in the olive module for the EM vs Pool method and",
-                                       "correlation to the eigenGene for the CHOP dataset"),
-                      longtable = TRUE,
-                      lines.page = 80,
-                      center = "centering",
-                      file = "table.olive.eg.tex")
-
-
-### Get ICC for DLBCL data
-with(dlbcl.rcm, ICC(nu, nrow(Psi)))
-
-### Do the test for homogeneitiy
-set.seed(100)
-if (!exists("homogeneity.rcm") || recompute) {
-  dat <- do.call(rbind, lapply(gep.sub, function(x) t(x)))
-  dat <- data.frame(dat)
-  class.lab <- rep(names(gep), sapply(gep.sub, ncol))
-  
-  homo.test <- function(tmp){
-    library(correlateR)
-    s.class.lab <- sample(class.lab)
-    dat.sub <- split(dat, s.class.lab)
-    dat.ns  <- sapply(dat.sub, nrow)
-    dat.S   <- lapply(dat.sub, correlateR::scatter)
-    nu <- sum(dat.ns) + ncol(dat.S[[1]]) + 1
-    psi <- nu*correlateR:::pool(dat.S, dat.ns)
-    
-    rand.rcm.i <- fit.rcm(S = dat.S, ns = dat.ns, verbose = FALSE,
-                          Psi.init = psi, nu.init = nu, eps = 0.01,
-                          max.ite = 1500)
-    
-    return(rand.rcm.i)
-  }
-  
-  cl <- makeCluster(3)
-  ## make this reproducible
-  clusterSetRNGStream(cl, 123)
-  clusterExport(cl, varlist = c("dat", "class.lab"))
-  homogeneity.rcm <- parLapply(cl, vector("list", 500), homo.test)
-  stopCluster(cl)
-  
-  resave(homogeneity.rcm, file = "saved.RData")
-}
-
-dlbcl.p.value <- get.TestPValue(homogeneity.rcm, dlbcl.rcm)
-
-
-################################################
-### Repeat survival analysis with 5 clusters ###
-################################################
-
-### Define colors for clusters
-num2col <- c("gray32",
-             "darkolivegreen3",
-             "mediumorchid3",
-             "lightskyblue3",
-             "coral3")
-
+#### Retrieve Sigma and Correlation matrices and calculate Hclusts for Pool
+dlbcl.pool.sigma <- with(dlbcl.pool, Psi2Sigma(Psi,nu))
+rownames(dlbcl.pool.sigma) <- colnames(dlbcl.pool.sigma) <- colnames(dlbcl.rcm.sigma)
+dlbcl.pool.cor <- cov2cor(dlbcl.pool.sigma)
+dlbcl.pool.hclu  <- flashClust(my.dist(dlbcl.pool.cor), method=dlbcl.par$linkage)
 
 ### Colors for different ordering of clusters in pool model
 num2col_pool <- c("gray32",
@@ -1302,38 +1181,17 @@ num2col_pool <- c("gray32",
                   "mediumorchid3",
                   "coral3")
 
-
-
-### Make clusters from RCM model
-dlbcl.cut <- cutree(dlbcl.rcm.hclu, k = 5)
-dlbcl.modules <- num2col[dlbcl.cut]
-names(dlbcl.modules) <- dlbcl.rcm.hclu$labels
-tangle.colors <- dlbcl.modules[order.dendrogram(as.dendrogram(dlbcl.rcm.hclu))]
-
 ### Make clusters from POOL model
-dlbcl.pool.cut <- cutree(dlbcl.pool.hclu, k = 5)
-dlbcl.pool.modules <- num2col_pool[dlbcl.pool.cut]
+dlbcl.pool.cut <- cutree(dlbcl.pool.hclu, k = dlbcl.par$n.modules)
+dlbcl.pool.modules <- num2col[dlbcl.pool.cut]
 names(dlbcl.pool.modules) <- dlbcl.pool.hclu$labels
+
 
 table(dlbcl.modules, dlbcl.pool.modules)
 
-## Heatmap for RCM
-jpeg("FigureS6A.jpg", width = 7, height = 7, units="in", res = 200)
-heatmap.2(cov2cor(dlbcl.rcm.sigma),
-          distfun = my.dist,
-          col = hmColors,
-          breaks = seq(-1,1, length.out = 100),
-          hclustfun = my.hclust,
-          dendrogram = "column",
-          trace = "none",
-          ColSideColors = dlbcl.modules,
-          labRow = NA,
-          labCol = NA,
-          main="EM")
-dev.off()
 
 ## Heatmap for Pool
-jpeg("FigureS6B.jpg", width = 7, height = 7, units="in", res = 200)
+jpeg("FigureS5A.jpg", width = 7, height = 7, units="in", res = 200)
 heatmap.2(cov2cor(dlbcl.pool.sigma),
           distfun = my.dist,
           col = hmColors,
@@ -1347,6 +1205,63 @@ heatmap.2(cov2cor(dlbcl.pool.sigma),
           main="Pool")
 dev.off()
 
+
+### iGraph for pool
+# Colors for igraph
+n.col <- 256
+keybreaks <- seq(min(dlbcl.pool.cor), max(dlbcl.pool.cor), length.out = n.col)
+
+keycols <- rep("White", n.col - 1)
+tmp <- rle(diff(sign(keybreaks)))
+neg <- tmp$lengths[1]
+pos <- tmp$lengths[3]
+keycols[1:neg] <- colorRampPalette(c("Blue", "White"))(neg)
+keycols[(neg+2):(neg+pos+1)] <- colorRampPalette(c("White", "Red"))(pos)
+
+dlbcl.pool.g <- graph.adjacency(abs(dlbcl.pool.cor), mode = "undirected",
+                                weighted = TRUE, diag = FALSE)
+V(dlbcl.pool.g)$name  <- map2hugo(V(dlbcl.pool.g)$name)
+V(dlbcl.pool.g)$color <- dlbcl.pool.modules
+E(dlbcl.pool.g)$color <- keycols[cut(E(dlbcl.pool.g)$weight, keybreaks)]
+
+
+w.pool <- E(dlbcl.pool.g)$weight
+dlbcl.par$threshold.pool <- quantile(abs(w.pool), prob = 0.90)
+
+jpeg("temp_FigureS5B.jpg", width = 7, height = 7, units="in", res = 200)
+layout(matrix(c(1,1,2,2), 2, 2, byrow = TRUE), 
+       widths=c(1,1), heights=c(1,4))
+
+# PANEL MODULE OVERVIEW
+tab <- table(dlbcl.pool.modules)
+go.func <- num2names[match(names(tab), names(num2names))]
+stopifnot(names(tab) == names(go.func))
+
+par(xaxs = "i", yaxs = "i", mar = c(0, 0, 0, 0) + 0.1)
+plot(1, type = "n", axes = FALSE, xlab = "", ylab = "")
+legend(0.7, 1, bty = "n", col = "black", pt.bg = names(tab),
+       cex = 1.2, pch = 22, pt.cex = 3,
+       title = "Modules", legend = capitalize(cleanName(names(tab))),
+       xjust = 0.5, yjust = 0.5)
+legend(.8, 1, bty = "n", col = "black", cex = 1.2, xjust = 0.5, yjust = 0.5,
+       title = "Size", legend =  sprintf("(%d)", tab))
+legend(1.07, 1, bty = "n", col = "black", cex = 1.2, xjust = 0.5, yjust = 0.5,
+       title = "Suggested GO function", legend =  rep("", 5))
+legend(1.12, 1, bty = "n", col = "black", cex = 1.0,
+       title = "", xjust = 0.5, yjust = 0.5,
+       legend =  go.func, y.intersp = 1.25)
+
+# Plot graph
+tmp.g <- delete.edges(dlbcl.pool.g, which(abs(w.pool) < dlbcl.par$threshold.pool))
+V(tmp.g)$size <- 3
+E(tmp.g)$width <- 1.3
+V(tmp.g)$frame.color <- V(tmp.g)$color
+l <- layout.custom(tmp.g)
+plot(tmp.g, layout = l, vertex.label = "")
+points(scaleToLayout(l), pch = 16, cex = 0.3)
+dev.off()
+
+
 ### Tanglegram of RCM vs Pool
 dlbcl.rcm.dend <- as.dendrogram(dlbcl.rcm.hclu)
 labels_colors(dlbcl.rcm.dend) <- dlbcl.modules[order.dendrogram(dlbcl.rcm.dend)]
@@ -1355,7 +1270,7 @@ dlbcl.pool.dend <- as.dendrogram(dlbcl.pool.hclu)
 labels_colors(dlbcl.pool.dend) <- dlbcl.pool.modules[order.dendrogram(dlbcl.pool.dend)]
 
 copheno_rcm_pool <- cor_cophenetic(dlbcl.rcm.dend, dlbcl.pool.dend)
-jpeg("FigureS6C.jpg", width = 7, height = 7/2, units="in", res = 200)
+jpeg("FigureS5C.jpg", width = 7, height = 7/2, units="in", res = 200)
 tanglegram(dlbcl.rcm.dend, dlbcl.pool.dend,
            sort=F, 
            main_left="EM", 
@@ -1370,10 +1285,147 @@ tanglegram(dlbcl.rcm.dend, dlbcl.pool.dend,
 )
 dev.off()
 
-jpeg("FigureS7.jpg", height = 1.2*7, width = 2*7, units = "in", res = 200)
-plot_surv_fig(metadataLLMPPCHOP, gep.sub$GEPLLMPPCHOP.ensg, metadataLLMPPCHOP$GEO.ID)
+figureS6 <- "FigureS6.jpg"
+jpeg(figureS6, height = 1.2*7, width = 2*7, units = "in", res = 200)
+{
+  par(mar = c(4, 4, 1, 0) + 0.1, oma = c(0,0,0,0), xpd = TRUE, cex = 1.2,
+      mgp = c(3, 1, 0)*0.75)
+  layout(cbind(1:2,3:4), heights = c(1,2))
+  
+  for (j in 1:2) {
+    
+    meta <- switch(j, metadataLLMPPCHOP, metadataLLMPPRCHOP)
+    rownames(meta) <- as.character(meta$GEO.ID)
+    expr <- switch(j,
+                   (gep.sub$GEPLLMPPCHOP.ensg)[names(dlbcl.pool.modules), ],
+                   (gep.sub$GEPLLMPPRCHOP.ensg)[names(dlbcl.pool.modules), ])
+    meta <- meta[colnames(expr), ] # Reorder
+    
+    # Check order
+    stopifnot(rownames(meta) == colnames(expr))
+    
+    res <- moduleEigengenes(t(expr), dlbcl.pool.modules)
+    eg <- res$eigengenes
+    col <- gsub("^ME", "", colnames(eg))
+    eg <- as.data.frame(lapply(eg, function(x) x/sd(x))) # Standardize
+    
+    #   # Multivariate
+    cph.fits <- coxph(meta$OS ~ ., data = eg, x = TRUE, y = TRUE)
+    dats <- get.cis(cph.fits)
+    dats <- dats[, -c(2,6)]
+    plot.cis(dats)
+    
+    for (i in seq_len(ncol(eg))) {
+      if (col[i] == the.module) {
+        eg.i <- eg[, paste0("ME", col[i])]
+        eg.high <- eg.i >= mean(eg.i)
+        sfit.h <- survfit(meta$OS ~ 1, subset = eg.high)
+        sfit.l <- survfit(meta$OS ~ 1, subset = !eg.high)
+        
+        plot(sfit.h,
+             conf.int = TRUE,
+             main = "",
+             col = col[i],
+             lwd = 2,
+             lty = c(1,2,2),
+             axes = FALSE,
+             xlab = "years",
+             ylab = "Survival proportion")
+        lines(sfit.l,
+              lwd = 2,
+              lty = c(1,3,3))
+        axis(1)
+        axis(2)
+        legend("bottomleft", bty = "n", lwd = 2, lty = 2:3,
+               legend = c("High eigengene", "Low eigengene"),
+               col = c(col[i], "black"), horiz = FALSE)
+        legend("topright", legend = paste(cleanName(col[i]), "eigengene"),
+               bty = "n", text.col = col[i])
+      }
+    }
+    title(switch(j, "GSE10846 CHOP", "GSE10846 R-CHOP"), xpd = TRUE)
+  }
+}
 dev.off()
 
-jpeg("FigureS8.jpg", height = 1.2*7, width = 2*7, units = "in", res = 200)
-plot_surv_fig(metadataLLMPPRCHOP, gep.sub$GEPLLMPPRCHOP.ensg, metadataLLMPPRCHOP$GEO.ID)
-dev.off()
+
+
+### Top genes in DLBCL Pool modules
+# Genes in modules
+mod.genes.pool <- list()
+for (col in unique(dlbcl.pool.modules)) {
+  mod.genes.pool[[col]] <- names(dlbcl.pool.modules[dlbcl.pool.modules == col])
+}
+
+stopifnot(all(names(mod.genes.pool) == names(num2names)))
+
+# Order by rowSums
+dlbcl.cor.sub <- lapply(mod.genes.pool, function(ensg) dlbcl.pool.cor[ensg, ensg])
+dlbcl.cor.sub <- lapply(dlbcl.cor.sub, function(x) {
+  o <- order(rowSums(abs(x)), decreasing = TRUE)
+  return(x[o,o])
+})
+tmp <- lapply(dlbcl.cor.sub, rownames)
+m <- max(table(dlbcl.pool.modules))  # Get largest module
+
+# Construct table
+dlbcl.mod.tab.genes <-
+  sapply(tmp, function(x) unname(c(map2hugo(x), rep(NA, m - length(x)))))
+dlbcl.mod.tab.genes.copy <- dlbcl.mod.tab.genes
+
+# First letter capitalized
+cgroup <- capitalize(cleanName(names(mod.genes.pool)))
+# cgroup <- paste0(cgroup, num2names)
+
+colnames(dlbcl.mod.tab.genes) <- # Number of gens in each module
+  paste0("n = ", colSums(!is.na(dlbcl.mod.tab.genes)))
+
+is.ensg <- structure(grepl("^ENSG", dlbcl.mod.tab.genes),
+                     dim = dim(dlbcl.mod.tab.genes))
+nn <- 50
+seq_tmp <- seq_len(min(nn, nrow(dlbcl.mod.tab.genes)))
+mod.tab.table <- latex(dlbcl.mod.tab.genes[seq_tmp, ],
+                       cgroup = cgroup,
+                       size = "tiny",
+                       caption = paste("The identified modules from the Pool method, their sizes, and",
+                                       "member genes. The genes are sorted decreasingly",
+                                       "by their intra-module connectivity (sum of the incident",
+                                       "edge weights). Only the top", nn, "genes are shown."),
+                       #     cellTexCmds = ifelse(is.ensg, "tiny", "")[seq_tmp, ],
+                       caption.loc = "bottom",
+                       label = "tab:top.genes.pool",
+                       landscape = FALSE,
+                       file = "table.top.genes.pool.tex")
+
+### Enrichment for pool modules
+dlbcl.pool.gprofile <- list()
+for(module in unique(dlbcl.pool.modules)){
+  module.tmp <- sub("_at", "", names(dlbcl.pool.modules[dlbcl.pool.modules==module]))
+  dlbcl.pool.gprofile[[module]] <- gprofiler(module.tmp, custom_bg = go.genes)#, correction_method = "fdr")  
+}
+
+
+dlbcl.pool.gprofile.table <- do.call(rbind,lapply(dlbcl.pool.gprofile, pickcolumns))
+dlbcl.pool.gprofile.table$term.id <- paste0("$",dlbcl.pool.gprofile.table$term.id,"$")
+dlbcl.pool.gprofile.table$term.name <- substr(dlbcl.pool.gprofile.table$term.name,1,40)
+
+gp.col.pool <- gsub("(^|[[:space:]])([[:alpha:]])",
+                    "\\1\\U\\2", gsub("\\.[0-9]+$", "", row.names(dlbcl.pool.gprofile.table)),
+                    perl = TRUE)
+
+
+go.table.pool.gp <- latex(dlbcl.pool.gprofile.table[,-1],
+                          rgroup = capitalize(cleanName(unique(tolower(gp.col.pool)))),
+                          rowname = dlbcl.pool.gprofile.table[,1],
+                          label  = "tab:enrichment.em",
+                          n.rgroup = table(gp.col.pool)[unique(gp.col.pool)],
+                          title = "Term ID",
+                          size = "tiny",
+                          caption = paste0("The significant annotations for DLBCL Pool method"),
+                          lines.page = 80,
+                          longtable = TRUE,
+                          center = "centering",
+                          file = "table.enrichment.pool.tex")
+
+
+
