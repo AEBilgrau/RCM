@@ -5,7 +5,7 @@
 rm(list = ls())
 set.seed(1)
 recompute <- FALSE
-library("Hmisc")
+library("Hmisc") # Version 3.17-4
 library("Bmisc")
 library("correlateR")
 library("GMCM")
@@ -19,6 +19,13 @@ library("topGO")
 library("igraph")
 library("MCMCpack")
 library("dplyr")
+# source("http://bioconductor.org/biocLite.R")
+# biocLite(c("topGO", "impute", "biomaRt", "affy",  "adephylo"))
+# install.packages(c("dplyr", "MCMCpack", "igraph", "GMCM", "MASS", "WGCNA"))
+# library("devtools")
+# install_github("AEBilgrau/Bmisc")
+# install_github("AEBilgrau/correlateR")
+#install_version("Hmisc", version="3.17-4")
 
 if (file.exists("saved.RData"))
   loaded <- load("saved.RData")

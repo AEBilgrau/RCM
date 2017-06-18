@@ -277,11 +277,11 @@ Meta-analysis comes in various flavors corresponding to the assumption on the na
 Random-effects models (REM) in meta-analysis model the inter-study effects as random variables \citep{DerSimonian1986, Choi2003}.
 In a vein similar to the ordinary meta-analysis approach, we think of the different studies as related but perturbed experiments and propose the following simple random covariance model (RCM) of the observations.
 Let $p$ be the number of features and $k$ the number of studies.
-We model an observation $\vx$ from the $i$'th study as a $p$-dimensional zero-mean multivariate Gaussian vector with covariance matrix realized from an inverse Wishart distribution, i.e.\ $\vx$ follows the hierarchical model
+We model an observation $\vx_i$ from the $i$'th study as a $p$-dimensional zero-mean multivariate Gaussian vector with covariance matrix realized from an inverse Wishart distribution, i.e.\ $\vx_i$ follows the hierarchical model
 \begin{align}
 \begin{split} \label{eq:RCM}
   \vSigma_i  &\sim \calW^{-1}_p\big(\vPsi, \nu\big), \\
-  \vx | \vSigma_i &\sim \calN_p(\vec{0}_p, \vSigma_i), \qquad i = 1, ..., k,
+  \vx_i | \vSigma_i &\sim \calN_p(\vec{0}_p, \vSigma_i), \qquad i = 1, ..., k,
 \end{split}
 \end{align}
 where $\calN_p(\vec{\mu},\vSigma_i)$ denotes a $p$-dimensional multivariate Gaussian distribution with mean $\vec{\mu}$ and positive definite (p.d.) covariance matrix $\vSigma_i$, and probability density function (pdf) shown in \eqref{eq:normalpdf},
