@@ -396,6 +396,7 @@ factory <- function(fun) {
 
 
 
+
 ##################################
 ### Analysis of simulated data ###
 ##################################
@@ -851,6 +852,73 @@ jpeg("Figure2.jpg", width = 7, height = 7/2, units = "in", res = 200)
 }
 dev.off()
 
+### Get ICC for DLBCL data
+with(dlbcl.rcm, ICC(nu, nrow(Psi)))
+
+### Do the test for homogeneitiy
+set.seed(100)
+if (!exists("homogeneity.rcm") || recompute) {
+  dat <- do.call(rbind, lapply(gep.sub, function(x) t(x)))
+  dat <- data.frame(dat)
+  class.lab <- rep(names(gep), sapply(gep.sub, ncol))
+  
+  homo.test <- function(tmp){
+    library(correlateR)
+    s.class.lab <- sample(class.lab)
+    dat.sub <- split(dat, s.class.lab)
+    dat.ns  <- sapply(dat.sub, nrow)
+    dat.S   <- lapply(dat.sub, correlateR::scatter)
+    nu <- sum(dat.ns) + ncol(dat.S[[1]]) + 1
+    psi <- nu*correlateR:::pool(dat.S, dat.ns)
+    
+    rand.rcm.i <- fit.rcm(S = dat.S, ns = dat.ns, verbose = FALSE,
+                          Psi.init = psi, nu.init = nu, eps = 0.01,
+                          max.ite = 1500)
+    
+    return(rand.rcm.i)
+  }
+  
+  cl <- makeCluster(3)
+  ## make this reproducible
+  clusterSetRNGStream(cl, 123)
+  clusterExport(cl, varlist = c("dat", "class.lab"))
+  homogeneity.rcm <- parLapply(cl, vector("list", 500), homo.test)
+  stopCluster(cl)
+  
+  resave(homogeneity.rcm, file = "saved.RData")
+}
+
+dlbcl.p.value <- get.TestPValue(homogeneity.rcm, dlbcl.rcm)
+
+
+## Conversion between ENSG and HGNC
+if(!exists("gene.info") || recompute){
+  mart <- useMart(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")
+  attributes <- c("hgnc_symbol", "chromosome_name", "start_position",
+                  "end_position", "strand", "band", "ensembl_gene_id", "go_id",
+                  "name_1006", "definition_1006", "go_linkage_type",
+                  "namespace_1003")
+  gene.info <- getBM(attributes = attributes, filters = "arrayexpress",
+                     values = all.genes, mart = mart)
+  resave(gene.info, file = "saved.RData")
+}
+
+# Mappings between ENSG and GO id
+gid2go <- split(gene.info$go_id, gene.info$ensembl_gene_id)
+gid2hugo <- with(dplyr::select(gene.info, hgnc_symbol, ensembl_gene_id) %>%
+                   distinct(hgnc_symbol, ensembl_gene_id),
+                 structure(hgnc_symbol, names = ensembl_gene_id))
+
+map2hugo <- function(ensg) {
+  ensg <- gsub("_at$", "", ensg)
+  ans <- gid2hugo[ensg]
+  isna <- is.na(ans)
+  ans[isna] <- ensg[isna]
+  names(ans) <- ensg
+  return(ans)
+}
+
+
 ### Retrieve Sigma and Correlation matrices and calculate Hclusts for RCM
 dlbcl.rcm.sigma  <- with(dlbcl.rcm, Psi2Sigma(Psi,nu))
 dlbcl.rcm.cor <- cov2cor(dlbcl.rcm.sigma)
@@ -1039,31 +1107,7 @@ dev.off()
 #####################################
 ### Top genes in DLBCL RCM modules ##
 #####################################
-if(!exists("gene.info") || recompute){
-  mart <- useMart(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")
-  attributes <- c("hgnc_symbol", "chromosome_name", "start_position",
-                  "end_position", "strand", "band", "ensembl_gene_id", "go_id",
-                  "name_1006", "definition_1006", "go_linkage_type",
-                  "namespace_1003")
-  gene.info <- getBM(attributes = attributes, filters = "arrayexpress",
-                     values = all.genes, mart = mart)
-  resave(gene.info, file = "saved.RData")
-}
 
-# Mappings between ENSG and GO id
-gid2go <- split(gene.info$go_id, gene.info$ensembl_gene_id)
-gid2hugo <- with(dplyr::select(gene.info, hgnc_symbol, ensembl_gene_id) %>%
-                   distinct(hgnc_symbol, ensembl_gene_id),
-                 structure(hgnc_symbol, names = ensembl_gene_id))
-
-map2hugo <- function(ensg) {
-  ensg <- gsub("_at$", "", ensg)
-  ans <- gid2hugo[ensg]
-  isna <- is.na(ans)
-  ans[isna] <- ensg[isna]
-  names(ans) <- ensg
-  return(ans)
-}
 
 # Genes in modules
 mod.genes <- list()
@@ -1228,7 +1272,7 @@ E(dlbcl.pool.g)$color <- keycols[cut(E(dlbcl.pool.g)$weight, keybreaks)]
 w.pool <- E(dlbcl.pool.g)$weight
 dlbcl.par$threshold.pool <- quantile(abs(w.pool), prob = 0.90)
 
-jpeg("temp_FigureS5B.jpg", width = 7, height = 7, units="in", res = 200)
+jpeg("FigureS5B.jpg", width = 7, height = 7, units="in", res = 200)
 layout(matrix(c(1,1,2,2), 2, 2, byrow = TRUE), 
        widths=c(1,1), heights=c(1,4))
 

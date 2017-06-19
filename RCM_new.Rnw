@@ -598,41 +598,33 @@ Next we compare the estimated networks from the EM and Pool methods. For simplic
   \includegraphics[width=\linewidth]{Figure3B.jpg}
   \label{fig:3b}
 \end{subfigure}
-\\
-\begin{subfigure}{\textwidth}
-	\centering
-	  \includegraphics[width=\linewidth]{Figure3C.jpg}
-	    \label{fig:3c}
-	\end{subfigure}
-\caption{Heatmaps and tanglegram for the estimated correlation matrices of the top 300 genes for the DLBCL data using either the EM or Pool method. Networks are cut at a height producing 3 clusters, and the tanglegram shows the comparison of clusters between the two methods}
+\caption{Heatmap and iGraph for the estimated correlation matrices of the top 300 genes for the DLBCL data using either the EM method. The network is cut at a height producing 5 clusters}
 \label{fig:3}
 \end{figure}
 
 
 <<survival_analysis, echo=FALSE, results='hide'>>=
 @
-We checked if the identified modules were prognostic for overall survival (OS) in the CHOP and R-CHOP-treated cohort datasets of GSE10846. To do this, the eigengene \citep{Horvath2011} for each module was computed and a multiple Cox proportional hazards model for OS was fitted with the module eigengenes as covariates. The module eigengene is the first principal component of the expression matrix of the module which thus can be represented by a linear combination of the module genes. For the prognostically interesting \Sexpr{cleanName(the.module)} module, the Kaplan-Meier estimates were computed for groups arising when dichotomizing the values of the corresponding eigengene as above or below the median value. These results are shown for the CHOP cohort in Figure \ref{fig:4}, while results for the R-CHOP cohort are show in supplementary Figure \ref{fig:S5}. In both cohorts we find that \Sexpr{cleanName(the.module)} module defined by the EM method splits the patients into groups with different survival whereas no difference is found for the module defined by the Pool method.
-
+We checked if the identified modules were prognostic for overall survival (OS) in the CHOP and R-CHOP-treated cohort datasets of GSE10846. To do this, the eigengene \citep{Horvath2011} for each module was computed and a multiple Cox proportional hazards model for OS was fitted with the module eigengenes as covariates. The module eigengene is the first principal component of the expression matrix of the module which thus can be represented by a linear combination of the module genes. For the prognostically interesting \Sexpr{cleanName(the.module)} module, the Kaplan-Meier estimates were computed for groups arising when dichotomizing the values of the corresponding eigengene as above or below the median value. These results are shown for the in Figure \ref{fig:4}.
 
 \begin{figure}
   \includegraphics[width=0.8\linewidth]{Figure4.jpg}
-  \caption{The top row shows $95\%$ and $99\%$ CI for the hazard ratio for each eigengene in the multiple Cox proportional hazards model containing all eigengenes in the CHOP dataset. The bottom row shows Kaplan-Meier estimates (and $95\%$ CI) for the overall survival for patients stratified by the dichotomized \Sexpr{cleanName(the.module)} eigengene with 3 clusters. Left panels show modules obtained from the EM method while the right panels shows modules from the Pool method.}
+  \caption{The top row shows $95\%$ and $99\%$ CI for the hazard ratio for each eigengene in the multiple Cox proportional hazards model containing all eigengenes in the CHOP dataset. The bottom row shows Kaplan-Meier estimates (and $95\%$ CI) for the overall survival for patients stratified by the dichotomized \Sexpr{cleanName(the.module)} eigengene.}
   \label{fig:4}
 \end{figure}
 
 <<dlbcl_go_analysis, echo=FALSE, results='hide'>>=
 @
 
-Next, the modules were screened for biological relevance using GO (Gene Ontology) Molecular Function enrichment analysis. Since we pre-selected the top 300 genes by variance, the enrichment analysis was done using only these as the background genes. Results of the GO enrichment analysis at significance level \Sexpr{dlbcl.par$go.alpha.level} for each of the modules defined by respectively the EM and Pool method are shown in Table \ref{tab:results.go},  while top20 genes for each module, ranked by correlation to the eigenGene in the CHOP cohort, are shown in Supplementary Tables \ref{tab:rcm.eg.cors} and \ref{tab:pool.eg.cors}.
+Next, the modules were screened for biological relevance using GO (Gene Ontology) Molecular Function enrichment analysis. Since we pre-selected the top 300 genes by variance, the enrichment analysis was done using only these as the background genes. Top genes for each module are shown in Table \ref{tab:top.genes.em}, while results of the GO enrichment analysis at significance level \Sexpr{dlbcl.par$go.alpha.level} for each of the modules are shown in Supplementary Table \ref{tab:enrichment.em}.
 
-\input{table3}
+\input{table.top.genes.em}
+%\input{table.enrichment.em}
 
 The notion of MHC protein binding by GO annotation of the olivegreen module for the EM method in combination with prognostic significance suggests that immune surveillance is enraptured in this model. 
 Immune surveillance plays a major role in controlling the proliferation of cancers and it is reported several times that DLBCL fails to express cell-surface molecules which are necessary for the recognition of tumour cells by immune-effector cells \citep{DybkaerBoegsted2015, pmid22137796, pmid25008267}. For an active immune surveillance, surface expression of both MHC class I and II proteins is required. Hence, antigenic peptide-loaded MHC class II molecules are normally expressed on the surface of professional antigen-presenting cells including dendritic cells, B cells, macrophages and thymic epithelial cells, and are presented to antigen-specific CD4+ T cells \citep{pmid25720354}. If the malignant DLBCL cells have decreased expression they become invisible to the immunesystem resulting in a poor overall survival \citep{pmid14976040}. Loss of MHC class II can occur if the MHC class II transactivator CIITA is lost, which frequently occurs in lymphoid cancers of B-cell origin due to mutations and genetic aberrations \cite{pmid21368758}. 
 In 29\% of cases, due to the mutations in the B2M gene the cell-surface expression of the MHC class I (HLA-I) is lost in DLBCL. The HLA class-I complex is necessary for recognition by CD8+ cytotoxic T-cells. Although loss of HLA I would provide immune escape from cytotoxic T cells, cells that lack HLA I are normally targeted for destruction by natural killer cells (NK). However, mutations in the CD58 gene occurs in more than 21\% of DLBCL patients \citep{pmid22137796}. CD58, a ligand for the C2 receptor, is involved in the recognition and destruction of cells by both NK cells and CD8+ cytotoxic T-cells. In DLBCL, very often there is a coordinated loss of B2M and CD58 suggesting that they are co-selected during lymphoma genesis for their combined role in escape from immune-surveillance. \citep{pmid22137796, pmid25008267}
 In support of captured immunesurveilance via MHC function by the EM method is the observations of GNLY in the top 50 genes (Supplementary Table \ref{tab:olive.eg.cors}). GNLY (Granulycin) is located in the cytotoxic granules of natural killer cells and T cells, from where it is released upon antigen stimulation. It is noteworthy, that only 9 of the top 50 genes for the EM method are not included in the pool method, perhaps illustrating that the olivegreen module in EM method encounters better genes with biological impact on treatment response and outcome.
-
-Finally, we must point out that had the network been cut at a height resulting in five modules instead of three, more similar modules with the same impact on survival would have been observed for the two methods, as shown in Supplementary Figures \ref{fig:S6}, \ref{fig:S7}, and \ref{fig:S8}. However, the number of modules at which the network is cut is arbitrary, so it remains important to retain the correct distance between modules at all heights.
 
 \section{Discussion}
 \label{sec:conclusion}
@@ -724,49 +716,35 @@ The technical assistance from Alexander Schmitz, Julie S.\ B\o{}dker, Ann-Maria 
   \label{fig:S4}
 \end{figure}
 
-\begin{figure}[H]
-  \includegraphics[width=0.8\linewidth]{FigureS5.jpg}
-  \caption{The top row shows $95\%$ and $99\%$ CI for the hazard ratio for each eigengene in the multiple Cox proportional hazards model containing all eigengenes in the R-CHOP dataset. The bottom row shows Kaplan-Meier estimates (and $95\%$ CI) for the overall survival for patients stratified by the dichotomized \Sexpr{cleanName(the.module)} eigengene with 3 clusters. Left panels show modules obtained with the EM method while right panels show modules from the Pool method.}
-  \label{fig:S5}
-\end{figure}
 
 \begin{figure}[H]
 \begin{subfigure}{0.5\textwidth}
   \centering
-  \includegraphics[width=\linewidth]{FigureS6A.jpg}
+  \includegraphics[width=\linewidth]{FigureS5A.jpg}
    \end{subfigure}%
 \begin{subfigure}{0.5\textwidth}
   \centering
-  \includegraphics[width=\linewidth]{FigureS6B.jpg}
+  \includegraphics[width=\linewidth]{FigureS5B.jpg}
   \end{subfigure}
 \\
 \begin{subfigure}{\textwidth}
 	\centering
-	  \includegraphics[width=\linewidth]{FigureS6C.jpg}
+	  \includegraphics[width=\linewidth]{FigureS5C.jpg}
 	 \end{subfigure}
-\caption{Heatmaps and tanglegram for the estimated correlation matrices of the top 300 genes for the DLBCL data using either the EM or Pool method. Networks are cut at a height producing 5 clusters, and the tanglegram shows the comparison of clusters between the two methods}
+\caption{Heatmap and iGpraph for the estimated correlation matrices of the top 300 genes for the DLBCL data using the Pool method. The network is cut at a height producing 5 clusters. The tanglegram in the lower panel shows the comparison of clusters between the EM and Pool methods.}
 \label{fig:S6}
 \end{figure}
 
 \begin{figure}[H]
-  \includegraphics[width=0.8\linewidth]{FigureS7.jpg}
-  \caption{The top row shows $95\%$ and $99\%$ CI for the hazard ratio for each eigengene in the multiple Cox proportional hazards model containing all eigengenes in the R-CHOP dataset. The bottom row shows Kaplan-Meier estimates (and $95\%$ CI) for the overall survival for patients stratified by the dichotomized \Sexpr{cleanName(the.module)} eigengene with 5 clusters. Left panels show modules obtained from the EM method while the right panels show modules from the Pool method.}
-  \label{fig:S7}
+  \includegraphics[width=0.8\linewidth]{FigureS6.jpg}
+  \caption{The top row shows $95\%$ and $99\%$ CI for the hazard ratio for each eigengene in the multiple Cox proportional hazards model containing all eigengenes in the CHOP or R-CHOP dataset. The bottom row shows Kaplan-Meier estimates (and $95\%$ CI) for the overall survival for patients stratified by the dichotomized \Sexpr{cleanName(the.module)} obtained from the Pool method.}
+  \label{fig:S5}
 \end{figure}
-
-\begin{figure}[H]
-  \includegraphics[width=0.8\linewidth]{FigureS7.jpg}
-  \caption{The top row shows $95\%$ and $99\%$ CI for the hazard ratio for each eigengene in the multiple Cox proportional hazards model containing all eigengenes in the R-CHOP dataset. The bottom row shows Kaplan-Meier estimates (and $95\%$ CI) for the overall survival for patients stratified by the dichotomized \Sexpr{cleanName(the.module)} eigengene with 5 clusters. Left panels show modules obtained from the EM method while the right panels show modules from the Pool method.}
-  \label{fig:S8}
-\end{figure}
-
 
 \input{tableS1}
-
-\input{table.rcm.eg}
-\input{table.pool.eg}
-\newpage
-\input{table.olive.eg}
+\input{table.enrichment.em}
+\input{table.top.genes.pool}
+\input{table.enrichment.pool}
 
 \section{Marginalization of the covariance}
 \label{sec:marginalization}
