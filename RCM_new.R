@@ -538,7 +538,7 @@ names(results.idrc.test.sigmas.table) <- c("$n_i$", "$\\nu$", "EM","Pool", "EM",
 caption <- 'Simulation results based on IDRC data. Mean cophenetic correlation and 
             Kullback-Leibler divergence  with $95\\%$ confidence,
             for estimated vs true network for 
-            different values of $\\nu$ and $n_i$ using the EM, MLE or Pool method'
+            different values of $\\nu$ and $n_i$ using the EM, MLE or Pool method.'
 
 tableS1 <- latex(results.idrc.test.sigmas.table,
                 file = "tableS1.tex",
@@ -1184,7 +1184,9 @@ pickcolumns <- function(x){
 
 dlbcl.rcm.gprofile.table <- do.call(rbind,lapply(dlbcl.rcm.gprofile, pickcolumns))
 dlbcl.rcm.gprofile.table$term.id <- paste0("$",dlbcl.rcm.gprofile.table$term.id,"$")
-dlbcl.rcm.gprofile.table$term.name <- substr(dlbcl.rcm.gprofile.table$term.name,1,40)
+dlbcl.rcm.gprofile.table$term.name <- substr(dlbcl.rcm.gprofile.table$term.name,1,30)
+names(dlbcl.rcm.gprofile.table) <-c("Term ID", "Domain", "Term", "P", "N", "O", "Recall","Precision")
+
 
 
 gp.col.rcm <- gsub("(^|[[:space:]])([[:alpha:]])",
@@ -1435,7 +1437,7 @@ mod.tab.table <- latex(dlbcl.mod.tab.genes[seq_tmp, ],
                                        "member genes. The genes are sorted decreasingly",
                                        "by their intra-module connectivity (sum of the incident",
                                        "edge weights). Only the top", nn, "genes are shown."),
-                       #     cellTexCmds = ifelse(is.ensg, "tiny", "")[seq_tmp, ],
+                      #      cellTexCmds = ifelse(is.ensg, "tiny", "")[seq_tmp, ],
                        caption.loc = "bottom",
                        label = "tab:top.genes.pool",
                        landscape = FALSE,
@@ -1451,7 +1453,8 @@ for(module in unique(dlbcl.pool.modules)){
 
 dlbcl.pool.gprofile.table <- do.call(rbind,lapply(dlbcl.pool.gprofile, pickcolumns))
 dlbcl.pool.gprofile.table$term.id <- paste0("$",dlbcl.pool.gprofile.table$term.id,"$")
-dlbcl.pool.gprofile.table$term.name <- substr(dlbcl.pool.gprofile.table$term.name,1,40)
+dlbcl.pool.gprofile.table$term.name <- substr(dlbcl.pool.gprofile.table$term.name,1,30)
+names(dlbcl.pool.gprofile.table) <-c("Term ID", "Domain", "Term", "P", "N", "O", "Recall","Precision")
 
 gp.col.pool <- gsub("(^|[[:space:]])([[:alpha:]])",
                     "\\1\\U\\2", gsub("\\.[0-9]+$", "", row.names(dlbcl.pool.gprofile.table)),
@@ -1461,7 +1464,7 @@ gp.col.pool <- gsub("(^|[[:space:]])([[:alpha:]])",
 go.table.pool.gp <- latex(dlbcl.pool.gprofile.table[,-1],
                           rgroup = capitalize(cleanName(unique(tolower(gp.col.pool)))),
                           rowname = dlbcl.pool.gprofile.table[,1],
-                          label  = "tab:enrichment.em",
+                          label  = "tab:enrichment.pool",
                           n.rgroup = table(gp.col.pool)[unique(gp.col.pool)],
                           title = "Term ID",
                           size = "tiny",
