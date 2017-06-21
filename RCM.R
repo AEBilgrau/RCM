@@ -681,13 +681,21 @@ if (!file.exists(dlbcl_plot) || recompute) {
   abline(h = 5.5, col = "grey", lty = 2)
 
   # PANEL GRAPH
+  #layout.custom <- function(graph,...) {
+  #  l <- layout.circle(graph)
+  #  layout.fruchterman.reingold(graph, niter = 5000,
+  #                              area = vcount(graph)/2,
+  #                              repulserad = vcount(graph)/2,
+  #                              weights = abs(E(graph)$weight),
+  #                              start = l, ...)
+  #}
+  
+  # PANEL GRAPH new
   layout.custom <- function(graph,...) {
     l <- layout.circle(graph)
-    layout.fruchterman.reingold(graph, niter = 5000,
-                                area = vcount(graph)/2,
-                                repulserad = vcount(graph)/2,
+    layout_with_fr(graph, niter = 5000,
                                 weights = abs(E(graph)$weight),
-                                start = l, ...)
+                                coords = l)
   }
 
   scaleToLayout <- function(x) {
