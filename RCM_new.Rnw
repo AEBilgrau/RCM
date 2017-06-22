@@ -166,10 +166,10 @@ DK-9000 Aalborg \O{}\\
 \end{aug}
 
 \begin{abstract}
-The estimation of covariance matrices of gene expressions has many applications in cancer systems biology. Many gene expression studies, however, are hampered by low sample size and it has therefore become popular to increase sample size by collecting gene expression data across laboratories. 
+The estimation of covariance matrices of gene expressions has many applications in cancer systems biology. Many gene expression studies, however, are hampered by low sample size and it has therefore become popular to increase sample size by collecting gene expression data across studies.
 Motivated by the traditional meta-analysis using random effects models, we present a hierarchical random covariance model and use it for the meta-analysis of gene correlation networks across 11 large-scale gene expression studies of diffuse large B-cell lymphoma (DLBCL).
 We suggest to use a maximum likelihood estimator for the underlying common covariance matrix and introduce an EM algorithm for estimation.  By simulation experiments comparing the estimated covariance matrices by cophenetic correlation and Kullback-Leibler divergence the suggested estimator showed to perform better or not worse than a simple pooled estimator.  In a posthoc analysis of the estimated common covariance matrix for the DLBCL data we were able to identify novel biologically meaningful gene correlation networks with eigengenes of prognostic value.
-In conclusion, the methods seem to provide a generally applicable framework for meta-analysis, when multiple features are measured and believed to share a common covariance matrix obscured by batch dependent noise. 
+In conclusion, the method seems to provide a generally applicable framework for meta-analysis, when multiple features are measured and believed to share a common covariance matrix obscured by study dependent noise.
 \end{abstract}
 
 \begin{keyword}
@@ -201,11 +201,11 @@ source("RCM_new.R")
 \section{Introduction}
 Human cells carry out their function in concerted interaction via intricate protein signalling networks. These networks are according to the central dogma of molecular biology controlled by expressed genes.  It has become popular to perform genome wide measurements of expressed genes and proteins and summarizing the information by huge covariance matrices leading to improved understanding of disease pathology and identification of new drug targets \citep{Agnelli2011, Clarke2013}. Many gene expression studies, however, are hampered by low sample size and it has therefore become of interest to increase sample size by collecting gene expression data across laboratories. These data are potentially hampered by severe batch effects, and robust methods are therefore required to conduct meta-analysis of covariance matrices.
 
-To the best of our knowledge no approaches exist where meta-analysis of covariance matrices have been addressed explicitly. We acknowledge, however, that a number of indirect methods have been constructed. An immediate and tempting approach is to use one of the many batch correcting approaches scattered around in the literature \citep{Irizarry2003, Johnson2007, Lee2014} followed by estimating the covariance matrix either on a pooled data set or by pooling covariance matrices estimated from each individual study as suggested by \cite{Lee2014}. This approach, however, suffers from the same disadvantages as usual meta-analysis based on pooling fixed effects as it puts too much weight on a large outliers in the data \citep{Borenstein2010}.
+To the best of our knowledge no approaches exist where meta-analysis of covariance matrices have been addressed explicitly. We acknowledge, however, that a number of indirect methods have been constructed. An immediate and tempting approach is to use one of the many study correcting approaches scattered around in the literature \citep{Irizarry2003, Johnson2007, Lee2014} followed by estimating the covariance matrix either based on a pooled data set or by pooling covariance matrices estimated from each individual study as suggested by \cite{Lee2014}. This approach, however, suffers from the same disadvantages as usual meta-analysis based on pooling fixed effects as it puts too much weight on large outliers in the data \citep{Borenstein2010}.
 
 Motivated by the alternative meta-analysis by random effects \citep{DerSimonian1986, Choi2003}, we suggest a hierarchical model where the covariance for each study is assumed to be drawn from an inverse Wishart distribution with a common mean covariance matrix, and data from each study is then subsequently generated from a multivariate Gaussian distribution with this covariance matrix. We suggest to use a maximum likelihood estimator for the underlying common covariance matrix and introduce an EM algorithm for its estimation. We use the method for the meta-analysis of gene correlation networks across 11 large-scale gene expression studies of diffuse large B-cell lymphoma (DLBCL). It is our expectation that a more suitable handling of the covariance matrix will lead to more adequate estimations of covariance matrices and subsequently inferred gene correlation networks.
 
-In Section \ref{sec:RCMmodel}, we propose the model for a common covariance matrix across multiple studies, derive estimators thereof, and propose an inter-study homogeneity measure to aid in assessing the variation between studies. We conduct an extensive simulation study in Section \ref{sec:estimationassessment} comparing the proposed estimator and simple pooling of covariance matrices. We then apply the model in Section \ref{sec:DLBCL} to $2{,}046$ DLBCL samples across 11 datasets before concluding the manuscript in Section \ref{sec:conclusion}. 
+In Section \ref{sec:RCMmodel}, we propose the model for a common covariance matrix across multiple studies, derive estimators thereof, and propose an inter-study homogeneity measure to aid in assessing the variation between studies. We conduct an extensive simulation study in Section \ref{sec:estimationassessment} comparing the proposed estimator and simple pooling of covariance matrices. We then apply the model in Section \ref{sec:DLBCL} to $2{,}046$ DLBCL samples across 11 datasets before concluding the manuscript in Section \ref{sec:conclusion}.
 
 
 \section{A hierarchical model for the covariance matrix}
@@ -378,7 +378,7 @@ This yields the updating scheme
     (n_i + \nu)\left(\hvTheta_{(t)}^{-1} + \vS_i\right)^{-1}
 \end{align}
 for $\vTheta_{(t)}$.
-We denote the inverse of the estimate obtained by repeated iteration of \eqref{eq:em} by $\hvPsi_\text{EM}$.
+We denote the inverse of the estimate obtained by repeated iteration of \eqref{eq:em} by $\hvPsi_\text{EM}$. The EM algorithm can be sensitive to starting values. Hence, starting the algorithm in different starting values can help assesing if a global maximum has been reached.
 
 An approximate maximum likelihood estimator using a first order approximation is also possible (derived in Appendix \ref{sec:amle}).
 
@@ -430,13 +430,13 @@ Variations on the convergence criterion can also be considered, such as (a) usin
 \subsubsection*{Intra-study correlation coefficient}
 The heterogeneity parameter $\nu$ has no straightforward interpretation partly because the values of $\nu$ which corresponds to a large study heterogeneity is dependent on the dimension $p$.
 We therefore introduce a descriptive statistic analogous to the intra-study correlation coefficient (ICC) \citep{Shrout1979} well known from ordinary meta-analysis.
-For the RCM this follows from the definition of the ICC which is defined to be the ratio of the between-study variation $\var(\Sigma_{ij})$ and the total variation $\var(S_{ij})$ of any single pair of variables. In Appendix \ref{app:ICC} it is shown that the ICC is given by:  
+For the RCM this follows from the definition of the ICC which is defined to be the ratio of the between-study variation $\var(\Sigma_{ij})$ and the total variation $\var(S_{ij})$ of any single pair of variables. In Appendix \ref{app:ICC} it is shown that the ICC is given by:
 \begin{align}
   \text{ICC}(\nu)
   = \frac{1}{\nu - p}.
   \label{eq:ICCexprs}
 \end{align}
-The ICC might in this sense be utilized in better quantifying the reproducibility of the covariance across studies. 
+The ICC might in this sense be utilized in better quantifying the reproducibility of the covariance across studies.
 A straight-forward plug-in estimator $\widehat{\text{ICC}}(\nu)$ of the ICC of some gene-gene interaction is then $\text{ICC}(\hat{\nu})$.
 
 Though $v > p + 3$ is required for the variances to exist, it is clear that
@@ -488,9 +488,9 @@ To reproduce this document see \url{http://github.com/AEBilgrau/RCM}.
 \subsection{Evalutation of Network Estimation}
 <<estimate_network, echo=FALSE, results='hide'>>=
 @
-To assess the estimation procedures ability to estimate $\Sigma$ we generated data from the hierarchical model \eqref{eq:RCM} in two different scenarios. In the first scenario we define a simple block matrix of dimension $p=40$ with four blocks of size $10$. Each block has an internal pairwise correlation of $0.5$, blocks 1\and 2 and 3\and 4 have a correlation of $0.3$ between all pairs, and the remaing correlations are set at $0.1$. In the second scenario we select the top 100 genes, ranked by variance, from the IDRC dataset (see Table \ref{tab:studies}) and used the scatter matrix of these genes, scaled as a correlation matrix, as the $\Sigma$ matrix for simulation. For both scenarios we performed agglomerative hierchacical clustering using Ward-linkage and 1 minus the absolute correlation as a distance measure. Heatmaps with associated hierarchical clustering of both $\Sigma$ matrices are shown in Supplementary Figure \ref{fig:S1}. 
+To assess the estimation procedures ability to estimate $\Sigma$ we generated data from the hierarchical model \eqref{eq:RCM} in two different scenarios. In the first scenario we define a simple block matrix of dimension $p=40$ with four blocks of size $10$. Each block has an internal pairwise correlation of $0.5$, blocks 1\and 2 and 3\and 4 have a correlation of $0.3$ between all pairs, and the remaing correlations are set at $0.1$. In the second scenario we select the top 100 genes, ranked by variance, from the IDRC dataset (see Table \ref{tab:studies}) and used the scatter matrix of these genes, scaled as a correlation matrix, as the $\Sigma$ matrix for simulation. For both scenarios we performed agglomerative hierchacical clustering using Ward-linkage and 1 minus the absolute correlation as a distance measure. Heatmaps with associated hierarchical clustering of both $\Sigma$ matrices are shown in Supplementary Figure \ref{fig:S1}.
 
-For both scenarios we simulate data with $k=3$ and a range of values for $n_i$ and $\nu$. Each simulation was repeated 100 times, and the correlation matrix was estimated using the EM, MLE, and Pool approaches as outlined in Section \ref{sec:RCMmodel}. The similarity of the estimated and true $\Sigma$ matrices and associated networks were evaluated using respectively the Kullback-Leibler divergence \citep{Mattiussi2011} and the cophenetic correlation \citep{Sokal1962}. The cophenetic correlation is defined as the correlation of cophenetic distances of all pairwise distances in a tree, where the cophenetic distance is the height of the lowest point on the tree where two points merge. Results from the first scenario are (shown for the EM and Pool method in Table \ref{tab:results.clustering}, full results in Supplementary Table \ref{tab:results.clustering.full}), show that for heterogenous data ($\nu = 50, 100$) and $n_i \geq p$ the EM estimator outperforms the Pool and MLE estimators using both measures. Examples of tanglegrams comparing networks estimated with the EM and Pool method and the true $\Sigma$ matrix are shown in Supplementary Figure \ref{fig:S2}. Tanglegrams were constructed using the R-package \texttt{dendextend} \citep{Galili2015}. Increasing the $\nu$ parameter, thereby making the data more homogeneous across groups diminishes the advantage of the EM estimator. Similar results were found in the second scenario using a $\Sigma$ matrix based on the IDRC dataset (Table \ref{tab:results.clustering.idrc}). Results furthermore showed that the estimates in terms of cophenetic correlation for the MLE and Pool approaches are nearly identical, and results from the MLE method were thus excluded from the tables. We expect this to be caused by the fact that the MLE method is initilized with the Pool estimates and stops after few iterations; presumably a better estimate cannot be found in these simple scenarios. 
+For both scenarios we simulate data with $k=3$ and a range of values for $n_i$ and $\nu$. Each simulation was repeated 100 times, and the correlation matrix was estimated using the EM, MLE, and Pool approaches as outlined in Section \ref{sec:RCMmodel}. The similarity of the estimated and true $\Sigma$ matrices and associated networks were evaluated using respectively the Kullback-Leibler divergence \citep{Mattiussi2011} and the cophenetic correlation \citep{Sokal1962}. The cophenetic correlation is defined as the correlation of cophenetic distances of all pairwise distances in a tree, where the cophenetic distance is the height of the lowest point on the tree where two points merge. Results from the first scenario are (shown for the EM and Pool method in Table \ref{tab:results.clustering}, full results in Supplementary Table \ref{tab:results.clustering.full}), show that for heterogenous data ($\nu = 50, 100$) and $n_i \geq p$ the EM estimator outperforms the Pool and MLE estimators using both measures. Examples of tanglegrams comparing networks estimated with the EM and Pool method and the true $\Sigma$ matrix are shown in Supplementary Figure \ref{fig:S2}. Tanglegrams were constructed using the R-package \texttt{dendextend} \citep{Galili2015}. Increasing the $\nu$ parameter, thereby making the data more homogeneous across groups diminishes the advantage of the EM estimator. Similar results were found in the second scenario using a $\Sigma$ matrix based on the IDRC dataset (Table \ref{tab:results.clustering.idrc}). Results furthermore showed that the estimates in terms of cophenetic correlation for the MLE and Pool approaches are nearly identical, and results from the MLE method were thus excluded from the tables. We expect this to be caused by the fact that the MLE method is initilized with the Pool estimates and stops after few iterations; presumably a better estimate cannot be found in these simple scenarios.
 
 \input{table1}
 
@@ -569,7 +569,7 @@ From the parameter estimate, the common expected covariance $\hvSigma = (\hat{\n
   \label{fig:2}
 \end{figure}
 
-The permutation test yielded a P-value for the null hypothesis of study homogeneity of $\Sexpr{round(dlbcl.p.value,4)}$, clearly rejecting it. 
+The permutation test yielded a P-value for the null hypothesis of study homogeneity of $\Sexpr{round(dlbcl.p.value,4)}$, clearly rejecting it. This means a significant difference has been detected between the estimated covariance structures across studies.
 The estimated $\hat{\nu}$ yields an estimated ICC of $\Sexpr{round(get.ICC(dlbcl.rcm), 4)}$.
 Hence by the RCM, only $\Sexpr{100*round(get.ICC(dlbcl.rcm), 4)} \%$ of the variability of the gene-gene covariances is between-studies on average.
 This low ICC might suggest a high inter-study homogeneity of covariances meaning that the covariances reproduce across studies.
@@ -609,7 +609,7 @@ We checked if the identified modules were prognostic for overall survival (OS) i
 <<dlbcl_go_analysis, echo=FALSE, results='hide'>>=
 @
 
-Next, the modules were screened for biological relevance using GO (Gene Ontology) Biological Process, Molecular Function, and Cellular Component as well as REACTOME and KEGG pathway enrichment analysis. This was done using the g:profiler web server \citep{Reimand2016} via the accompanying R-package \texttt{gProfileR} \citep{gProfileR2016}. Since we pre-selected the top 300 genes by variance, the enrichment analysis was done using only these as the background genes. Top genes for each module, ranked by connectivity, are shown in Table \ref{tab:top.genes.em}, while results of the enrichment analysis for each of the modules are shown in Supplementary Table \ref{tab:enrichment.em}. Inspection of the enrichment analysis  and most connected genes allowed us to hypothesize that the coral module is involved in "tissue development", the Skyblue module is involved in "metastasis", the orchid module involved in "immune regulation", and the olivegreen module involved in "immune surveillance".  
+Next, the modules were screened for biological relevance using GO (Gene Ontology) Biological Process, Molecular Function, and Cellular Component as well as REACTOME and KEGG pathway enrichment analysis. This was done using the g:profiler web server \citep{Reimand2016} via the accompanying R-package \texttt{gProfileR} \citep{gProfileR2016}. Since we pre-selected the top 300 genes by variance, the enrichment analysis was done using only these as the background genes. Top genes for each module, ranked by connectivity, are shown in Table \ref{tab:top.genes.em}, while results of the enrichment analysis for each of the modules are shown in Supplementary Table \ref{tab:enrichment.em}. Inspection of the enrichment analysis  and most connected genes allowed us to hypothesize that the coral module is involved in "tissue development", the Skyblue module is involved in "metastasis", the orchid module involved in "immune regulation", and the olivegreen module involved in "immune surveillance".
 
 \input{table.top.genes.em}
 %\input{table.enrichment.em}
@@ -625,7 +625,7 @@ size than their wild-type littermates. This result indicates that knockdown
 of these proteins may improve the outcome of immunotherapy strategies in
 patients with values of the eigengene of the olivegreen module.
 
-Finally, we compared the network analyses based on the covariance matrix obtanied by the EM to that obtained by the Pool methods. The upper row of Supplementary Figure \ref{fig:S5} shows the heatmap and associated network modules for the Pool method, when the dendogram is cut at \Sexpr{dlbcl.par$n.modules} modules, Supplementary Figure \ref{fig:S6} shows plots for the survival analysis, and top genes and gene enrichments are given in Supplementary Tables \ref{tab:top.genes.pool} and \ref{tab:enrichment.pool}. For the Pool method, we chose for each module the same color as the module of the EM based clustering with most overlapping genes. In the lower row of Figure \ref{fig:S5} a tangleram was constructed and the cophenetic correlation was calculated. We noticed a great overlap between the modules, but a low cophenetic correlation. With background in the simulation we anticipate the Pool method has lower efficiency than the EM method. This implies the signal from the tightly regulated modules are so strong that it manifest itself for both methods. However, if we look at the less correlated intramodular connections the noise plays a larger role leading to a less clear separation between the modules for the Pool method. This can have potential biological implications, when regulating hub genes resulting in intra module cascades of reactions.    
+Finally, we compared the network analyses based on the covariance matrix obtanied by the EM to that obtained by the Pool methods. The upper row of Supplementary Figure \ref{fig:S5} shows the heatmap and associated network modules for the Pool method, when the dendogram is cut at \Sexpr{dlbcl.par$n.modules} modules, Supplementary Figure \ref{fig:S6} shows plots for the survival analysis, and top genes and gene enrichments are given in Supplementary Tables \ref{tab:top.genes.pool} and \ref{tab:enrichment.pool}. For the Pool method, we chose for each module the same color as the module of the EM based clustering with most overlapping genes. In the lower row of Figure \ref{fig:S5} a tangleram was constructed and the cophenetic correlation was calculated. We noticed a great overlap between the modules, but a low cophenetic correlation. With background in the simulation we anticipate the Pool method has lower efficiency than the EM method. This implies the signal from the tightly regulated modules are so strong that it manifest itself for both methods. However, if we look at the less correlated intramodular connections the noise plays a larger role leading to a less clear separation between the modules for the Pool method. This can have potential biological implications, when regulating hub genes resulting in intra module cascades of reactions.
 
 \section{Discussion}
 \label{sec:conclusion}
@@ -635,7 +635,7 @@ However, the proposed testing is computationally demanding and only feasible whe
 
 The moderate size of $p$ is a severe drawback as many methods have been published concerning estimation of large covariance matrices by various regularization methods \citep{Meinshausen2006, Friedman2008, vanWieringen2014}. Therefore we believe this work could be further enriched by combining the method with regularized estimation. In the future such generalizations of the model to $p \gg n_\bullet$ is extremely interesting though out of scope for this article.
 
-In conclusion the article demonstrates an advantageous model based way of conducting meta-analaysis of covariance matrices - especially in a setting with moderate number of features compared to the dimension. One should also notice the method seems to provide a generally applicable framework making it usable in other settings where multiple features are measured and believed to share a common covariance matrix obscured by group dependent noise. 
+In conclusion the article demonstrates an advantageous model based way of conducting meta-analaysis of covariance matrices - especially in a setting with moderate number of features compared to the dimension. One should also notice the method seems to provide a generally applicable framework making it usable in other settings where multiple features are measured and believed to share a common covariance matrix obscured by group dependent noise.
 
 \section*{Acknowledgments}
 We thank Martin Raussen, Jon Johnsen, as well as Niels Richard Hansen for their assistance on some of the mathematical proofs.
@@ -672,11 +672,11 @@ The technical assistance from Alexander Schmitz, Julie S.\ B\o{}dker, Ann-Maria 
 \renewcommand*{\thepage}{A\arabic{page}} %Add A to page counter
 
 
-\section{Supplementary Figures and Tables}  
+\section{Supplementary Figures and Tables}
 \counterwithin{figure}{section}
 \counterwithin{table}{section}
-\setcounter{figure}{0} 
-\setcounter{table}{0} 
+\setcounter{figure}{0}
+\setcounter{table}{0}
 
 \begin{figure}[H]
 \begin{subfigure}{0.5\textwidth}
@@ -1237,7 +1237,7 @@ which suggests the estimators
 \begin{align}
   \hat{\vPsi}_\text{MLE}
   = \frac{\sum_{i=1}^k (\nu + n_i) \vS_i}{n_\bullet}
-  \label{eq:mle}  
+  \label{eq:mle}
   \quad \text{ and } \quad
   \hat{\vSigma}_\text{MLE}
   = \frac{\sum_{i=1}^k (\nu + n_i) \vS_i}{(\nu-p-1)n_\bullet}.
