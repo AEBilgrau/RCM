@@ -101,6 +101,8 @@
 \end{figure}
 }
 
+
+
 % END OF PREAMBLE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -199,9 +201,9 @@ source("RCM_new.R")
 \section{Introduction}
 Human cells carry out their function in concerted interaction via intricate protein signalling networks. These networks are according to the central dogma of molecular biology controlled by expressed genes.  It has become popular to perform genome wide measurements of expressed genes and proteins and summarizing the information by huge covariance matrices leading to improved understanding of disease pathology and identification of new drug targets \citep{Agnelli2011, Clarke2013}. Many gene expression studies, however, are hampered by low sample size and it has therefore become of interest to increase sample size by collecting gene expression data across laboratories. These data are potentially hampered by severe batch effects, and robust methods are therefore required to conduct meta-analysis of covariance matrices.
 
-Motivated by the alternative meta-analysis by random effects \citep{DerSimonian1986, Choi2003}, we suggest a hierarchical model where the covariance for each study is assumed to be drawn from an inverse Wishart distribution with a common mean covariance matrix, and data from each study is then subsequently generated from a multivariate Gaussian distribution with this covariance matrix. We suggest to use a maximum likelihood estimator for the underlying common covariance matrix and introduce an EM algorithm for its estimation. We use the method for the meta-analysis of gene correlation networks across 11 large-scale gene expression studies of diffuse large B-cell lymphoma (DLBCL). It is our expectation that a more suitable handling of the covariance matrix will lead to more adequate estimations of covariance matrices and subsequently inferred gene correlation networks.
-
 To the best of our knowledge no approaches exist where meta-analysis of covariance matrices have been addressed explicitly. We acknowledge, however, that a number of indirect methods have been constructed. An immediate and tempting approach is to use one of the many batch correcting approaches scattered around in the literature \citep{Irizarry2003, Johnson2007, Lee2014} followed by estimating the covariance matrix either on a pooled data set or by pooling covariance matrices estimated from each individual study as suggested by \cite{Lee2014}. This approach, however, suffers from the same disadvantages as usual meta-analysis based on pooling fixed effects as it puts too much weight on a large outliers in the data \citep{Borenstein2010}.
+
+Motivated by the alternative meta-analysis by random effects \citep{DerSimonian1986, Choi2003}, we suggest a hierarchical model where the covariance for each study is assumed to be drawn from an inverse Wishart distribution with a common mean covariance matrix, and data from each study is then subsequently generated from a multivariate Gaussian distribution with this covariance matrix. We suggest to use a maximum likelihood estimator for the underlying common covariance matrix and introduce an EM algorithm for its estimation. We use the method for the meta-analysis of gene correlation networks across 11 large-scale gene expression studies of diffuse large B-cell lymphoma (DLBCL). It is our expectation that a more suitable handling of the covariance matrix will lead to more adequate estimations of covariance matrices and subsequently inferred gene correlation networks.
 
 In Section \ref{sec:RCMmodel}, we propose the model for a common covariance matrix across multiple studies, derive estimators thereof, and propose an inter-study homogeneity measure to aid in assessing the variation between studies. We conduct an extensive simulation study in Section \ref{sec:estimationassessment} comparing the proposed estimator and simple pooling of covariance matrices. We then apply the model in Section \ref{sec:DLBCL} to $2{,}046$ DLBCL samples across 11 datasets before concluding the manuscript in Section \ref{sec:conclusion}. 
 
@@ -600,7 +602,7 @@ We checked if the identified modules were prognostic for overall survival (OS) i
 
 \begin{figure}
   \includegraphics[width=0.8\linewidth]{Figure4.jpg}
-  \caption{The top row shows $95\%$ and $99\%$ CI for the hazard ratio for each eigengene in the multiple Cox proportional hazards model containing all eigengenes in the CHOP and R-CHOP dataset. The bottom row shows Kaplan-Meier estimates (and $95\%$ CI) for the overall survival for patients stratified by the dichotomized \Sexpr{cleanName(the.module)} eigengene.}
+  \caption{The top row shows $95\%$ and $99\%$ CI for the hazard ratio for each eigengene in the multiple Cox proportional hazards model containing all eigengenes in the CHOP and R-CHOP dataset. The bottom row shows Kaplan-Meier estimates (and $95\%$ CI) for the overall survival for patients stratified by the dichotomized \Sexpr{cleanName(the.module)} eigengene. The proportion of variance explained by the eigengene in the CHOP and R-CHOP datasets for respectively the Coral, Olivegreen, Gray, Skyblue and Orchid modules were \Sexpr{paste(as.character(round(eigenvars[[1]],2)), collapse=", ")}, and \Sexpr{paste(as.character(round(eigenvars[[2]],2)), collapse=", ")}}
   \label{fig:4}
 \end{figure}
 
@@ -643,8 +645,8 @@ The technical assistance from Alexander Schmitz, Julie S.\ B\o{}dker, Ann-Maria 
 \begin{supplement}
 \sname{Supplement A}\label{suppA}
 \stitle{Appendices}
-\slink[url]{http://github.com/AEBilgrau/RCM}
-\sdescription{Supplementary figures, tables and proofs.}
+\slink[url]{http://imstat.org/aoas/}
+\sdescription{Supplementary figures, tables and proofs available online.}
 \end{supplement}
 
 \begin{supplement}
@@ -736,7 +738,7 @@ The technical assistance from Alexander Schmitz, Julie S.\ B\o{}dker, Ann-Maria 
 
 \begin{figure}[H]
   \includegraphics[width=0.8\linewidth]{FigureS6.jpg}
-  \caption{The top row shows $95\%$ and $99\%$ CI for the hazard ratio for each eigengene in the multiple Cox proportional hazards model containing all eigengenes in the CHOP or R-CHOP dataset. The bottom row shows Kaplan-Meier estimates (and $95\%$ CI) for the overall survival for patients stratified by the dichotomized \Sexpr{cleanName(the.module)} obtained from the Pool method.}
+  \caption{The top row shows $95\%$ and $99\%$ CI for the hazard ratio for each eigengene in the multiple Cox proportional hazards model containing all eigengenes in the CHOP or R-CHOP dataset. The bottom row shows Kaplan-Meier estimates (and $95\%$ CI) for the overall survival for patients stratified by the dichotomized \Sexpr{cleanName(the.module)} obtained from the Pool method. The proportion of variance explained by the eigengene in the CHOP and R-CHOP datasets for respectively the Coral, Olivegreen, Gray, Skyblue and Orchid modules were \Sexpr{paste(as.character(round(eigenvarspool[[1]],2)), collapse=", ")}, and \Sexpr{paste(as.character(round(eigenvarspool[[2]],2)), collapse=", ")}}
   \label{fig:S6}
 \end{figure}
 

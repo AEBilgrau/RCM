@@ -1085,6 +1085,7 @@ dev.off()
 load("~/GitHub/RCM/metadata.RData")
 the.module <- num2col[2] # = "darkolivegreen3"
 
+eigenvars <- list()
 
 figure4 <- "Figure4.jpg"
 jpeg(figure4, height = 1.2*7, width = 2*7, units = "in", res = 200)
@@ -1106,6 +1107,7 @@ jpeg(figure4, height = 1.2*7, width = 2*7, units = "in", res = 200)
     stopifnot(rownames(meta) == colnames(expr))
     
     res <- moduleEigengenes(t(expr), dlbcl.modules)
+    eigenvars[[j]] <- res$varExplained
     eg <- res$eigengenes
     col <- gsub("^ME", "", colnames(eg))
     eg <- as.data.frame(lapply(eg, function(x) x/sd(x))) # Standardize
@@ -1387,6 +1389,7 @@ tanglegram(dlbcl.rcm.dend, dlbcl.pool.dend,
 )
 dev.off()
 
+eigenvarspool <- list()
 figureS6 <- "FigureS6.jpg"
 jpeg(figureS6, height = 1.2*7, width = 2*7, units = "in", res = 200)
 {
@@ -1407,6 +1410,7 @@ jpeg(figureS6, height = 1.2*7, width = 2*7, units = "in", res = 200)
     stopifnot(rownames(meta) == colnames(expr))
     
     res <- moduleEigengenes(t(expr), dlbcl.pool.modules)
+    eigenvarspool[[j]] <- res$varExplained
     eg <- res$eigengenes
     col <- gsub("^ME", "", colnames(eg))
     eg <- as.data.frame(lapply(eg, function(x) x/sd(x))) # Standardize
