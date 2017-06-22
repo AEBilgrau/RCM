@@ -25,10 +25,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-\usepackage{amssymb}  % Math symbols (e.g. \mathbb{})
-\usepackage{dsfont}   % For \mathds{1} blackboard bold 1
-\usepackage{hyperref} % For urls and hyperlinks
-\usepackage{longtable}
+\usepackage{amssymb}   % Math symbols (e.g. \mathbb{})
+\usepackage{dsfont}    % For \mathds{1} blackboard bold 1
+\usepackage{hyperref}  % For urls and hyperlinks
+\usepackage{longtable} % For tables overlapping multiple pages
+\usepackage{lscape}    % To rotate objects into landscape
 
 % For algorihmns
 \usepackage{algorithm}
@@ -139,6 +140,7 @@ Department of Haematology\\
 Sdr.\ Skovvej 15\\
 DK-9000 Aalborg\\
 \printead{e1}\\
+\phantom{E-mail: }\printead*{e5}\\
 \phantom{E-mail: }\printead*{e4}\\
 \phantom{E-mail: }\printead*{e3}
 }
@@ -165,7 +167,7 @@ DK-9000 Aalborg \O{}\\
 The estimation of covariance matrices of gene expressions has many applications in cancer systems biology. Many gene expression studies, however, are hampered by low sample size and it has therefore become popular to increase sample size by collecting gene expression data across laboratories. 
 Motivated by the traditional meta-analysis using random effects models, we present a hierarchical random covariance model and use it for the meta-analysis of gene correlation networks across 11 large-scale gene expression studies of diffuse large B-cell lymphoma (DLBCL).
 We suggest to use a maximum likelihood estimator for the underlying common covariance matrix and introduce an EM algorithm for estimation.  By simulation experiments comparing the estimated covariance matrices by cophenetic correlation and Kullback-Leibler divergence the suggested estimator showed to perform better or not worse than a simple pooled estimator.  In a posthoc analysis of the estimated common covariance matrix for the DLBCL data we were able to identify novel biologically meaningful gene correlation networks with eigengenes of prognostic value.
-In conclusions the methods seems to provide a generally applicable framework for meta-analysis, when multiple features are measured and believed to share a common covariance matrix obscured by batch dependent noise. 
+In conclusion, the methods seem to provide a generally applicable framework for meta-analysis, when multiple features are measured and believed to share a common covariance matrix obscured by batch dependent noise. 
 \end{abstract}
 
 \begin{keyword}
@@ -197,9 +199,9 @@ source("RCM_new.R")
 \section{Introduction}
 Human cells carry out their function in concerted interaction via intricate protein signalling networks. These networks are according to the central dogma of molecular biology controlled by expressed genes.  It has become popular to perform genome wide measurements of expressed genes and proteins and summarizing the information by huge covariance matrices leading to improved understanding of disease pathology and identification of new drug targets \citep{Agnelli2011, Clarke2013}. Many gene expression studies, however, are hampered by low sample size and it has therefore become of interest to increase sample size by collecting gene expression data across laboratories. These data are potentially hampered by severe batch effects, and robust methods are therefore required to conduct meta-analysis of covariance matrices.
 
-To the best of our knowledge no approaches exist where meta-analysis of covariance matrices have been addressed explicitly. We acknowledge, however, that a number of indirect methods have been constructed. An immediate and tempting approach is to use one of the many batch correcting approaches scattered around in the literature \citep{Irizarry2003, Johnson2007, Lee2014} followed by estimating the covariance matrix either on a pooled data set or by pooling covariance matrices estimated from each individual study as suggested by \cite{Lee2014}. This approach suffers from the same disadvantages as usual meta-analysis based on pooling fixed effects as it puts too much weight on a large outliers in the data \citep{Borenstein2010}. 
-
 Motivated by the alternative meta-analysis by random effects \citep{DerSimonian1986, Choi2003}, we suggest a hierarchical model where the covariance for each study is assumed to be drawn from an inverse Wishart distribution with a common mean covariance matrix, and data from each study is then subsequently generated from a multivariate Gaussian distribution with this covariance matrix. We suggest to use a maximum likelihood estimator for the underlying common covariance matrix and introduce an EM algorithm for its estimation. We use the method for the meta-analysis of gene correlation networks across 11 large-scale gene expression studies of diffuse large B-cell lymphoma (DLBCL). It is our expectation that a more suitable handling of the covariance matrix will lead to more adequate estimations of covariance matrices and subsequently inferred gene correlation networks.
+
+To the best of our knowledge no approaches exist where meta-analysis of covariance matrices have been addressed explicitly. We acknowledge, however, that a number of indirect methods have been constructed. An immediate and tempting approach is to use one of the many batch correcting approaches scattered around in the literature \citep{Irizarry2003, Johnson2007, Lee2014} followed by estimating the covariance matrix either on a pooled data set or by pooling covariance matrices estimated from each individual study as suggested by \cite{Lee2014}. This approach, however, suffers from the same disadvantages as usual meta-analysis based on pooling fixed effects as it puts too much weight on a large outliers in the data \citep{Borenstein2010}.
 
 In Section \ref{sec:RCMmodel}, we propose the model for a common covariance matrix across multiple studies, derive estimators thereof, and propose an inter-study homogeneity measure to aid in assessing the variation between studies. We conduct an extensive simulation study in Section \ref{sec:estimationassessment} comparing the proposed estimator and simple pooling of covariance matrices. We then apply the model in Section \ref{sec:DLBCL} to $2{,}046$ DLBCL samples across 11 datasets before concluding the manuscript in Section \ref{sec:conclusion}. 
 
@@ -467,7 +469,7 @@ As \textit{small} values of $\hat{\nu}$ are critical for $H_0$ approximate accep
   \Bigg),
 \end{align}
 where $\bbOne[ \,\cdot\, ]$ is the indicator function.
-The addition of one in the nominator and denominator adds a positive bias to the approximate p-value minimally needed according to \citet{Phipson2010}.
+The addition of one to both nominator and denominator adds a positive bias to the approximate p-value and is considered minimally needed according to \citet{Phipson2010}.
 This is approximately the fraction of $\hat{\nu}^{(j)}_0$'s smaller than $\hat{\nu}_\text{obs}$.
 
 
@@ -481,7 +483,7 @@ To reproduce this document see \url{http://github.com/AEBilgrau/RCM}.
 
 \section{Simulation experiments}
 \label{sec:estimationassessment}
-\subsection{Estimation of network}
+\subsection{Evalutation of Network Estimation}
 <<estimate_network, echo=FALSE, results='hide'>>=
 @
 To assess the estimation procedures ability to estimate $\Sigma$ we generated data from the hierarchical model \eqref{eq:RCM} in two different scenarios. In the first scenario we define a simple block matrix of dimension $p=40$ with four blocks of size $10$. Each block has an internal pairwise correlation of $0.5$, blocks 1\and 2 and 3\and 4 have a correlation of $0.3$ between all pairs, and the remaing correlations are set at $0.1$. In the second scenario we select the top 100 genes, ranked by variance, from the IDRC dataset (see Table \ref{tab:studies}) and used the scatter matrix of these genes, scaled as a correlation matrix, as the $\Sigma$ matrix for simulation. For both scenarios we performed agglomerative hierchacical clustering using Ward-linkage and 1 minus the absolute correlation as a distance measure. Heatmaps with associated hierarchical clustering of both $\Sigma$ matrices are shown in Supplementary Figure \ref{fig:S1}. 
@@ -503,7 +505,7 @@ Next we tested the performance of the different methods in terms of computation 
 \subsection{Evaluation of the hypothesis testing}
 <<test_pvalue, echo=FALSE, results='hide'>>=
 @
-Finally we investigate the performance of the P-value for the hypothesis test suggested in \eqref{eq:pvalue}. To do this, we simulate from the hierarchical model with $k=3$ and a range of different values for $p$, $\nu$, and $n_i$. For these simulations we used a $\Psi$ matrix with a diagonal of ones and $0.5$ for off-diagonal values. Simulations were done 100 times for each scenario, and 500 permutations were done for each simulation. Results summarized as boxplots of the P-values obtained in the 100 simulations for each scenario are shown in Supplementary Figure \ref{fig:S3}. We find that for heterogenous data (e.g. $p=20, \nu=30$) the null-hypothesis is clearly rejected if $n_i>p$. When increasing $\nu$ thus making the groups more similar, more observations are needed to reject the null hypothesis, while for identical groups, i.e. $\nu=\infty$, the null-hypothesis is not rejected. The P-values obtained from the permuation test thus performs as intended.
+Finally we investigate the performance of the P-value for the hypothesis test suggested in \eqref{eq:pvalue}. To do this, we simulate from the hierarchical model with $k=3$ and a range of different values for $p$, $\nu$, and $n_i$. For these simulations we used a $\Psi$ matrix with a diagonal of ones and $0.5$ for off-diagonal values. Simulations were done 100 times for each scenario, and 500 permutations were done for each simulation. Results summarized as boxplots of the P-values obtained in the 100 simulations for each scenario are shown in Supplementary Figure \ref{fig:S3}. We find that for heterogenous data (e.g. $p=20, \nu=30$) the null-hypothesis is clearly rejected if $n_i>p$. When increasing $\nu$ thus making the groups more similar, more observations are needed to reject the null hypothesis, while for identical groups, i.e. $\nu=\infty$, the null-hypothesis is generally not rejected. The P-values obtained from the permuation test thus performs as intended.
 
 \section{DLBCL meta-analysis}
 \label{sec:DLBCL}
@@ -521,7 +523,7 @@ The corresponding GEO-accession numbers and microarray platforms used are seen i
 The downloaded data yield a total of \Sexpr{rowSums(dlbcl.dims)["Samples"]} samples with study sizes in the range \Sexpr{paste(range(dlbcl.dims["Samples",]), collapse = "-")}.
 The summarization using brainarray CDFs to Ensembl gene identifiers facilitates cross-platform integration.
 
-After RMA normalization and summarization, the data were brought to a common scale by quantile normalizing all data to the common cumulative distribution function of all arrays. Lastly, the datasets were reduced to \Sexpr{dim(gep[[1]])["Features"]} common genes represented in all studies and array platforms. Figure \ref{fig:S4} shows a plot of the first and second principal components of the combined dataset. We see a clear split on the first principal component, indicitating a possible batch effect and heterogeneous data, and thus a situation where the EM estimator might offer an advantage compared to the simpler Pooling approach.
+After RMA normalization and summarization, the data were brought to a common scale by quantile normalizing all data to the common cumulative distribution function of all arrays. Lastly, the datasets were reduced to \Sexpr{dim(gep[[1]])["Features"]} common genes represented in all studies and array platforms. Figure \ref{fig:S4} shows a plot of the first and second principal components of the combined dataset. We see a clear split on the first principal component, indicitating a possible batch effect and heterogeneous data, and thus a situation where the EM estimator might offer an advantage compared to the simpler Pool approach.
 
 \begin{table}[!tbp]
 \caption{Overview of studies used with GEO accession number from the NCBI Gene expression omnibus website, the relevant reference, array types used in the study, and number of samples and features on the used array.\label{tab:studies}}
@@ -574,7 +576,7 @@ By selection, we have high inter-study variability which drives the ICC down.
 
 <<dlbcl_clustering, echo=FALSE, results='hide'>>=
 @
-For simplicity we employed a standard network analysis to the estimated common correlation matrix $\hat{\vec{R}}$ across all studies. To identify clusters with high internal correlation, we used agglomerative hierarchical clustering with \Sexpr{capitalize(dlbcl.par$linkage)}-linkage and distance measure defined as 1 minus the absolute value of the correlation. The dendrogram was arbitrarily pruned at a height which produced \Sexpr{dlbcl.par$n.modules} modules. The Modules are given different colors. Figure \ref{fig:3} shows the heatmap and associated network modules.
+For simplicity we employed a standard network analysis to the estimated common correlation matrix $\hat{\vec{R}}$ across all studies. To identify clusters with high internal correlation, we used agglomerative hierarchical clustering with \Sexpr{capitalize(dlbcl.par$linkage)}-linkage and distance measure defined as 1 minus the absolute value of the correlation. The dendrogram was arbitrarily pruned at a height which produced \Sexpr{dlbcl.par$n.modules} modules. The Modules are given different colors. Figure \ref{fig:3} shows the heatmap, associated network modules and suggested GO function.
 
 \begin{figure}
 \begin{subfigure}{0.5\textwidth}
@@ -594,7 +596,7 @@ For simplicity we employed a standard network analysis to the estimated common c
 
 <<survival_analysis, echo=FALSE, results='hide'>>=
 @
-We checked if the identified modules were prognostic for overall survival (OS) in the CHOP and R-CHOP-treated cohort datasets of GSE10846. To do this, the eigengene \citep{Horvath2011} for each module was computed. The module eigengene is the first principal component of the expression matrix of the module which thus can be represented by a linear combination of the module genes. Multiple Cox proportional hazards model for OS was fitted with the module eigengenes as covariates.  For the prognostically interesting \Sexpr{cleanName(the.module)} module, the Kaplan-Meier estimates were computed for groups arising when dichotomizing the values of the corresponding eigengene as above or below the median value. These results are shown in Figure \ref{fig:4}.
+We checked if the identified modules were prognostic for overall survival (OS) in the CHOP and R-CHOP-treated cohort datasets of GSE10846. To do this, the eigengene \citep{Horvath2011} for each module was computed. The module eigengene is the first principal component of the expression matrix of the module which thus can be represented by a linear combination of the module genes. Multiple Cox proportional hazards model for OS was fitted with the module eigengenes as covariates.  For the prognostically interesting and tightly clustered \Sexpr{cleanName(the.module)} module, the Kaplan-Meier estimates were computed for groups arising when dichotomizing the values of the corresponding eigengene as above or below the median value. These results are shown in Figure \ref{fig:4}.
 
 \begin{figure}
   \includegraphics[width=0.8\linewidth]{Figure4.jpg}
@@ -631,7 +633,7 @@ However, the proposed testing is computationally demanding and only feasible whe
 
 The moderate size of $p$ is a severe drawback as many methods have been published concerning estimation of large covariance matrices by various regularization methods \citep{Meinshausen2006, Friedman2008, vanWieringen2014}. Therefore we believe this work could be further enriched by combining the method with regularized estimation. In the future such generalizations of the model to $p \gg n_\bullet$ is extremely interesting though out of scope for this article.
 
-In conclusion the article demonstrates an advantageous model based way of conducting meta-analaysis of covariance matrices - especially in a moderate number of features setting. One should also notice the method seems to provide a generally applicable framework making it usable in other settings where multiple features are measured and believed to share a common covariance matrix obscured by study dependent noise. 
+In conclusion the article demonstrates an advantageous model based way of conducting meta-analaysis of covariance matrices - especially in a setting with moderate number of features compared to the dimension. One should also notice the method seems to provide a generally applicable framework making it usable in other settings where multiple features are measured and believed to share a common covariance matrix obscured by group dependent noise. 
 
 \section*{Acknowledgments}
 We thank Martin Raussen, Jon Johnsen, as well as Niels Richard Hansen for their assistance on some of the mathematical proofs.
@@ -742,6 +744,7 @@ The technical assistance from Alexander Schmitz, Julie S.\ B\o{}dker, Ann-Maria 
 \input{table.enrichment.em}
 \input{table.top.genes.pool}
 \input{table.enrichment.pool}
+\newpage
 
 \section{Marginalization of the covariance}
 \label{sec:marginalization}

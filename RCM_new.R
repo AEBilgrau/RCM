@@ -372,6 +372,30 @@ plot.cis <- function(dat, ...) {
   
 }
 
+plot.cis_bw <- function(dat, ...) { # Plot confidence interval i B/W
+  
+  plot(1, type = "n",
+       xlim = range(dat),
+       ylim = c(0, nrow(dat) + 1),
+       xlab = "", ylab = "", axes = FALSE, log = "x",
+       xaxs = "r", ...)
+  
+  h <- 0.2
+  col <- gsub("^ME", "", rownames(dat))
+  axis(1, at = axTicks(3), label = formatC(axTicks(3)))
+  axis(2, at = seq_along(col), label = cleanName(col), las = 2, tick = FALSE,
+       pos = min(dat))
+  
+  
+  n.seq <- 1:nrow(dat)
+  rect(dat[,5], n.seq - h, dat[,6], n.seq + h, col = alp("lightgrey", 0.5), border = NA)
+  rect(dat[,2], n.seq - h, dat[,3], n.seq + h)
+  rect(dat[,5], n.seq - h, dat[,6], n.seq + h)
+  segments(x0 = dat[,1], y0 = n.seq- 1.5*h, y1 = n.seq + 1.5*h, lwd = 2)
+  segments(x0 = 1, y0 = 0, y1 = 6, col = "darkgrey", lty = 2)
+  
+}
+
 cleanName <- function(x) {
   return(gsub("[0-9]+|dark|medium|light", "", x))
 }
@@ -504,7 +528,8 @@ table1 <- latex(results.test.sigmas.table, file = "table1.tex",
                 caption = caption,
                 size = "tiny",
                 label ="tab:results.clustering",
-                rowname=NULL,       
+                rowname=NULL,
+                landscape = TRUE,
                 cgroup = c("", "Cophenetic Correlation", "Kullback-Leibler divergence"),
                 n.cgroup = c(2,2,3))
 
@@ -545,6 +570,7 @@ tableS1 <- latex(results.idrc.test.sigmas.table,
                 title = "Clustering results",
                 caption = caption,
                 size = "tiny",
+                landscape = TRUE,
                 label = "tab:results.clustering.idrc",
                 rowname=NULL,
                 cgroup = c("", "Cophenetic Correlation", "Kullback-Leibler divergence"),
@@ -1068,7 +1094,8 @@ jpeg(figure4, height = 1.2*7, width = 2*7, units = "in", res = 200)
     cph.fits <- coxph(meta$OS ~ ., data = eg, x = TRUE, y = TRUE)
     dats <- get.cis(cph.fits)
     dats <- dats[, -c(2,6)]
-    plot.cis(dats)
+    plot.cis_bw(dats) #use B/W
+    #plot.cis(dats)
     
     for (i in seq_len(ncol(eg))) {
       if (col[i] == the.module) {
@@ -1080,7 +1107,7 @@ jpeg(figure4, height = 1.2*7, width = 2*7, units = "in", res = 200)
         plot(sfit.h,
              conf.int = TRUE,
              main = "",
-             col = col[i],
+             col = "grey", #col[i], B/W
              lwd = 2,
              lty = c(1,2,2),
              axes = FALSE,
@@ -1093,9 +1120,11 @@ jpeg(figure4, height = 1.2*7, width = 2*7, units = "in", res = 200)
         axis(2)
         legend("bottomleft", bty = "n", lwd = 2, lty = 2:3,
                legend = c("High eigengene", "Low eigengene"),
-               col = c(col[i], "black"), horiz = FALSE)
+               #col = c(col[i], "black"), horiz = FALSE)
+               col = c("grey", "black"), horiz = FALSE) # B/W
         legend("topright", legend = paste(cleanName(col[i]), "eigengene"),
-               bty = "n", text.col = col[i])
+               #bty = "n", text.col = col[i]) #B/W
+               bty = "n", text.col = "grey") 
       }
     }
     title(switch(j, "GSE10846 CHOP", "GSE10846 R-CHOP"), xpd = TRUE)
@@ -1123,33 +1152,38 @@ dlbcl.cor.sub <- lapply(dlbcl.cor.sub, function(x) {
   o <- order(rowSums(abs(x)), decreasing = TRUE)
   return(x[o,o])
 })
+
 tmp <- lapply(dlbcl.cor.sub, rownames)
+n.tmp <- unlist(lapply(tmp, length))
 m <- max(table(dlbcl.modules))  # Get largest module
 
 # Construct table
-dlbcl.mod.tab.genes <-
-  sapply(tmp, function(x) unname(c(map2hugo(x), rep(NA, m - length(x)))))
-dlbcl.mod.tab.genes.copy <- dlbcl.mod.tab.genes
+convert_to_hugo <- function(x){
+   x <- map2hugo(x)
+   x <- x[grep("ENSG",x, invert=TRUE)]
+  return(unname(c(x, rep(NA, m - length(x)))))
+}
+
+dlbcl.mod.tab.genes <- sapply(tmp, convert_to_hugo)
 
 # First letter capitalized
 cgroup <- capitalize(cleanName(names(mod.genes)))
 # cgroup <- paste0(cgroup, num2names)
 
 colnames(dlbcl.mod.tab.genes) <- # Number of gens in each module
-  paste0("n = ", colSums(!is.na(dlbcl.mod.tab.genes)))
+  paste0("n = ", n.tmp)
 
-is.ensg <- structure(grepl("^ENSG", dlbcl.mod.tab.genes),
-                     dim = dim(dlbcl.mod.tab.genes))
-nn <- 50
+
+nn <- 40
 seq_tmp <- seq_len(min(nn, nrow(dlbcl.mod.tab.genes)))
 mod.tab.table <- latex(dlbcl.mod.tab.genes[seq_tmp, ],
                        cgroup = cgroup,
+                       n.cgroup = rep(1,5),
                        size = "tiny",
                        caption = paste("The identified modules, their sizes, and",
                                        "member genes. The genes are sorted decreasingly",
                                        "by their intra-module connectivity (sum of the incident",
                                        "edge weights). Only the top", nn, "genes are shown."),
-                       #     cellTexCmds = ifelse(is.ensg, "tiny", "")[seq_tmp, ],
                        caption.loc = "bottom",
                        label = "tab:top.genes.em",
                        landscape = FALSE,
@@ -1195,14 +1229,16 @@ gp.col.rcm <- gsub("(^|[[:space:]])([[:alpha:]])",
 
 
 
-go.table.rcm.gp <- latex(dlbcl.rcm.gprofile.table[,-1],
+go.table.rcm.gp <- latex(dlbcl.rcm.gprofile.table[,-c(1,7,8)],
                          rgroup = capitalize(cleanName(unique(tolower(gp.col.rcm)))),
                          rowname = dlbcl.rcm.gprofile.table[,1],
                          label  = "tab:enrichment.em",
                          n.rgroup = table(gp.col.rcm)[unique(gp.col.rcm)],
                          title = "Term ID",
                          size = "tiny",
-                         caption = paste0("The significant annotations for DLBCL EM method"),
+                         caption = paste0("The significant terms for the gene enrichment ,
+                                          analysis of the DLBCL EM method modules. Number of genes ,
+                                          in each term (N), and the overlap to module (O)."),
                          lines.page = 80,
                          longtable = TRUE,
                          center = "centering",
@@ -1411,24 +1447,28 @@ dlbcl.cor.sub <- lapply(dlbcl.cor.sub, function(x) {
   o <- order(rowSums(abs(x)), decreasing = TRUE)
   return(x[o,o])
 })
+
 tmp <- lapply(dlbcl.cor.sub, rownames)
+n.tmp <- unlist(lapply(tmp, length))
 m <- max(table(dlbcl.pool.modules))  # Get largest module
 
 # Construct table
-dlbcl.mod.tab.genes <-
-  sapply(tmp, function(x) unname(c(map2hugo(x), rep(NA, m - length(x)))))
-dlbcl.mod.tab.genes.copy <- dlbcl.mod.tab.genes
+convert_to_hugo <- function(x){
+  x <- map2hugo(x)
+  x <- x[grep("ENSG",x, invert=TRUE)]
+  return(unname(c(x, rep(NA, m - length(x)))))
+}
+
+dlbcl.mod.tab.genes <- sapply(tmp, convert_to_hugo)
 
 # First letter capitalized
-cgroup <- capitalize(cleanName(names(mod.genes.pool)))
+cgroup <- capitalize(cleanName(names(mod.genes)))
 # cgroup <- paste0(cgroup, num2names)
 
 colnames(dlbcl.mod.tab.genes) <- # Number of gens in each module
-  paste0("n = ", colSums(!is.na(dlbcl.mod.tab.genes)))
+  paste0("n = ", n.tmp)
 
-is.ensg <- structure(grepl("^ENSG", dlbcl.mod.tab.genes),
-                     dim = dim(dlbcl.mod.tab.genes))
-nn <- 50
+nn <- 40
 seq_tmp <- seq_len(min(nn, nrow(dlbcl.mod.tab.genes)))
 mod.tab.table <- latex(dlbcl.mod.tab.genes[seq_tmp, ],
                        cgroup = cgroup,
@@ -1437,7 +1477,6 @@ mod.tab.table <- latex(dlbcl.mod.tab.genes[seq_tmp, ],
                                        "member genes. The genes are sorted decreasingly",
                                        "by their intra-module connectivity (sum of the incident",
                                        "edge weights). Only the top", nn, "genes are shown."),
-                      #      cellTexCmds = ifelse(is.ensg, "tiny", "")[seq_tmp, ],
                        caption.loc = "bottom",
                        label = "tab:top.genes.pool",
                        landscape = FALSE,
@@ -1461,14 +1500,16 @@ gp.col.pool <- gsub("(^|[[:space:]])([[:alpha:]])",
                     perl = TRUE)
 
 
-go.table.pool.gp <- latex(dlbcl.pool.gprofile.table[,-1],
+go.table.pool.gp <- latex(dlbcl.pool.gprofile.table[,-c(1,7,8)],
                           rgroup = capitalize(cleanName(unique(tolower(gp.col.pool)))),
                           rowname = dlbcl.pool.gprofile.table[,1],
                           label  = "tab:enrichment.pool",
                           n.rgroup = table(gp.col.pool)[unique(gp.col.pool)],
                           title = "Term ID",
                           size = "tiny",
-                          caption = paste0("The significant annotations for DLBCL Pool method"),
+                          caption = paste0("The significant terms for the gene enrichment ,
+                                          analysis of the DLBCL Pool method modules. Number of genes ,
+                                          in each term (N), and the overlap to module (O)."),
                           lines.page = 80,
                           longtable = TRUE,
                           center = "centering",
