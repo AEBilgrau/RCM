@@ -664,8 +664,12 @@ The technical assistance from Alexander Schmitz, Julie S.\ B\o{}dker, Ann-Maria 
 \bibliographystyle{imsart-nameyear}
 \bibliography{references_manual}
 
+\printaddresses  % Print adresses
+
 \newpage
 \appendix
+\pagenumbering{arabic}                   %Reset page counter
+\renewcommand*{\thepage}{A\arabic{page}} %Add A to page counter
 
 
 \section{Supplementary Figures and Tables}  
