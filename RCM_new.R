@@ -514,14 +514,15 @@ if(!exists("results.test.sigmas") || recompute){
   resave(results.test.sigmas, file = "saved.RData")
 }
 
+## Table with only EM and Pool
 results.test.sigmas.table <- makeTable(results.test.sigmas)
-results.test.sigmas.table <- results.test.sigmas.table[,-4] #Remove MLE results for copheno
-names(results.test.sigmas.table) <- c("$n_i$", "$\\nu$", "EM","Pool", "EM", "MLE","Pool")
+results.test.sigmas.table <- results.test.sigmas.table[,-c(4,6)] #Remove MLE results for copheno
+names(results.test.sigmas.table) <- c("$n_i$", "$\\nu$", "EM","Pool", "EM", "Pool")
 
 caption <- 'Mean cophenetic correlation and 
             Kullback-Leibler divergence with $95\\%$ confidence,
             for estimated  vs true network for 
-            different values of $\\nu$ and $n_i$ using the EM, MLE or Pool method'
+            different values of $\\nu$ and $n_i$ using the EM or Pool method'
 
 table1 <- latex(results.test.sigmas.table, file = "table1.tex",
                 title = "Clustering results",
@@ -529,9 +530,28 @@ table1 <- latex(results.test.sigmas.table, file = "table1.tex",
                 size = "tiny",
                 label ="tab:results.clustering",
                 rowname=NULL,
+                landscape = FALSE,
+                cgroup = c("", "Cophenetic Correlation", "Kullback-Leibler divergence"),
+                n.cgroup = c(2,2,2))
+
+## Table with full results
+results.test.sigmas.table <- makeTable(results.test.sigmas)
+names(results.test.sigmas.table) <- c("$n_i$", "$\\nu$", "EM","MLE","Pool", "EM","MLE", "Pool")
+
+caption <- 'Mean cophenetic correlation and 
+Kullback-Leibler divergence with $95\\%$ confidence,
+for estimated  vs true network for 
+different values of $\\nu$ and $n_i$ using the EM, MLE or Pool method'
+
+table1 <- latex(results.test.sigmas.table, file = "tableS2.tex",
+                title = "Clustering results",
+                caption = caption,
+                size = "tiny",
+                label ="tab:results.clustering.full",
+                rowname=NULL,
                 landscape = TRUE,
                 cgroup = c("", "Cophenetic Correlation", "Kullback-Leibler divergence"),
-                n.cgroup = c(2,2,3))
+                n.cgroup = c(2,3,3))
 
 
 ## IDRC data
@@ -556,8 +576,8 @@ if(!exists("results.idrc.test.sigmas") || recompute){
 }
 
 results.idrc.test.sigmas.table <- makeTable(results.idrc.test.sigmas)
-results.idrc.test.sigmas.table <- results.idrc.test.sigmas.table[,-4] #Remove MLE results
-names(results.idrc.test.sigmas.table) <- c("$n_i$", "$\\nu$", "EM","Pool", "EM","MLE", "Pool")
+results.idrc.test.sigmas.table <- results.idrc.test.sigmas.table #Remove MLE results
+names(results.idrc.test.sigmas.table) <- c("$n_i$", "$\\nu$", "EM","MLE","Pool", "EM","MLE", "Pool")
 
 
 caption <- 'Simulation results based on IDRC data. Mean cophenetic correlation and 
@@ -574,7 +594,7 @@ tableS1 <- latex(results.idrc.test.sigmas.table,
                 label = "tab:results.clustering.idrc",
                 rowname=NULL,
                 cgroup = c("", "Cophenetic Correlation", "Kullback-Leibler divergence"),
-                n.cgroup = c(2,2,3))
+                n.cgroup = c(2,3,3))
 
 ## Example Tanglegrams
 exIndex <- 13
