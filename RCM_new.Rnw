@@ -569,18 +569,9 @@ From the parameter estimate, the common expected covariance $\hvSigma = (\hat{\n
   \label{fig:2}
 \end{figure}
 
-<<<<<<< HEAD
 Despite the low ICC value the permutation test yielded a P-value for the null hypothesis of study homogeneity of $\Sexpr{round(dlbcl.p.value,4)}$, clearly rejecting it. This means a significant difference 
 has been detected between the estimated covariance structures across studies.
-This low ICC might suggest selecting most variable genes bias the ICC version high inter-study homogeneity of covariances. 
-=======
-The permutation test yielded a P-value for the null hypothesis of study homogeneity of $\Sexpr{round(dlbcl.p.value,4)}$, clearly rejecting it. This means a significant difference has been detected between the estimated covariance structures across studies.
-The estimated $\hat{\nu}$ yields an estimated ICC of $\Sexpr{round(get.ICC(dlbcl.rcm), 4)}$.
-Hence by the RCM, only $\Sexpr{100*round(get.ICC(dlbcl.rcm), 4)} \%$ of the variability of the gene-gene covariances is between-studies on average.
-This low ICC might suggest a high inter-study homogeneity of covariances meaning that the covariances reproduce across studies.
-However, the selection of only the most varying (across studies) genes is an obvious contribution to the low ICC.
-By selection, we have high inter-study variability which drives the ICC down. To further investigate the low ICC value we randomly sampled 300 genes and estimated the $\nu$ parameter 100 times. This gave a value of $\nu$ ranging from \Sexpr{round(min(subset_nu),2)} to \Sexpr{round(max(subset_nu),2)} with a mean of \Sexpr{round(mean(subset_nu),2)}, corresponding to an ICC ranging from \Sexpr{round(min(subset_ICC),2)} to \Sexpr{round(max(subset_ICC),2)} with a mean of \Sexpr{round(mean(subset_ICC),2)}; histograms are shown in Supplementary Figure \ref{fig:S7}.
->>>>>>> origin/Rasmus
+This low ICC might suggest selecting the most variable genes bias the ICC towards inter-study homogeneity of covariances. To further investigate the low ICC value we randomly sampled 300 genes and estimated the $\nu$ parameter 100 times. This gave a value of $\nu$ ranging from \Sexpr{round(min(subset_nu),2)} to \Sexpr{round(max(subset_nu),2)} with a mean of \Sexpr{round(mean(subset_nu),2)}, corresponding to an ICC ranging from \Sexpr{round(min(subset_ICC),2)} to \Sexpr{round(max(subset_ICC),2)} with a mean of \Sexpr{round(mean(subset_ICC),2)}; histograms are shown in Supplementary Figure \ref{fig:S7}. This indicates more homogeneity for the high variance selected genes.
 
 <<dlbcl_clustering, echo=FALSE, results='hide'>>=
 @
