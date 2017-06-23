@@ -1345,6 +1345,14 @@ dev.off()
 
 ### iGraph for pool
 # Colors for igraph
+## Define labels for color legend
+num2names_pool <- c("",
+               "Immune surveillance.",
+               "",
+               "Metastasis.",
+               "Tissue development.")
+names(num2names_pool) <- num2col
+
 n.col <- 256
 keybreaks <- seq(min(dlbcl.pool.cor), max(dlbcl.pool.cor), length.out = n.col)
 
@@ -1371,7 +1379,7 @@ layout(matrix(c(1,1,2,2), 2, 2, byrow = TRUE),
 
 # PANEL MODULE OVERVIEW
 tab <- table(dlbcl.pool.modules)
-go.func <- num2names[match(names(tab), names(num2names))]
+go.func <- num2names_pool[match(names(tab), names(num2names_pool))]
 stopifnot(names(tab) == names(go.func))
 
 par(xaxs = "i", yaxs = "i", mar = c(0, 0, 0, 0) + 0.1)
