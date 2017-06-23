@@ -736,7 +736,7 @@ The technical assistance from Alexander Schmitz, Julie S.\ B\o{}dker, Ann-Maria 
 	\centering
 	  \includegraphics[width=\linewidth]{FigureS5C.jpg}
 	 \end{subfigure}
-\caption{Heatmap and iGpraph for the estimated correlation matrices of the top 300 genes for the DLBCL data using the Pool method. The network is cut at a height producing 5 clusters. The tanglegram in the lower panel shows the comparison of clusters between the EM and Pool methods.}
+\caption{Heatmap and correlation network for the estimated correlation matrices of the top 300 genes for the DLBCL data using the Pool method. The network is cut at a height producing 5 clusters. The tanglegram in the lower panel shows the comparison of clusters between the EM and Pool methods.}
 \label{fig:S5}
 \end{figure}
 

@@ -1071,11 +1071,11 @@ w <- E(dlbcl.g)$weight
 dlbcl.par$threshold <- quantile(abs(w), prob = 0.90)
 
 ## Define labels for color legend
-num2names <- c("Antigen & receptor binding",
-               "Fatty acid binding & peptidase activity",
-               "Inflamation & immuneresponse. Lipid metabolisme.",
-               "Extracellular matrix structure & Growthfactor.",
-               "Cytoskeleton organization")
+num2names <- c("",
+               "Immune surveillance.",
+               "Immune regulation.",
+               "Metastasis.",
+               "Tissue development.")
 names(num2names) <- num2col
 
 
@@ -1097,7 +1097,7 @@ legend(0.7, 1, bty = "n", col = "black", pt.bg = names(tab),
 legend(.8, 1, bty = "n", col = "black", cex = 1.2, xjust = 0.5, yjust = 0.5,
        title = "Size", legend =  sprintf("(%d)", tab))
 legend(1.07, 1, bty = "n", col = "black", cex = 1.2, xjust = 0.5, yjust = 0.5,
-       title = "Suggested GO function", legend =  rep("", 5))
+       title = "Suggested function", legend =  rep("", 5))
 legend(1.12, 1, bty = "n", col = "black", cex = 1.0,
        title = "", xjust = 0.5, yjust = 0.5,
        legend =  go.func, y.intersp = 1.25)
@@ -1320,7 +1320,7 @@ num2col_pool <- c("gray32",
 
 ### Make clusters from POOL model
 dlbcl.pool.cut <- cutree(dlbcl.pool.hclu, k = dlbcl.par$n.modules)
-dlbcl.pool.modules <- num2col[dlbcl.pool.cut]
+dlbcl.pool.modules <- num2col_pool[dlbcl.pool.cut]
 names(dlbcl.pool.modules) <- dlbcl.pool.hclu$labels
 
 
@@ -1383,7 +1383,7 @@ legend(0.7, 1, bty = "n", col = "black", pt.bg = names(tab),
 legend(.8, 1, bty = "n", col = "black", cex = 1.2, xjust = 0.5, yjust = 0.5,
        title = "Size", legend =  sprintf("(%d)", tab))
 legend(1.07, 1, bty = "n", col = "black", cex = 1.2, xjust = 0.5, yjust = 0.5,
-       title = "Suggested GO function", legend =  rep("", 5))
+       title = "Suggested function", legend =  rep("", 5))
 legend(1.12, 1, bty = "n", col = "black", cex = 1.0,
        title = "", xjust = 0.5, yjust = 0.5,
        legend =  go.func, y.intersp = 1.25)
@@ -1496,7 +1496,6 @@ for (col in unique(dlbcl.pool.modules)) {
   mod.genes.pool[[col]] <- names(dlbcl.pool.modules[dlbcl.pool.modules == col])
 }
 
-stopifnot(all(names(mod.genes.pool) == names(num2names)))
 
 # Order by rowSums
 dlbcl.cor.sub <- lapply(mod.genes.pool, function(ensg) dlbcl.pool.cor[ensg, ensg])
@@ -1519,7 +1518,7 @@ convert_to_hugo <- function(x){
 dlbcl.mod.tab.genes <- sapply(tmp, convert_to_hugo)
 
 # First letter capitalized
-cgroup <- capitalize(cleanName(names(mod.genes)))
+cgroup <- capitalize(cleanName(names(mod.genes.pool)))
 # cgroup <- paste0(cgroup, num2names)
 
 colnames(dlbcl.mod.tab.genes) <- # Number of gens in each module
