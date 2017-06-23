@@ -936,6 +936,39 @@ if (!exists("homogeneity.rcm") || recompute) {
 
 dlbcl.p.value <- get.TestPValue(homogeneity.rcm, dlbcl.rcm)
 
+### Check nu and ICC under random subsets
+if (!exists("rcm.random.subset") || recompute) {
+  rcm.random.subset <- list()
+  for(i in 1:100){
+    gep.sub.sample   <- lapply(gep, function(x) exprs(x)[sample(1:nrow(gep$GEPBCCA.ensg), 300), ])
+    sub.sample.ns    <- sapply(gep.sub.sample, ncol)
+    sub.sample.S     <- lapply(gep.sub.sample, function(x) correlateR::scatter(t(x)))
+    
+    nu.sample <- sum(sub.sample.ns) + ncol(sub.sample.S[[1]]) + 1
+    psi.sample <- nu.sample*correlateR:::pool(sub.sample.S, sub.sample.ns)
+    
+    start <- date()
+    cat(i)
+    dlbcl.rcm.sample <- fit.rcm(S = sub.sample.S, ns = sub.sample.ns, verbose = FALSE,
+                                Psi.init = psi.sample, nu.init = nu.sample, eps = 0.01,
+                                max.ite = 1500)
+    
+    
+    rcm.random.subset[[i]] <- dlbcl.rcm.sample
+  }
+  resave(rcm.random.subset, file = "saved.RData")
+}
+
+subset_nu <- sapply(rcm.random.subset, function(x) x$nu)
+subset_ICC <- sapply(rcm.random.subset, get.ICC)
+
+jpeg("FigureS7.jpg", width = 7, height = 7, units="in", res = 200)
+  par(mfrow=c(2,1))
+  hist(subset_nu, xlab=expression(nu), main="RCM with random subsets of 300 genes")
+  hist(subset_ICC, xlab="ICC", main="")
+dev.off()
+
+
 
 ## Conversion between ENSG and HGNC
 if(!exists("gene.info") || recompute){
@@ -1038,11 +1071,11 @@ w <- E(dlbcl.g)$weight
 dlbcl.par$threshold <- quantile(abs(w), prob = 0.90)
 
 ## Define labels for color legend
-num2names <- c("Antigen & receptor binding",
-               "Fatty acid binding & peptidase activity",
-               "Inflamation & immuneresponse. Lipid metabolisme.",
-               "Extracellular matrix structure & Growthfactor.",
-               "Cytoskeleton organization")
+num2names <- c("",
+               "Immune surveillance.",
+               "Immune regulation.",
+               "Metastasis.",
+               "Tissue development.")
 names(num2names) <- num2col
 
 
@@ -1064,7 +1097,7 @@ legend(0.7, 1, bty = "n", col = "black", pt.bg = names(tab),
 legend(.8, 1, bty = "n", col = "black", cex = 1.2, xjust = 0.5, yjust = 0.5,
        title = "Size", legend =  sprintf("(%d)", tab))
 legend(1.07, 1, bty = "n", col = "black", cex = 1.2, xjust = 0.5, yjust = 0.5,
-       title = "Suggested GO function", legend =  rep("", 5))
+       title = "Suggested function", legend =  rep("", 5))
 legend(1.12, 1, bty = "n", col = "black", cex = 1.0,
        title = "", xjust = 0.5, yjust = 0.5,
        legend =  go.func, y.intersp = 1.25)
@@ -1287,7 +1320,7 @@ num2col_pool <- c("gray32",
 
 ### Make clusters from POOL model
 dlbcl.pool.cut <- cutree(dlbcl.pool.hclu, k = dlbcl.par$n.modules)
-dlbcl.pool.modules <- num2col[dlbcl.pool.cut]
+dlbcl.pool.modules <- num2col_pool[dlbcl.pool.cut]
 names(dlbcl.pool.modules) <- dlbcl.pool.hclu$labels
 
 
@@ -1350,7 +1383,7 @@ legend(0.7, 1, bty = "n", col = "black", pt.bg = names(tab),
 legend(.8, 1, bty = "n", col = "black", cex = 1.2, xjust = 0.5, yjust = 0.5,
        title = "Size", legend =  sprintf("(%d)", tab))
 legend(1.07, 1, bty = "n", col = "black", cex = 1.2, xjust = 0.5, yjust = 0.5,
-       title = "Suggested GO function", legend =  rep("", 5))
+       title = "Suggested function", legend =  rep("", 5))
 legend(1.12, 1, bty = "n", col = "black", cex = 1.0,
        title = "", xjust = 0.5, yjust = 0.5,
        legend =  go.func, y.intersp = 1.25)
@@ -1463,7 +1496,6 @@ for (col in unique(dlbcl.pool.modules)) {
   mod.genes.pool[[col]] <- names(dlbcl.pool.modules[dlbcl.pool.modules == col])
 }
 
-stopifnot(all(names(mod.genes.pool) == names(num2names)))
 
 # Order by rowSums
 dlbcl.cor.sub <- lapply(mod.genes.pool, function(ensg) dlbcl.pool.cor[ensg, ensg])
@@ -1486,7 +1518,7 @@ convert_to_hugo <- function(x){
 dlbcl.mod.tab.genes <- sapply(tmp, convert_to_hugo)
 
 # First letter capitalized
-cgroup <- capitalize(cleanName(names(mod.genes)))
+cgroup <- capitalize(cleanName(names(mod.genes.pool)))
 # cgroup <- paste0(cgroup, num2names)
 
 colnames(dlbcl.mod.tab.genes) <- # Number of gens in each module

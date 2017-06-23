@@ -569,9 +569,18 @@ From the parameter estimate, the common expected covariance $\hvSigma = (\hat{\n
   \label{fig:2}
 \end{figure}
 
+<<<<<<< HEAD
 Despite the low ICC value the permutation test yielded a P-value for the null hypothesis of study homogeneity of $\Sexpr{round(dlbcl.p.value,4)}$, clearly rejecting it. This means a significant difference 
 has been detected between the estimated covariance structures across studies.
 This low ICC might suggest selecting most variable genes bias the ICC version high inter-study homogeneity of covariances. 
+=======
+The permutation test yielded a P-value for the null hypothesis of study homogeneity of $\Sexpr{round(dlbcl.p.value,4)}$, clearly rejecting it. This means a significant difference has been detected between the estimated covariance structures across studies.
+The estimated $\hat{\nu}$ yields an estimated ICC of $\Sexpr{round(get.ICC(dlbcl.rcm), 4)}$.
+Hence by the RCM, only $\Sexpr{100*round(get.ICC(dlbcl.rcm), 4)} \%$ of the variability of the gene-gene covariances is between-studies on average.
+This low ICC might suggest a high inter-study homogeneity of covariances meaning that the covariances reproduce across studies.
+However, the selection of only the most varying (across studies) genes is an obvious contribution to the low ICC.
+By selection, we have high inter-study variability which drives the ICC down. To further investigate the low ICC value we randomly sampled 300 genes and estimated the $\nu$ parameter 100 times. This gave a value of $\nu$ ranging from \Sexpr{round(min(subset_nu),2)} to \Sexpr{round(max(subset_nu),2)} with a mean of \Sexpr{round(mean(subset_nu),2)}, corresponding to an ICC ranging from \Sexpr{round(min(subset_ICC),2)} to \Sexpr{round(max(subset_ICC),2)} with a mean of \Sexpr{round(mean(subset_ICC),2)}; histograms are shown in Supplementary Figure \ref{fig:S7}.
+>>>>>>> origin/Rasmus
 
 <<dlbcl_clustering, echo=FALSE, results='hide'>>=
 @
@@ -737,7 +746,7 @@ The technical assistance from Alexander Schmitz, Julie S.\ B\o{}dker, Ann-Maria 
 	\centering
 	  \includegraphics[width=\linewidth]{FigureS5C.jpg}
 	 \end{subfigure}
-\caption{Heatmap and iGpraph for the estimated correlation matrices of the top 300 genes for the DLBCL data using the Pool method. The network is cut at a height producing 5 clusters. The tanglegram in the lower panel shows the comparison of clusters between the EM and Pool methods.}
+\caption{Heatmap and correlation network for the estimated correlation matrices of the top 300 genes for the DLBCL data using the Pool method. The network is cut at a height producing 5 clusters. The tanglegram in the lower panel shows the comparison of clusters between the EM and Pool methods.}
 \label{fig:S5}
 \end{figure}
 
@@ -745,6 +754,12 @@ The technical assistance from Alexander Schmitz, Julie S.\ B\o{}dker, Ann-Maria 
   \includegraphics[width=0.8\linewidth]{FigureS6.jpg}
   \caption{The top row shows $95\%$ and $99\%$ CI for the hazard ratio for each eigengene in the multiple Cox proportional hazards model containing all eigengenes in the CHOP or R-CHOP dataset. The bottom row shows Kaplan-Meier estimates (and $95\%$ CI) for the overall survival for patients stratified by the dichotomized \Sexpr{cleanName(the.module)} obtained from the Pool method. The proportion of variance explained by the eigengene in the CHOP and R-CHOP datasets for respectively the Coral, Olivegreen, Gray, Skyblue and Orchid modules were \Sexpr{paste(as.character(round(eigenvarspool[[1]],2)), collapse=", ")}, and \Sexpr{paste(as.character(round(eigenvarspool[[2]],2)), collapse=", ")}}
   \label{fig:S6}
+\end{figure}
+
+\begin{figure}[H]
+  \includegraphics[width=0.8\linewidth]{FigureS7.jpg}
+  \caption{Distribution of $\nu$ and the corresponding ICC when fitting the RCM with the EM method to random subsets of 300 genes.}
+  \label{fig:S7}
 \end{figure}
 
 \input{tableS2}
