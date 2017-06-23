@@ -670,6 +670,7 @@ The technical assistance from Alexander Schmitz, Julie S.\ B\o{}dker, Ann-Maria 
 \newpage
 \appendix
 \pagenumbering{arabic}                   %Reset page counter
+\setcounter{page}{1}
 \renewcommand*{\thepage}{A\arabic{page}} %Add A to page counter
 
 
