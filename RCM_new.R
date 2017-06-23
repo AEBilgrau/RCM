@@ -936,6 +936,39 @@ if (!exists("homogeneity.rcm") || recompute) {
 
 dlbcl.p.value <- get.TestPValue(homogeneity.rcm, dlbcl.rcm)
 
+### Check nu and ICC under random subsets
+if (!exists("rcm.random.subset") || recompute) {
+  rcm.random.subset <- list()
+  for(i in 1:100){
+    gep.sub.sample   <- lapply(gep, function(x) exprs(x)[sample(1:nrow(gep$GEPBCCA.ensg), 300), ])
+    sub.sample.ns    <- sapply(gep.sub.sample, ncol)
+    sub.sample.S     <- lapply(gep.sub.sample, function(x) correlateR::scatter(t(x)))
+    
+    nu.sample <- sum(sub.sample.ns) + ncol(sub.sample.S[[1]]) + 1
+    psi.sample <- nu.sample*correlateR:::pool(sub.sample.S, sub.sample.ns)
+    
+    start <- date()
+    cat(i)
+    dlbcl.rcm.sample <- fit.rcm(S = sub.sample.S, ns = sub.sample.ns, verbose = FALSE,
+                                Psi.init = psi.sample, nu.init = nu.sample, eps = 0.01,
+                                max.ite = 1500)
+    
+    
+    rcm.random.subset[[i]] <- dlbcl.rcm.sample
+  }
+  resave(rcm.random.subset, file = "saved.RData")
+}
+
+subset_nu <- sapply(rcm.random.subset, function(x) x$nu)
+subset_ICC <- sapply(rcm.random.subset, get.ICC)
+
+jpeg("FigureS7.jpg", width = 7, height = 7, units="in", res = 200)
+  par(mfrow=c(2,1))
+  hist(subset_nu, xlab=expression(nu), main="RCM with random subsets of 300 genes")
+  hist(subset_ICC, xlab="ICC", main="")
+dev.off()
+
+
 
 ## Conversion between ENSG and HGNC
 if(!exists("gene.info") || recompute){
