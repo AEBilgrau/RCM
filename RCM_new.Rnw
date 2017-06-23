@@ -558,8 +558,8 @@ After RMA normalization and summarization, the data were brought to a common sca
 \subsection{Analysis}
 For each dataset the scatter matrix $\vS_i$ of the top \Sexpr{dlbcl.par$top.n} most variable genes (as measured by the pooled variance across all studies) was computed as the sufficient statistics along with the number of samples.
 
-The parameters of the RCM were estimated using the EM algorithm and yielded the $\Sexpr{dlbcl.par$top.n} \times \Sexpr{dlbcl.par$top.n}$ matrix $\hvPsi$ and $\hat{\nu} = \Sexpr{round(dlbcl.rcm[["nu"]], 2)}$.
-The RCM was fitted using three different initial sets of parameters which all converged to the same parameter estimates.
+The parameters of the RCM were estimated using the EM algorithm and yielded the $\Sexpr{dlbcl.par$top.n} \times \Sexpr{dlbcl.par$top.n}$ matrix $\hvPsi$, $\hat{\nu} = \Sexpr{round(dlbcl.rcm[["nu"]], 2)}$, 
+and ICC = $\Sexpr{round(get.ICC(dlbcl.rcm), 4)}$. The RCM was fitted using three different initial sets of parameters which all converged to the same parameter estimates.
 Log-likelihood traces, iterations used, and computation times are seen in Figure \ref{fig:2}.
 From the parameter estimate, the common expected covariance $\hvSigma = (\hat{\nu}-p-1)^{-1}\hvPsi$ was computed and subsequently scaled to the corresponding correlation matrix $\hat{\vec{R}}$.
 
@@ -569,12 +569,9 @@ From the parameter estimate, the common expected covariance $\hvSigma = (\hat{\n
   \label{fig:2}
 \end{figure}
 
-The permutation test yielded a P-value for the null hypothesis of study homogeneity of $\Sexpr{round(dlbcl.p.value,4)}$, clearly rejecting it. This means a significant difference has been detected between the estimated covariance structures across studies.
-The estimated $\hat{\nu}$ yields an estimated ICC of $\Sexpr{round(get.ICC(dlbcl.rcm), 4)}$.
-Hence by the RCM, only $\Sexpr{100*round(get.ICC(dlbcl.rcm), 4)} \%$ of the variability of the gene-gene covariances is between-studies on average.
-This low ICC might suggest a high inter-study homogeneity of covariances meaning that the covariances reproduce across studies.
-However, the selection of only the most varying (across studies) genes is an obvious contribution to the low ICC.
-By selection, we have high inter-study variability which drives the ICC down.
+Despite the low ICC value the permutation test yielded a P-value for the null hypothesis of study homogeneity of $\Sexpr{round(dlbcl.p.value,4)}$, clearly rejecting it. This means a significant difference 
+has been detected between the estimated covariance structures across studies.
+This low ICC might suggest selecting most variable genes bias the ICC version high inter-study homogeneity of covariances. 
 
 <<dlbcl_clustering, echo=FALSE, results='hide'>>=
 @
@@ -598,7 +595,7 @@ For simplicity we employed a standard network analysis to the estimated common c
 
 <<survival_analysis, echo=FALSE, results='hide'>>=
 @
-We checked if the identified modules were prognostic for overall survival (OS) in the CHOP and R-CHOP-treated cohort datasets of GSE10846. To do this, the eigengene \citep{Horvath2011} for each module was computed. The module eigengene is the first principal component of the expression matrix of the module which thus can be represented by a linear combination of the module genes. Multiple Cox proportional hazards model for OS was fitted with the module eigengenes as covariates.  For the prognostically interesting and tightly clustered \Sexpr{cleanName(the.module)} module, the Kaplan-Meier estimates were computed for groups arising when dichotomizing the values of the corresponding eigengene as above or below the median value. These results are shown in Figure \ref{fig:4}.
+We checked if the identified modules were prognostic for overall survival (OS) in the CHOP and R-CHOP-treated cohort datasets of GSE10846. To do this, the eigengene \citep{Horvath2011} for each module was computed. The module eigengene is the first principal component of the expression matrix of the module which thus can be represented by a linear combination of the module genes. We also report the amount of variation the eigengene represents by calculating the explained variation of the first pricipal component. Multiple Cox proportional hazards model for OS was fitted with the module eigengenes as covariates.  For the prognostically interesting and tightly clustered \Sexpr{cleanName(the.module)} module, the Kaplan-Meier estimates were computed for groups arising when dichotomizing the values of the corresponding eigengene as above or below the median value. These results are shown in Figure \ref{fig:4}. The proportion of variance explained by the eigengene in the CHOP and R-CHOP datasets for respectively the Coral, Olivegreen, Gray, Skyblue and Orchid modules were \Sexpr{paste(as.character(round(eigenvars[[1]],2)), collapse=", ")}, and \Sexpr{paste(as.character(round(eigenvars[[2]],2)), collapse=", ")}.
 
 \begin{figure}
   \includegraphics[width=0.8\linewidth]{Figure4.jpg}
@@ -609,7 +606,9 @@ We checked if the identified modules were prognostic for overall survival (OS) i
 <<dlbcl_go_analysis, echo=FALSE, results='hide'>>=
 @
 
-Next, the modules were screened for biological relevance using GO (Gene Ontology) Biological Process, Molecular Function, and Cellular Component as well as REACTOME and KEGG pathway enrichment analysis. This was done using the g:profiler web server \citep{Reimand2016} via the accompanying R-package \texttt{gProfileR} \citep{gProfileR2016}. Since we pre-selected the top 300 genes by variance, the enrichment analysis was done using only these as the background genes. Top genes for each module, ranked by connectivity, are shown in Table \ref{tab:top.genes.em}, while results of the enrichment analysis for each of the modules are shown in Supplementary Table \ref{tab:enrichment.em}. Inspection of the enrichment analysis  and most connected genes allowed us to hypothesize that the coral module is involved in "tissue development", the Skyblue module is involved in "metastasis", the orchid module involved in "immune regulation", and the olivegreen module involved in "immune surveillance".
+Next, the modules were screened for biological relevance using GO (Gene Ontology) Biological Process, Molecular Function, and Cellular Component as well as REACTOME and KEGG pathway enrichment analysis. This was done using the g:profiler web server \citep{Reimand2016} via the accompanying R-package \texttt{gProfileR} \citep{gProfileR2016}. Since we pre-selected the top 300 genes by variance, the enrichment analysis was done using only these as the background genes. 
+Top genes for each module, ranked by connectivity, are shown in Table \ref{tab:top.genes.em}, while results of the enrichment analysis for each of the modules are shown in Supplementary Table \ref{tab:enrichment.em}. 
+Inspection of the enrichment analysis  and most connected genes allowed us to hypothesize that the coral module is involved in "tissue development" (strong association with GO:0009888 tissue development), the Skyblue module is involved in "metastasis" (strong association with G0:0009611-response to wounding and GO.00442060-wound healing, \citep{Opdenaker2015}), the orchid module involved in "immune regulation" (strong association with GO:0002376-immune system process), and the olivegreen module involved in "immune surveillance" (strong association with GO:0006952-defense response and GO:0045087-innate immune response).
 
 \input{table.top.genes.em}
 %\input{table.enrichment.em}
@@ -619,13 +618,15 @@ as compelling research has shown that the S100 family of calciumbinding
 proteins maintain immunosuppressive myeloid-derived suppressor cells at the tumor site
 \citep{fulmer2008}. Notably, in mice injected with lymphoma cells, knockout
 of S100A9 resulted in greater tumor infiltration of T-cells and less accumulation
-of MDS cells than that seen in wild-type mice \citep{Cheng2008}.
+of myeloid derived suppressor (MDS) cells than that seen in wild-type mice \citep{Cheng2008}.
 The knockout mice had higher rates of tumor rejection and lower tumor
 size than their wild-type littermates. This result indicates that knockdown
 of these proteins may improve the outcome of immunotherapy strategies in
 patients with values of the eigengene of the olivegreen module.
 
-Finally, we compared the network analyses based on the covariance matrix obtanied by the EM to that obtained by the Pool methods. The upper row of Supplementary Figure \ref{fig:S5} shows the heatmap and associated network modules for the Pool method, when the dendogram is cut at \Sexpr{dlbcl.par$n.modules} modules, Supplementary Figure \ref{fig:S6} shows plots for the survival analysis, and top genes and gene enrichments are given in Supplementary Tables \ref{tab:top.genes.pool} and \ref{tab:enrichment.pool}. For the Pool method, we chose for each module the same color as the module of the EM based clustering with most overlapping genes. In the lower row of Figure \ref{fig:S5} a tangleram was constructed and the cophenetic correlation was calculated. We noticed a great overlap between the modules, but a low cophenetic correlation. With background in the simulation we anticipate the Pool method has lower efficiency than the EM method. This implies the signal from the tightly regulated modules are so strong that it manifest itself for both methods. However, if we look at the less correlated intramodular connections the noise plays a larger role leading to a less clear separation between the modules for the Pool method. This can have potential biological implications, when regulating hub genes resulting in intra module cascades of reactions.
+Finally, we compared the network analyses based on the covariance matrix obtanied by the EM to that obtained by the Pool methods. The upper row of Supplementary Figure \ref{fig:S5} shows the heatmap and associated network modules for the Pool method, when the dendogram is cut at \Sexpr{dlbcl.par$n.modules} modules, Supplementary Figure \ref{fig:S6} shows plots for the survival analysis, and top genes and gene enrichments are given in Supplementary Tables \ref{tab:top.genes.pool} and \ref{tab:enrichment.pool}. For the Pool method, we chose for each module the same color as the module of the EM based clustering with most overlapping genes. In the lower row of Figure \ref{fig:S5} a tangleram was constructed and the cophenetic correlation was calculated. We noticed generally a great overlap between the modules, but a low cophenetic correlation. With background in the simulation we anticipate the Pool method has lower efficiency than the EM method. 
+
+The olivegreen and coral modules seem to be so tightly regulated that they manifest itself for both methods. This is also seen the enrichment analyses. However, for the skyblue module it increases in size for the pool methods by aquiring further genes from the grey module. The overall enrichment is not changed.  For the orchid module, we notice a number of genes ending up in the grey module for pool methods. This has the consequence that the immune regulation fingerprint disappers using the pool method. Morever, if we look at the less correlated intramodular connections the noise plays a larger role leading to a less clear separation between the modules for the Pool method. This can have potential biological implications, when regulating hub genes resulting in intra module cascades of reactions.
 
 \section{Discussion}
 \label{sec:conclusion}
