@@ -1106,7 +1106,7 @@ num2names <- c("",
                "Immune surveillance.",
                "Immune regulation.",
                "Metastasis.",
-               "Cell Death.")
+               "Tissue development.")
 names(num2names) <- num2col
 
 
@@ -1385,8 +1385,8 @@ dev.off()
 num2names_pool <- c("",
                "Immune surveillance.",
                "",
-               "Tissue development.",
-               "Cell Death")
+               "Metastasis",
+               "Tissue development.")
 names(num2names_pool) <- num2col
 
 n.col <- 256
